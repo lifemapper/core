@@ -5,9 +5,11 @@ Todo:
     * Generalize
 """
 import os
+
 from osgeo import gdal
 
 from LmCommon.common.lmconstants import LMFormat
+
 
 # .............................................................................
 def validate_raster_file(raster_filename, raster_format=None):
@@ -22,7 +24,7 @@ def validate_raster_file(raster_filename, raster_format=None):
     msg = 'Valid'
     valid = False
     if os.path.exists(raster_filename):
-        # If a raster format was not provided, try to get it from the file 
+        # If a raster format was not provided, try to get it from the file
         #    extension
         if raster_format is None:
             _, ext = os.path.splitext(raster_filename)
@@ -31,20 +33,20 @@ def validate_raster_file(raster_filename, raster_format=None):
             elif ext == LMFormat.GTIFF.ext:
                 raster_format = LMFormat.GTIFF
             else:
-                msg = 'Extension {} did not map to a known raster format'.format(
-                                                                           ext)
+                msg = ('Extension {} did not map to a known raster format'
+                       ).format(ext)
 
         if raster_format is not None:
             try:
-                ds = gdal.Open(raster_filename)
-                if ds is None:
+                dataset = gdal.Open(raster_filename)
+                if dataset is None:
                     msg = 'Could not open {}'.format(raster_filename)
                 else:
-                    lyr = ds.GetRasterBand(1)
+                    _lyr = dataset.GetRasterBand(1)
                     valid = True
-            except Exception, e:
+            except Exception as e:
                 msg = str(e)
         else:
             msg = 'File does not exist'
-   
+
     return valid, msg

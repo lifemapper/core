@@ -1,27 +1,24 @@
-"""Command commands
+"""Common commands
 """
 from LmBackend.command.base import _LmCommand
 from LmBackend.common.lmconstants import (
     BACKEND_SCRIPTS_DIR, COMMON_SCRIPTS_DIR)
 
+
 # .............................................................................
 class IdigbioQueryCommand(_LmCommand):
+    """Command class for querying iDigBio.
     """
-    @summary: This command will query iDigBio for a list of GBIF TaxonIds,
-              write the results to a CSV file and metadata to a JSON file.
-    """
-    relDir = COMMON_SCRIPTS_DIR
-    scriptName = 'get_idig_data.py'
+    relative_directory = COMMON_SCRIPTS_DIR
+    script_name = 'get_idig_data.py'
 
     # ................................
     def __init__(self, taxon_id_file, point_output_file, meta_output_file,
                  success_file, missing_id_file=None):
-        """
-        @summary: Construct the command object
-        @param configFile: Configuration file for the boom run
+        """Construct the command object
         """
         _LmCommand.__init__(self)
-        
+
         # no need to add taxon_id_file to inputs
         self.outputs.extend(
             [point_output_file, meta_output_file, success_file])
@@ -29,7 +26,8 @@ class IdigbioQueryCommand(_LmCommand):
             taxon_id_file, point_output_file, meta_output_file, success_file)
         if missing_id_file is not None:
             self.opt_args = '--missing_id_file {}'.format(missing_id_file)
-            
+
+
 # .............................................................................
 class ChainCommand(_LmCommand):
     """Chain multiple commands into a single command
@@ -38,29 +36,30 @@ class ChainCommand(_LmCommand):
     is required before the next can start but these commands should be treated
     as one for organizational purposes
     """
+
     # ................................
-    def __init__(self, cmdList):
+    def __init__(self, cmd_list):
         """Constructor, combines the list of commands into a single command
         """
         _LmCommand.__init__(self)
-        
+
         # Set inputs and outputs
-        inSet = set.union(*[set(c.inputs) for c in cmdList])
-        outSet = set.union(*[set(c.outputs) for c in cmdList])
-            
-        self.outputs = list(outSet)
-        self.inputs = list(inSet.difference(outSet))
+        in_set = set.union(*[set(c.inputs) for c in cmd_list])
+        out_set = set.union(*[set(c.outputs) for c in cmd_list])
+
+        self.outputs = list(out_set)
+        self.inputs = list(in_set.difference(out_set))
 
         # Assemble commands
-        self._cmd = ' ; '.join([c.getCommand() for c in cmdList])
-    
+        self._cmd = ' ; '.join([c.get_command() for c in cmd_list])
+
     # ................................
-    def getCommand(self):
+    def get_command(self):
         """Get the aggregated command for each of the instances
         """
         return self._cmd
-    
-    
+
+
 # .............................................................................
 class ConcatenateMatricesCommand(_LmCommand):
     """Generate a command to concatenate a list of matrices
@@ -68,52 +67,26 @@ class ConcatenateMatricesCommand(_LmCommand):
     This command will concatenate a list of matrices based on the specified
     axis
     """
-    relDir = COMMON_SCRIPTS_DIR
-    scriptName = 'concatenate_matrices.py'
+    relative_directory = COMMON_SCRIPTS_DIR
+    script_name = 'concatenate_matrices.py'
 
     # ................................
-    def __init__(self, matrices, axis, outMtxFilename, 
-                             mashedPotatoFilename=None):
+    def __init__(self, matrices, axis, out_mtx_file_name):
         """Construct the command object
 
         Args:
             matrices: A list of zero or more matrix filenames to concatenate
             axis: The axis to concatenate the matrices on
-            outMtxFilename: The output location of the resulting matrix
-            mashedPotatoFilename: (optional) If present, get the input matrix
-                file names from this file instead 
+            out_mtx_file_name: The output location of the resulting matrix
         """
         _LmCommand.__init__(self)
-        
-        self.args = '{} {} {}'.format(outMtxFilename, axis, ' '.join(matrices))
-        
+
+        self.args = '{} {} {}'.format(
+            out_mtx_file_name, axis, ' '.join(matrices))
+
         self.inputs.extend(matrices)
-        self.outputs.append(outMtxFilename)
-        if mashedPotatoFilename is not None:
-            self.outputs.append(mashedPotatoFilename)
-            self.opt_args = '--mashedPotato={}'.format(mashedPotatoFilename)
-            
-# .............................................................................
-class ConvertLayerCommand(_LmCommand):
-    """This command will convert a tiff to ascii
-    """
-    relDir = BACKEND_SCRIPTS_DIR
-    scriptName = 'convert_single_layer.py'
+        self.outputs.append(out_mtx_file_name)
 
-    # ................................
-    def __init__(self, origAsciiFilename, modifiedAsciiFilename):
-        """Construct the command object
-
-        Args:
-            origAsciiFilename: The original ASCII file
-            modifiedAsciiFilename: The modified ASCII file
-        """
-        _LmCommand.__init__(self)
-        
-        self.args = '{} {}'.format(origAsciiFilename, modifiedAsciiFilename)
-        
-        self.inputs.append(origAsciiFilename)
-        self.outputs.append(modifiedAsciiFilename)
 
 # .............................................................................
 class CreateSignificanceMatrixCommand(_LmCommand):
@@ -123,8 +96,8 @@ class CreateSignificanceMatrixCommand(_LmCommand):
     determined by comparing random values, and a significance layer indicating
     which values are significant after p-value correction.
     """
-    relDir = BACKEND_SCRIPTS_DIR
-    scriptName = 'create_significance_matrix.py'
+    relative_directory = BACKEND_SCRIPTS_DIR
+    script_name = 'create_significance_matrix.py'
 
     # ................................
     def __init__(self, observed_filename, out_matrix_filename, random_matrices,
@@ -159,34 +132,12 @@ class CreateSignificanceMatrixCommand(_LmCommand):
             self.opt_args += ' -t {}'.format(test_matrix)
             self.inputs.append(test_matrix)
 
-# .............................................................................
-class ModifyAsciiHeadersCommand(_LmCommand):
-    """This command will reduce the number of decimal digits in ASCII headers
-    """
-    relDir = COMMON_SCRIPTS_DIR
-    scriptName = 'modify_ascii_headers.py'
 
-    # ................................
-    def __init__(self, origAsciiFilename, modifiedAsciiFilename, digits=7):
-        """Construct the command object
-
-        Args:
-            origAsciiFilename: The original ASCII file
-            modifiedAsciiFilename: The modified ASCII file
-            digits: The number of decimal digits to keep
-        """
-        _LmCommand.__init__(self)
-        
-        self.args = '{} {}'.format(origAsciiFilename, modifiedAsciiFilename)
-        self.opt_args = '-d {}'.format(digits)
-        
-        self.inputs.append(origAsciiFilename)
-        self.outputs.append(modifiedAsciiFilename)
-            
 # .............................................................................
 class SystemCommand(_LmCommand):
     """This command will run a system command (not a Python script)
     """
+
     # ................................
     def __init__(self, script, args, inputs=None, outputs=None):
         """Construct the command object
@@ -198,28 +149,24 @@ class SystemCommand(_LmCommand):
             outputs: An optional list of output files generated by this script
         """
         _LmCommand.__init__(self)
-        
+
         if inputs is not None:
             if isinstance(inputs, list):
                 self.inputs.extend(inputs)
             else:
                 self.inputs.append(inputs)
-        
+
         if outputs is not None:
             if isinstance(outputs, list):
                 self.outputs.extend(outputs)
             else:
                 self.outputs.append(outputs)
-            
+
         self.script = script
         self.args = args
-        # System commands won't be able to handle empty inputs automatically,
-        #     therefore, we tell the wrapper about them and it can skip the 
-        #     command if these arguments are missing
-        self.required_inputs = inputs
-        
+
     # ................................
-    def getCommand(self):
+    def get_command(self):
         """Get the concatenate matrices command
         """
         return '{} {}'.format(self.script, self.args)

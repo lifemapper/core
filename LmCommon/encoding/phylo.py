@@ -1,56 +1,36 @@
-"""
-@summary: Module containing a class for encoding a Phylogenetic tree into a 
-                 matrix
-@author: CJ Grady (originally by Jeff Cavner)
-@version: 1.0
-@status: beta
+"""Module containing a class for encoding a Phylogenetic tree into a matrix.
 
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
 
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
-@see: Leibold, m.A., E.P. Economo and P.R. Peres-Neto. 2010. Metacommunity
-            phylogenetics: separating the roles of environmental filters and 
-            historical biogeography. Ecology letters 13: 1290-1299.
-@todo: Use method to get labels by matrix index when available from tree
+See:
+    Leibold, m.A., E.P. Economo and P.R. Peres-Neto. 2010. Metacommunity
+        phylogenetics: separating the roles of environmental filters and
+        historical biogeography. Ecology letters 13: 1290-1299.
+
+Todo:
+    Use method to get labels by matrix index when available from tree
 """
-import numpy as np
 from random import shuffle
 
-from LmCommon.common.lmconstants import PhyloTreeKeys, DEFAULT_TREE_SCHEMA
-from LmCommon.common.matrix import Matrix
-from LmCommon.encoding.encodingException import EncodingException
-from LmCommon.trees.lmTree import LmTree
+import numpy as np
+from lmpy import Matrix, PhyloTreeKeys, TreeWrapper
+
+from LmCommon.encoding.encoding_exception import EncodingException
+
 
 # .............................................................................
-class PhyloEncoding(object):
+class PhyloEncoding:
     """
     @summary: The PhyloEncoding class represents the encoding of a phylogenetic
                      tree to match a PAM
     """
-    # ..............................    
+
+    # ..............................
     def __init__(self, tree, pam):
-        """
-        @summary: Base constructor
-        @param tree: An LmTree object
-        @param pam: A Matrix for a PAM
+        """Base constructor
+
+        Args:
+            tree (TreeWrapper): A tree object to encode.
+            pam (Matrix): A PAM matrix object.
         """
         self.tree = tree
 
@@ -58,338 +38,348 @@ class PhyloEncoding(object):
             self.pam = pam
         else:
             self.pam = Matrix(pam)
-    
-    # ..............................    
-    @classmethod
-    def fromFile(cls, treeDLoc, pamDLoc):
-        """
-        @summary: Creates an instance of the PhyloEncoding class from tree and 
-                         pam files
-        @param treeDLoc: The location of the tree (in JSON format)
-        @param pamDLoc: The location of the PAM (in numpy format)
-        @raise IOError: If one or both of the files are not found
-        """
-        tree = LmTree.initFromFile(treeDLoc, DEFAULT_TREE_SCHEMA)
-        
-        pam = Matrix.load(pamDLoc)
-        
-        return cls(tree, pam)
-        
+
     # ..............................
-    def encodePhylogeny(self):
+    @classmethod
+    def from_file(cls, tree_file_name, pam_file_name):
+        """Creates an instance of the PhyloEncoding class from tree and pam.
+
+        Args:
+            tree_file_name (str): The location of the tree.
+            pam_file_name (str): The location of the PAM.
+
+        Raises:
+            IOError: If one or both of the files are not found.
         """
-        @summary: Encode the phylogenetic tree into a matrix, P in the literature,
-                         a tip (row) by internal node (column) matrix that needs to 
-                         match the provided PAM.
-        @todo: Consider providing options for correcting the tree / pam
+        tree = TreeWrapper.from_filename(tree_file_name)
+        pam = Matrix.load(pam_file_name)
+        return cls(tree, pam)
+
+    # ..............................
+    def encode_phylogeny(self):
+        """Encode the phylogenetic tree into a matrix.
+
+        Note:
+            P in the literature, a tip (row) by internal node (column) matrix
+                that needs to match the provided PAM.
+
+        Todo:
+            Consider providing options for correcting the tree / pam
         """
-        if self.validate(): # Make sure that the PAM and tree match
-            if self.tree.hasBranchLengths():
-                pMtx = self._buildPMatrixWithBranchLengths()
+        if self.validate():  # Make sure that the PAM and tree match
+            if self.tree.has_branch_lengths():
+                p_mtx = self._build_p_matrix_with_branch_lengths()
             else:
-                pMtx = self._buildPMatrixNoBranchLengths()
+                p_mtx = self._build_p_matrix_no_branch_lengths()
         else:
             raise EncodingException(
-                        "PAM and Tree do not match, fix before encoding")
-        
-        return pMtx
-    
+                "PAM and Tree do not match, fix before encoding")
+
+        return p_mtx
+
     # ..............................
     def validate(self):
-        """
-        @summary: Validates the tree / PAM combination to make sure they can be
-                         used to create an encoding
+        """Validates the tree / PAM combination.
         """
         # check if tree is ultrametric
-        if (not self.tree.hasBranchLengths() or self.tree.isUltrametric()) and \
-              self.tree.isBinary(): 
+        if (not self.tree.has_branch_lengths() or self.tree.is_ultrametric()) \
+                and self.tree.is_binary():
             # Check that matrix indices in tree match PAM
             # List of matrix indices (based on PAM column count)
-            pamMatrixIndices = range(self.pam.data.shape[1])
+            pam_mtx_indices = range(self.pam.shape[1])
             # All matrix indices in tree
-            
-            treeMatrixIndices = [int(mtxId) for _, mtxId in self.tree.getAnnotations(
-                                                                          PhyloTreeKeys.MTX_IDX) if mtxId is not None]
-            #treeMatrixIndices = self.tree.getMatrixIndicesInClade()
-            
-            # Find the intersection between the two lists by creating a set for 
-            #     each and then checking which values are in both and making a list 
-            intersection = list(set(pamMatrixIndices) & set(treeMatrixIndices))
+            tree_mtx_indices = [
+                int(mtx_id) for _, mtx_id in self.tree.get_annotations(
+                    PhyloTreeKeys.MTX_IDX) if mtx_id is not None]
 
-            # This checks that there are no duplicates in either of the indices 
+            # Find the intersection between the two lists
+            intersection = set(pam_mtx_indices) & set(tree_mtx_indices)
+
+            # This checks that there are no duplicates in either of the indices
             #     lists and that they overlap completely
-            if len(intersection) == len(pamMatrixIndices) and \
-                     len(pamMatrixIndices) == len(treeMatrixIndices):
-                
+            if len(intersection) == len(pam_mtx_indices) and \
+                    len(pam_mtx_indices) == len(tree_mtx_indices):
                 # If everything checks out to here, return true for valid
                 return True
         # If anything does not validate, return false
         return False
-    
+
     # ..............................
-    def _buildPBranchLengthValues(self, node):
+    def _build_p_branch_length_values(self, node):
+        """Recurse through the tree to get P matrix values for node / tips.
+
+        Args:
+            node (dendropy.Node): The current clade.
         """
-        @summary: Recurse through tree to get P matrix values for node / tip 
-                         combinations
-        @param clade: The current clade
-        """
-        blDict = {} # Dictionary of branch length lists bottom-up from tip to 
-        #                     current clade
-        
-        cladeBL = node.edge_length # To avoid lookups
-        
-        # This is the sum of all branch lengths in the clade and will be used as
-        #     the denominator for the p value for each tip to this node.  See the
-        #     literature for more information.  We will initialize with the branch
-        #     length of this clade because it will always be added whether we are
-        #     at a tip or an internal node
-        blSum = cladeBL
-        
-        pValsDict = {} # Dictionary of dictionaries of P-values, first key is 
-        #                         node path id, sub keys are tip matrix indices for 
-        #                         that node
-        if node.num_child_nodes() > 0: # Assume this is two
-            cladePvals = {} # Initialize P-values for the clade dictionary
-            multipliers = [-1.0, 1.0] # One branch should be positive, the other  
-            #                                        negative
+        # Dictionary of branch length lists, bottom-up from tip to current node
+        bl_dict = {}
+
+        clade_bl = node.edge_length  # To avoid lookups
+
+        # This is the sum of all branch lengths in the clade and will be used
+        #    as the denominator for the p value for each tip to this node.  See
+        #    the literature for more information.  We will initialize with the
+        #    branch length of this clade because it will always be added
+        #    whether we are at a tip or an internal node.
+        bl_sum = clade_bl
+
+        # Dictionary of dictionaries of p values, first key is node path id,
+        #    sub-keys are tip matrix indices for that node
+        p_vals_dict = {}
+
+        if node.num_child_nodes() > 0:  # Assume this is two since binary
+            clade_p_vals = {}
+            multipliers = [-1.0, 1.0]  # One positive, one negative
             shuffle(multipliers)
-            
+
             for child in node.child_nodes():
-                
-                childBlDict, childBlSum, childPvalDict = \
-                                                        self._buildPBranchLengthValues(child)
+                (child_bl_dict, child_bl_sum, child_p_val_dict
+                 ) = self._build_p_branch_length_values(child)
                 multiplier = multipliers.pop(0)
-                
-                # Extend the P values dictionary
-                pValsDict.update(childPvalDict)
-                
-                # Add this child's branch length sum to the clade's branch length 
-                #     sum
-                blSum += childBlSum
 
-                childBL = child.edge_length
+                # Extend the p values dictionary
+                p_vals_dict.update(child_p_val_dict)
 
-                # We will add this value to the branch length list for all of the 
-                #     tips in this clade.  It is the branch length of this clade 
-                #     divided by the number of tips in the clade
-                addVal = 1.0 * childBL / len(childBlDict.keys())
-                
-                # Process each of the tips in childBlDict
-                for k in childBlDict.keys():
-                    
-                    # The formula for calculating the P-value is:
-                    # P(tip)(node) = (l1 + l2/2 + l3/3 + ... ln/n) / Sum of branch lengths to node
-                    #    This value is arbitrarily set to be positve for one child 
-                    #        and negative for the other (we will use "multiplier")
-                    # The l term is the length of a branch and it is divided by the
-                    #     number of tips that share that branch
-                    tipBLs = childBlDict[k] + [addVal]
-                    
-                    # Add the P-value to pValsDict
-                    cladePvals[k] = multiplier * sum(tipBLs) / childBlSum
-                    
-                    # Add to blDict with this branch length
-                    blDict[k] = tipBLs
+                # Add this child's branch length sum to the clade's branch
+                #    length sum
+                bl_sum += child_bl_sum
+                child_bl = child.edge_length
 
-            pValsDict[node.label] = cladePvals
-            
-        else: # We are at a tip
-            blDict = {
-                node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX) : []
+                # We will add this value to the branch length list for all of
+                #    the tips in this clade.  It is the branch length of this
+                #    clade divided by the number of tips in the clade.
+                add_val = 1.0 * child_bl / len(child_bl_dict)
+
+                # Process eac of the tips in the child_bl_dict
+                for k, child_bl_k in child_bl_dict.items():
+                    # The formula for calculating the p value is:
+                    #    P(tip)(node) = (l1 + l2/2 + l3/3 + ... ln/n) / sum of
+                    #        branch lengths to node
+                    #    The value is arbitrarily set to be positive for one
+                    #        child and negative for the other
+                    #    The 'l' term is the length of a branch  and it is
+                    #        divided by the number of tips that share that
+                    #        branch.
+                    tip_bls = child_bl_k + [add_val]
+
+                    # Add the p value to p_vals_dict
+                    clade_p_vals[k] = multiplier * sum(tip_bls) / child_bl_sum
+
+                    # Add to bl_dict with this branch length
+                    bl_dict[k] = tip_bls
+
+            p_vals_dict[node.label] = clade_p_vals
+
+        else:  # We are at a tip
+            bl_dict = {
+                node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX): []
             }
-            
-        
-        return blDict, blSum, pValsDict
-    
-    # ..............................    
-    def _buildPMatrixNoBranchLengths(self):
-        """
-        @summary: Creates a P matrix when no branch lengths are present
-        @note: For this method, we assume that there is a total weight of -1 to 
-                     the left and +1 to the right for each node.  As we go down 
-                     (towards the tips) of the tree, we divide the proportion of 
-                     each previously visited node by 2.  We then recurse with this 
-                     new visited list down the tree.  Once we reach a tip, we can 
-                     return that list of proportions because it will match for that 
-                     tip for each of it's ancestors.
-        @note: Example: 
-                    3
-                    +--2
-                    |  +-- 1
-                    |  |    +--0
-                    |  |    |  +-- A
-                    |  |    |  +-- B
-                    |  |    |
-                    |  |    +-- C
-                    |  |
-                    |  +-- D
-                    |
-                    +--4
-                        +-- E
-                        +-- F
-                        
-                Step 1: (Node 3) [] 
-                             - recurse left with [(3,-1)] 
-                             - recurse right with [(3,1)]
-                Step 2: (Node 2) [(3,-1)]
-                             - recurse left with [(3,-.5),(2,-1)] 
-                             - recurse right with [(3,-.5),(2,1)]
-                Step 3: (Node 1)[(3,-.5),(2,-1)] 
-                             - recurse left with [(3,-.25),(2,-.5),(1,-1)]
-                             - recurse right with [3,-.25),(2,-.5),(1,1)]
-                Step 4: (Node 0)[(3,-.25),(2,-.5),(1,-1)]
-                             - recurse left with [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
-                             - recurse right with [(3,-.125),(2,-.25),(1,-.5),(0,1)]
-                Step 5: (Tip A) - Return [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
-                Step 6: (Tip B) - Return [(3,-.125),(2,-.25),(1,-.5),(0,1)]
-                Step 7: (Tip C) - Return [(3,-.25),(2,-.5),(1,1)]
-                Step 8: (Tip D) - Return [(3,-.5),(2,1)]
-                Step 9: (Node 4) [(3,1)] - recurse left with [(3,.5),(4,-1)]
-                                                 - recurse right with [(3,.5),(4,1)]
-                Step 10: (Tip E) - Return [(3,.5),(4,-1)]
-                Step 11: (Tip F) - Return [(3,.5),(4,1)]
-                
-                Creates matrix:
-                         0     1     2      3        4
-                    A -1.0 -0.5 -0.25 -0.125  0.0
-                    B  1.0 -0.5 -0.25 -0.125  0.0
-                    C  0.0  1.0 -0.5  -0.25    0.0
-                    D  0.0  0.0  1.0  -0.5     0.0
-                    E  0.0  0.0  0.0    0.5    -1.0
-                    F  0.0  0.0  0.0    0.5     1.0
-        
-        @see: Page 1293 of the literature
+
+        return bl_dict, bl_sum, p_vals_dict
+
+    # ..............................
+    def _build_p_matrix_no_branch_lengths(self):
+        """Creates a P matrix when no branch lengths are present.
+
+        Note:
+            For this method, we assume that there is a total weight of -1 to
+                the left and +1 to the right for each node.  As we go down
+                (towards the tips) of the tree, we divide the proportion of
+                each previously visited node by 2.  We then recurse with this
+                new visited list down the tree.  Once we reach a tip, we can
+                return that list of proportions because it will match for that
+                tip for each of its ancestors.
+
+        Example:
+            3
+            +-- 2
+            |   +-- 1
+            |   |   +-- 0
+            |   |   |   +-- A
+            |   |   |   +-- B
+            |   |   |
+            |   |   +-- C
+            |   |
+            |   +-- D
+            |
+            +--4
+               +-- E
+               +-- F
+
+            Step 1: (Node 3) []
+                - recurse left with [(3,-1)]
+                - recurse right with [(3,1)]
+            Step 2: (Node 2) [(3,-1)]
+                - recurse left with [(3,-.5),(2,-1)]
+                - recurse right with [(3,-.5),(2,1)]
+            Step 3: (Node 1)[(3,-.5),(2,-1)]
+                - recurse left with [(3,-.25),(2,-.5),(1,-1)]
+                - recurse right with [3,-.25),(2,-.5),(1,1)]
+            Step 4: (Node 0)[(3,-.25),(2,-.5),(1,-1)]
+                - recurse left with [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
+                - recurse right with [(3,-.125),(2,-.25),(1,-.5),(0,1)]
+            Step 5: (Tip A) - Return [(3,-.125),(2,-.25),(1,-.5),(0,-1)]
+            Step 6: (Tip B) - Return [(3,-.125),(2,-.25),(1,-.5),(0,1)]
+            Step 7: (Tip C) - Return [(3,-.25),(2,-.5),(1,1)]
+            Step 8: (Tip D) - Return [(3,-.5),(2,1)]
+            Step 9: (Node 4) [(3,1)]
+                - recurse left with [(3,.5),(4,-1)]
+                - recurse right with [(3,.5),(4,1)]
+            Step 10: (Tip E) - Return [(3,.5),(4,-1)]
+            Step 11: (Tip F) - Return [(3,.5),(4,1)]
+
+            Creates matrix:
+                     0     1     2      3       4
+                A -1.0  -0.5  -0.25  -0.125   0.0
+                B  1.0  -0.5  -0.25  -0.125   0.0
+                C  0.0   1.0  -0.5   -0.25    0.0
+                D  0.0   0.0   1.0   -0.5     0.0
+                E  0.0   0.0   0.0    0.5    -1.0
+                F  0.0   0.0   0.0    0.5     1.0
+
+        See:
+            Page 1293 of the literature
         """
         # .......................
         # Initialize the matrix
-        internalNodeLabels = [n.label for n in self.tree.tree.nodes() if not n.is_leaf()]
-        labels = self.pam.getColumnHeaders()
-        
-        matrix = np.zeros((len(labels), len(internalNodeLabels)), dtype=np.float)
+        internal_node_labels = [
+            n.label for n in self.tree.nodes() if not n.is_leaf()]
+        labels = self.pam.get_column_headers()
+
+        # We need a mapping of node path id to matrix column.  I don't think
+        #     order matters
+        node_col_idx = dict(
+            zip(internal_node_labels, range(len(internal_node_labels))))
+
+        mtx = Matrix(
+            np.zeros((len(labels), len(internal_node_labels)), dtype=np.float),
+            headers={'0': labels, '1': internal_node_labels})
 
         # Get the list of tip proportion lists
-        # Note: Which tip each of the lists belongs to doesn't really matter but
-        #             recursion will start at the top and go to the bottom of the 
-        #             tree tips
-        self.tree.tree.seed_node._set_edge_length(0.0)
-        tipProps = self._buildPMatrixTipProportionList(self.tree.tree.seed_node, 
-                                                                      visited=[])
-        
-        # We need a mapping of node path id to matrix column.  I don't think 
-        #     order matters
-        nodeColumnIndex = dict(zip(internalNodeLabels, 
-                                            range(len(internalNodeLabels))))
-        
+        # Note: Which tip each of the lists belongs to doesn't really matter
+        #    but recursion will start at the top and go to the bottom of the
+        #    tree tips.
+        self.tree.seed_node._set_edge_length(0.0)
+        tip_props = self._build_p_matrix_tip_proportion_list(
+            self.tree.seed_node, visited=[])
+
         # The matrix index of the tip in the PAM maps to the row index of P
-        for rowIdx, tipProp in tipProps:
-            for nodeCladeId, val in tipProp:
-                matrix[rowIdx][nodeColumnIndex[nodeCladeId]] = val
-                
-        return Matrix(matrix, headers={'0': labels,
-                                        '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
-    
-    # ..............................    
-    def _buildPMatrixTipProportionList(self, node, visited=[]):
+        for row_idx, tip_prop in tip_props:
+            for node_clade_id, val in tip_prop:
+                mtx[row_idx][node_col_idx[node_clade_id]] = val
+
+        return mtx
+
+    # ..............................
+    def _build_p_matrix_tip_proportion_list(self, node, visited=None):
+        """Builds a list of tip proportions for the p matrix w/o branch lengths
+
+        Args:
+            node (dendropy.Node): The current clade.
+            visited (:obj:`None` or :obj:`list` of :obj:`tuple`): A list of
+                (node path id, proportion) tuples.
+
+        Note:
+            Proportion for each visited node is divided by two as we go
+                towards the tips at each hop.
         """
-        @summary: Recurses through the tree to build a list of tip proportions to 
-                         be used to build a P-matrix when no branch lengths are 
-                         present
-        @param clade: The current clade
-        @param visited: A list of [(node path id, proportion)]
-        @note: Proportion for each visited node is divided by two as we go 
-                     towards the tips at each hop
-        """
-        tipProps = []
-        if node.num_child_nodes() > 0: # Assume this is two
+        if visited is None:
+            visited = []
+
+        tip_props = []
+        if node.num_child_nodes() > 0:  # Assume this is two since binary
             # First divide all existing visited by two
-            newVisited = [(idx, val / 2.0) for idx, val in visited]
+            new_visited = [(idx, val / 2) for idx, val in visited]
             # Recurse.  Left is negative, right is positive
-            leftChild, rightChild = node.child_nodes()
-            tipProps.extend(
-                self._buildPMatrixTipProportionList(leftChild, 
-                                                          newVisited + [(node.label, -1.0)]))
-            tipProps.extend(
-                self._buildPMatrixTipProportionList(rightChild, 
-                                                            newVisited + [(node.label, 1.0)]))
-        else: # We are at a tip
-            tipProps.append((
-                node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX), 
-                visited)) # Just return a list with one list
-        return tipProps
-    
-    # ..............................    
-    def _buildPMatrixWithBranchLengths(self):
-        """
-        @summary: Creates a P matrix when branch lengths are present
-        @note: For this method, we assume that there is a total weight of -1 to 
-                     the left and +1 to the right for each node.  As we go down 
-                     (towards the tips) of the tree, we divide the proportion of 
-                     each previously visited node by 2.  We then recurse with this 
-                     new visited list down the tree.  Once we reach a tip, we can 
-                     return that list of proportions because it will match for that 
-                     tip for each of it's ancestors.
-        @note: Example: 
-                    3
-                    +-- 2 (0.4)
-                    |    +-- 1 (0.15)
-                    |    |    +-- 0 (0.65)
-                    |    |    |    +-- A (0.2)
-                    |    |    |    +-- B (0.2)
-                    |    |    |
-                    |    |    +-- C (0.85)
-                    |    |
-                    |    +-- D (1.0)
-                    |
-                    +-- 4 (0.9)
-                         +-- E (0.5)
-                         +-- F (0.5)
-                        
-                Value for any cell (tip)(node) = (l1 + l2/2 + l3/3 + ... + ln/n)/
-                                                    (Sum of branch lengths in daughter clade)
-                ln / n -> The length of branch n divided by the number of tips that
-                                 descend from that clade
-                 
-                P(A)(2) = (0.2 + 0.65/2 + 0.15/3) / (0.2 + 0.2 + 0.65 + 0.85 + 0.15)
-                          = (0.2 + 0.325 + 0.05) / (2.05)
-                          = 0.575 / 2.05
-                          = 0.280
-                          
-                P(D)(3) = (1.0 + 0.4/4) / (.2 + .2 + .65 + .85 + .15 + 1.0 + .4)
-                          = 1.1 / 3.45
-                          = 0.319
-                        
-                
-                Creates matrix:
-                          0         1         2         3         4
-                    A  -1.000  -0.500  -0.280  -0.196    0.000
-                    B    1.000  -0.500  -0.280  -0.196    0.000
-                    C    0.000    1.000  -0.439  -0.290    0.000
-                    D    0.000    0.000    1.000  -0.319    0.000
-                    E    0.000    0.000    0.000    0.500  -1.000
-                    F    0.000    0.000    0.000    0.500    1.000
-        
-        @see: Literature supplemental material
+            left_child, right_child = node.child_nodes()
+            tip_props.extend(
+                self._build_p_matrix_tip_proportion_list(
+                    left_child, visited=new_visited + [(node.label, -1.0)]))
+            tip_props.extend(
+                self._build_p_matrix_tip_proportion_list(
+                    right_child, visited=new_visited + [(node.label, 1.0)]))
+        else:
+            tip_props.append(
+                (node.taxon.annotations.get_value(PhyloTreeKeys.MTX_IDX),
+                 visited))
+
+        return tip_props
+
+    # ..............................
+    def _build_p_matrix_with_branch_lengths(self):
+        """Creates a P matrix when branch lengths are present
+
+        Note:
+            For this method, we assume that there is a total weight of -1 to
+                the left and +1 to the right for each node.  As we go down
+                (towards the tips) of the tree, we divide the proportion of
+                each previously visited node by 2.  We then recurse with this
+                new visited list down the tree.  Once we reach a tip, we can
+                return that list of proportions because it will match for that
+                tip for each of its ancestors.
+
+        Example:
+            3
+            +-- 2 (0.4)
+            |    +-- 1 (0.15)
+            |    |    +-- 0 (0.65)
+            |    |    |    +-- A (0.2)
+            |    |    |    +-- B (0.2)
+            |    |    |
+            |    |    +-- C (0.85)
+            |    |
+            |    +-- D (1.0)
+            |
+            +-- 4 (0.9)
+                 +-- E (0.5)
+                 +-- F (0.5)
+
+            Value for any cell (tip)(node) = (l1 + l2/2 + l3/3 + ... + ln/n) /
+                                   (Sum of branch lengths in daughter clade)
+            ln / n -> The length of branch n divided by the number of tips that
+                descend from that clade
+
+            P(A)(2) = (0.2 + 0.65/2 + 0.15/3) /
+                        (0.2 + 0.2 + 0.65 + 0.85 + 0.15)
+                    = (0.2 + 0.325 + 0.05) / (2.05)
+                    = 0.575 / 2.05
+                    = 0.280
+
+            P(D)(3) = (1.0 + 0.4/4) / (.2 + .2 + .65 + .85 + .15 + 1.0 + .4)
+                    = 1.1 / 3.45
+                    = 0.319
+
+            Creates matrix:
+                    0         1       2       3       4
+                A  -1.000  -0.500  -0.280  -0.196   0.000
+                B   1.000  -0.500  -0.280  -0.196   0.000
+                C   0.000   1.000  -0.439  -0.290   0.000
+                D   0.000   0.000   1.000  -0.319   0.000
+                E   0.000   0.000   0.000   0.500  -1.000
+                F   0.000   0.000   0.000   0.500   1.000
+
+        See:
+            Literature supplemental material
         """
         # We only need the P-values dictionary
         # TODO: Is there a better way to do this so the length of the r?
-        self.tree.tree.seed_node._set_edge_length(0.0)
-        _, _, pValDict = self._buildPBranchLengthValues(self.tree.tree.seed_node)
-        
-        # Initialize the matrix
-        labels = self.pam.getColumnHeaders()
-        matrix = np.zeros((len(labels), len(pValDict.keys())), 
-                                dtype=np.float)
+        self.tree.seed_node._set_edge_length(0.0)
+        _, _, p_val_dict = self._build_p_branch_length_values(
+            self.tree.seed_node)
 
-        # We need a mapping of node path id to matrix column.  I don't think 
+        # Initialize the matrix
+        labels = self.pam.get_column_headers()
+        mtx = Matrix(
+            np.zeros((len(labels), len(p_val_dict)), dtype=np.float),
+            headers={'0': labels, '1': list(p_val_dict.keys())})
+
+        # We need a mapping of node path id to matrix column.  I don't think
         #     order matters
-        nodeColumnIndex = dict(zip(pValDict.keys(), range(len(pValDict.keys()))))
-        
-        for nodeCladeId in pValDict.keys():
-            
-            for tipMtxIdx in pValDict[nodeCladeId].keys():
-                matrix[int(tipMtxIdx)][nodeColumnIndex[nodeCladeId]] = pValDict[
-                                                                            nodeCladeId][tipMtxIdx]
-                
-        return Matrix(matrix, headers={'0': labels,
-                                        '1': [k for k,_ in nodeColumnIndex.iteritems()]})  
-    
+        node_col_idx = dict(
+            zip(p_val_dict.keys(), range(len(p_val_dict.keys()))))
+
+        for node_clade_id, p_val_node_val in p_val_dict.items():
+            for tip_mtx_idx, tip_p_vals in p_val_node_val.items():
+                mtx[int(tip_mtx_idx)][node_col_idx[node_clade_id]] = tip_p_vals
+
+        return mtx

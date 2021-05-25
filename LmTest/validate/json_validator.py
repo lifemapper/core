@@ -9,6 +9,7 @@ Todo:
 import json
 import os
 
+
 # .............................................................................
 def validate_json_file(json_filename):
     """Validates a JSON document by seeing if it can be loaded
@@ -21,9 +22,9 @@ def validate_json_file(json_filename):
     if os.path.exists(json_filename):
         try:
             with open(json_filename) as in_json:
-                json_obj = json.load(in_json)
+                _ = json.load(in_json)
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

@@ -1,91 +1,82 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Scenario
-"""
-
+"""This module provides REST services for Scenario"""
 import cherrypy
 
+from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
-from LmCommon.common.lmconstants import HTTPStatus
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathScenarioId')
+@cherrypy.popargs('path_scenario_id')
 class ScenarioService(LmService):
+    """Scenarios service class.
     """
-    @summary: This class is for the scenarios service.  The dispatcher is
-                     responsible for calling the correct method
-    """
+
     # ................................
-    @lmFormatter
-    def GET(self, pathScenarioId=None, afterTime=None,
-            altPredCode=None, beforeTime=None, dateCode=None,
-            epsgCode=None, gcmCode=None, limit=100, offset=0, urlUser=None,
+    @lm_formatter
+    def GET(self, path_scenario_id=None, after_time=None,
+            alt_pred_code=None, before_time=None, date_code=None,
+            epsg_code=None, gcm_code=None, limit=100, offset=0, url_user=None,
             **params):
+        """GET request.  Individual, list, count
         """
-        @summary: Performs a GET request.  If a scenario id is provided,
-                         attempt to return that item.  If not, return a list of 
-                         scenarios that match the provided parameters
-        """
-        if pathScenarioId is None:
-            return self._listScenarios(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                altPredCode=altPredCode, beforeTime=beforeTime,
-                dateCode=dateCode, epsgCode=epsgCode, gcmCode=gcmCode,
+        if path_scenario_id is None:
+            return self._list_scenarios(
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                alt_pred_code=alt_pred_code, before_time=before_time,
+                date_code=date_code, epsg_code=epsg_code, gcm_code=gcm_code,
                 limit=limit, offset=offset)
-        elif pathScenarioId.lower() == 'count':
-            return self._countScenarios(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                altPredCode=altPredCode, beforeTime=beforeTime,
-                dateCode=dateCode, epsgCode=epsgCode, gcmCode=gcmCode)
-        else:
-            return self._getScenario(pathScenarioId)
-    
-    # ................................
-    def _countScenarios(self, userId, afterTime=None, altPredCode=None,
-                        beforeTime=None, dateCode=None, epsgCode=None,
-                        gcmCode=None):
-        """
-        @summary: Return a list of scenarios matching the specified criteria
-        """
-        scnCount = self.scribe.countScenarios(
-            userId=userId, beforeTime=beforeTime, afterTime=afterTime,
-            epsg=epsgCode, gcmCode=gcmCode, altpredCode=altPredCode,
-            dateCode=dateCode)
-        return {'count' : scnCount}
+
+        if path_scenario_id.lower() == 'count':
+            return self._count_scenarios(
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                alt_pred_code=alt_pred_code, before_time=before_time,
+                date_code=date_code, epsg_code=epsg_code, gcm_code=gcm_code)
+
+        return self._get_scenario(path_scenario_id)
 
     # ................................
-    def _getScenario(self, pathScenarioId):
-        """
-        @summary: Attempt to get a scenario
-        """
-        scn = self.scribe.getScenario(int(pathScenarioId), fillLayers=True)
-        
-        if scn is None:
-            raise cherrypy.HTTPError(404, 'Scenario {} not found'.format(
-                                                                                        pathScenarioId))
-        
-        if checkUserPermission(self.getUserId(), scn, HTTPMethod.GET):
-            return scn
-
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User {} does not have permission to get scenario {}'.format(
-                    self.getUserId(), pathScenarioId))
-    
-    # ................................
-    def _listScenarios(self, userId, afterTime=None, altPredCode=None,
-                       beforeTime=None, dateCode=None, epsgCode=None,
-                       gcmCode=None, limit=100, offset=0):
+    def _count_scenarios(self, user_id, after_time=None, alt_pred_code=None,
+                         before_time=None, date_code=None, epsg_code=None,
+                         gcm_code=None):
         """Return a list of scenarios matching the specified criteria
         """
-        scnAtoms = self.scribe.listScenarios(
-            offset, limit, userId=userId, beforeTime=beforeTime,
-            afterTime=afterTime, epsg=epsgCode, gcmCode=gcmCode,
-            altpredCode=altPredCode, dateCode=dateCode)
-        return scnAtoms
+        scen_count = self.scribe.count_scenarios(
+            user_id=user_id, before_time=before_time, after_time=after_time,
+            epsg=epsg_code, gcm_code=gcm_code, alt_pred_code=alt_pred_code,
+            date_code=date_code)
+        return {'count': scen_count}
 
+    # ................................
+    def _get_scenario(self, path_scenario_id):
+        """Attempt to get a scenario
+        """
+        scn = self.scribe.get_scenario(int(path_scenario_id), fill_layers=True)
+
+        if scn is None:
+            raise cherrypy.HTTPError(
+                HTTPStatus.NOT_FOUND, 'Scenario {} not found'.format(
+                    path_scenario_id))
+
+        if check_user_permission(self.get_user_id(), scn, HTTPMethod.GET):
+            return scn
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to get scenario {}'.format(
+                self.get_user_id(), path_scenario_id))
+
+    # ................................
+    def _list_scenarios(self, user_id, after_time=None, alt_pred_code=None,
+                        before_time=None, date_code=None, epsg_code=None,
+                        gcm_code=None, limit=100, offset=0):
+        """Return a list of scenarios matching the specified criteria
+        """
+        scn_atoms = self.scribe.list_scenarios(
+            offset, limit, user_id=user_id, before_time=before_time,
+            after_time=after_time, epsg=epsg_code, gcm_code=gcm_code,
+            alt_pred_code=alt_pred_code, date_code=date_code)
+        return scn_atoms

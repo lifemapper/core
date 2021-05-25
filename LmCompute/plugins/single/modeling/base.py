@@ -13,24 +13,23 @@ import shutil
 import time
 import zipfile
 
-from LmBackend.common.layerTools import processLayersJSON
+from LmBackend.common.layer_tools import process_layers_json
+from LmBackend.common.lmobj import LMError
 from LmBackend.common.metrics import LmMetricNames, LmMetrics
-from LmBackend.common.subprocessManager import (
+from LmBackend.common.subprocess_manager import (
     LongRunningProcessError, SubprocessRunner)
-
 from LmCommon.common.lmconstants import JobStatus, LMFormat, ONE_HOUR_SECONDS
-from LmCommon.common.readyfile import readyFilename
-
-from LmCompute.common.lmObj import LmException
+from LmCommon.common.ready_file import ready_filename
 from LmCompute.common.log import LmComputeLogger
 
+
 # .............................................................................
-class ModelSoftwareWrapper(object):
+class ModelSoftwareWrapper:
     """Base class for modeling software wrappers
     """
-    LOGGER_NAME = 'model_tool' # Subclasses should change this
+    LOGGER_NAME = 'model_tool'  # Subclasses should change this
     RETRY_STATUSES = []
-    
+
     # ...................................
     def __init__(self, work_dir, species_name, logger=None):
         """Constructor for wrapper
@@ -44,16 +43,16 @@ class ModelSoftwareWrapper(object):
         self.metrics = LmMetrics(None)
         self.snippets = []
         self.species_name = species_name
-        
+
         # If work directory does not exist, create it
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
-        
+
         if logger is None:
-            self.logger = LmComputeLogger(self.LOGGER_NAME, addConsole=True)
+            self.logger = LmComputeLogger(self.LOGGER_NAME, add_console=True)
         else:
             self.logger = logger
-    
+
     # ...................................
     def _build_command(self, tool, option_list):
         """Builds a command to run the tool
@@ -66,11 +65,11 @@ class ModelSoftwareWrapper(object):
             tool=tool, options=' '.join(option_list))
         self.logger.debug('Command: "{}"'.format(cmd))
         return cmd
-    
+
     # ...................................
     def _check_projection(self):
         pass
-    
+
     # ...................................
     def _check_model(self):
         pass
@@ -78,19 +77,25 @@ class ModelSoftwareWrapper(object):
     # ...................................
     def _check_outputs(self):
         pass
-    
+
     # ...................................
-    def _process_layers(self, layer_json, layer_dir=None):
+    @staticmethod
+    def _find_error(std_err):
+        raise LMError('_find_error must be implemented in subclasses')
+
+    # ...................................
+    @staticmethod
+    def _process_layers(layer_json, layer_dir=None):
         """Read the layer JSON and process the layers accordingly
 
         Args:
-            layer_json : JSON string with layer information.
-            layer_dir : If present, create sym links in the directory to the 
+            layer_json: JSON string with layer information.
+            layer_dir: If present, create sym links in the directory to the
                 layers.
         """
-        lyrs = processLayersJSON(layer_json, symDir=layer_dir)
+        lyrs = process_layers_json(layer_json, sym_dir=layer_dir)
         return lyrs
-    
+
     # ...................................
     def _run_tool(self, cmd, num_tries=1):
         """Runs the tool
@@ -105,63 +110,66 @@ class ModelSoftwareWrapper(object):
             while cont:
                 cont = False
                 tries_left -= 1
-                spr = SubprocessRunner(cmd, killTime=ONE_HOUR_SECONDS)
+                spr = SubprocessRunner(cmd, kill_time=ONE_HOUR_SECONDS)
                 start_time = time.time()
                 proc_exit_status, proc_std_err = spr.run()
                 end_time = time.time()
                 self.metrics.add_metric(
                     LmMetricNames.RUNNING_TIME, end_time - start_time)
                 status = JobStatus.COMPUTED
-                
+
                 if proc_exit_status > 0:
                     status = self._find_error(proc_std_err)
-                    
+
                     if status in self.RETRY_STATUSES:
                         self.logger.debug(
                             'Status is: {}, retries left: {}'.format(
                                 status, tries_left))
                         if tries_left > 0:
                             cont = True
-        except LongRunningProcessError as lrpe:
+        except LongRunningProcessError:
             status = JobStatus.LM_LONG_RUNNING_JOB_ERROR
-        except LmException as lme:
-            status = lme.status
-        
+        except LMError:
+            status = JobStatus.GENERAL_ERROR
+
         # Get size of output directory
         self.metrics.add_metric(
             LmMetricNames.OUTPUT_SIZE,
             self.metrics.get_dir_size(self.work_dir))
         self.metrics.add_metric(LmMetricNames.STATUS, status)
-    
+
     # ...................................
     def clean_up(self):
         """Deletes work directory
         """
         shutil.rmtree(self.work_dir)
-    
+
     # ...................................
-    def create_model(self, points, layer_json, parameters_json, 
-                     mask_filename=None, crs_wkt=None):
+    @staticmethod
+    def create_model(points, layer_json, parameters_json, mask_filename=None,
+                     crs_wkt=None):
         """Creates a model
 
         Args:
             points : A list of (local_id, x, y) point tuples.
             layer_json : Climate layer information in a JSON document.
-            mask_filename : If provided, use this layer as a mask for the model.
-            crs_wkt : Well-Known text describing the map projection of the 
+            mask_filename : If provided, use this layer as a mask for the
+                model.
+            crs_wkt : Well-Known text describing the map projection of the
                 points.
-        
+
         Note:
             * Do not use this version, use a subclass.
-        
+
         Raises:
             * Exception : This version should not be called, use a subclass.
         """
         raise Exception('Not implemented in base class')
-            
+
     # ...................................
-    def create_projection(self, ruleset_filename, layer_json, 
-                          parameters_json=None, mask_filename=None):
+    @staticmethod
+    def create_projection(ruleset_filename, layer_json, parameters_json=None,
+                          mask_filename=None):
         """Creates a projection.
 
         Args:
@@ -170,27 +178,28 @@ class ModelSoftwareWrapper(object):
             parameters_json : Algorithm parameters in a JSON document.
             mask_filename : If provided, this is a file path to a mask layer
                 to use for the projection.
-        
-        Note:
-            * Do not use this version, use a subclass.
-        
-        Raises:
-            * Exception : This version should not be called, use a subclass.
-        """
-        raise Exception('Not implemented in base class')
-    
-    # ...................................
-    def get_ruleset_filename(self):
-        """Return the ruleset filename generated by the model
 
         Note:
             * Do not use this version, use a subclass.
-        
+
         Raises:
             * Exception : This version should not be called, use a subclass.
         """
         raise Exception('Not implemented in base class')
-    
+
+    # ...................................
+    @staticmethod
+    def get_ruleset_filename():
+        """Return the ruleset filename generated by the model
+
+        Note:
+            Do not use this version, use a subclass.
+
+        Raises:
+            Exception : This version should not be called, use a subclass.
+        """
+        raise Exception('Not implemented in base class')
+
     # ...................................
     def get_output_package(self, destination_filename, overwrite=False):
         """Write the output package to the specified file location.
@@ -199,47 +208,49 @@ class ModelSoftwareWrapper(object):
             destination_filename : The location to write the (zipped) package
             overwrite : Should the file location be overwritten
         """
-        readyFilename(destination_filename, overwrite=overwrite)
-        
-        with zipfile.ZipFile(destination_filename, 'w', 
-                             compression=zipfile.ZIP_DEFLATED, 
-                             allowZip64=True) as zf:
+        ready_filename(destination_filename, overwrite=overwrite)
+
+        with zipfile.ZipFile(
+                destination_filename, 'w', compression=zipfile.ZIP_DEFLATED,
+                allowZip64=True) as z_f:
             for base, _, files in os.walk(self.work_dir):
-                if base.find('layers') == -1: # Skip layers directory
-                    for f in files:
+                if base.find('layers') == -1:  # Skip layers directory
+                    for file in files:
                         # Don't add zip files
-                        if f.find(LMFormat.ZIP.ext) == -1 \
-                                and os.path.exists(os.path.join(base, f)):
-                            zf.write(
-                                os.path.join(base, f),
-                                os.path.relpath(os.path.join(base, f),
-                                                self.work_dir))
+                        if (file.find(LMFormat.ZIP.ext) == -1
+                                and os.path.exists(os.path.join(base, file))):
+                            z_f.write(
+                                os.path.join(base, file),
+                                os.path.relpath(
+                                    os.path.join(base, file), self.work_dir))
 
     # ...................................
-    def get_log_filename(self):
+    @staticmethod
+    def get_log_filename():
         """Return the filename for the generated log
 
         Note:
             * Do not use this version, use a subclass.
-        
+
         Raises:
             * Exception : This version should not be called, use a subclass.
         """
         raise Exception('Not implemented in base class')
-    
+
     # ...................................
     def get_metrics(self):
         """Returns the metrics from the computation.
         """
         return self.metrics
-    
+
     # ...................................
-    def get_projection_filename(self):
+    @staticmethod
+    def get_projection_filename():
         """Return the projection raster filename generated
 
         Note:
             * Do not use this version, use a subclass.
-        
+
         Raises:
             * Exception : This version should not be called, use a subclass.
         """
@@ -251,25 +262,26 @@ class ModelSoftwareWrapper(object):
         """
         try:
             return self.metrics.get_metric(LmMetricNames.STATUS)
-        except:
+        except Exception:
             return None
 
     # ...................................
-    def _copy_file(self, source_filename, destination_filename,
+    @staticmethod
+    def _copy_file(source_filename, destination_filename,
                    overwrite=False):
         """Copy source file to destination and prepare location if necessary
 
         Args:
             source_filename : The source file.
             destination_filename : The destination for the file.
-            overwrite : Should the file location be overwritten. 
+            overwrite : Should the file location be overwritten.
         """
         if os.path.exists(source_filename):
-            readyFilename(destination_filename, overwrite=overwrite)
+            ready_filename(destination_filename, overwrite=overwrite)
             shutil.copy(source_filename, destination_filename)
         else:
-            raise IOError, '{} does not exist'.format(source_filename)
-        
+            raise IOError('{} does not exist'.format(source_filename))
+
     # ...................................
     def copy_ruleset(self, destination_filename, overwrite=False):
         """Copy the ruleset to the specified destination
@@ -279,9 +291,9 @@ class ModelSoftwareWrapper(object):
             overwrite : Should the file location be overwritten.
         """
         self._copy_file(
-            self.get_ruleset_filename(), destination_filename, 
+            self.get_ruleset_filename(), destination_filename,
             overwrite=overwrite)
-    
+
     # ...................................
     def copy_projection(self, destination_filename, overwrite=False):
         """Copy the projection raster to the specified destination
@@ -303,5 +315,5 @@ class ModelSoftwareWrapper(object):
             overwrite : Should the file location be overwritten.
         """
         self._copy_file(
-            self.get_log_filename(), destination_filename, 
+            self.get_log_filename(), destination_filename,
             overwrite=overwrite)

@@ -1,342 +1,296 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Module containing scenario and scenario package classes
 """
 from LmBackend.common.lmobj import LMError
 from LmServer.base.layerset import MapLayerSet
 from LmServer.base.lmobj import LMSpatialObject
-from LmServer.base.serviceobject2 import ServiceObject
-from LmServer.common.lmconstants import LMFileType, LMServiceType
-from LmServer.legion.envlayer import EnvLayer
+from LmServer.base.service_object import ServiceObject
+from LmServer.common.lmconstants import (
+    LMFileType, LMServiceType, ID_PLACEHOLDER)
+
+from LmServer.legion.env_layer import EnvLayer
+
 
 # .........................................................................
 class ScenPackage(ServiceObject, LMSpatialObject):
-    """         
-    Class to hold a set of Raster object environmental data layers 
-    that are used together for creating or projecting a niche model
-    """
-# .............................................................................
-# Constructor
-# .............................................................................
-    # ...............................................         
-    def __init__(self, name, userId, 
-                     metadata={},
-                     metadataUrl=None, 
-                     epsgcode=None, 
-                     bbox=None, 
-                     mapunits=None,
-                     modTime=None, 
-                     scenarios=None, 
-                     scenPackageId=None):
-        """
-        @summary Constructor for the ScenPackage class 
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-        @param name: The name for this set of scenarios
-        @param scenarios: list of Scenario objects
-        """
-        ServiceObject.__init__(self, userId, scenPackageId, 
-                                      LMServiceType.SCEN_PACKAGES, 
-                                      metadataUrl=metadataUrl, 
-                                      modTime=modTime)
-        LMSpatialObject.__init__(self, epsgcode, bbox, mapunits)
+    """Class containing multiple, related, scenario objects for SDMs."""
+    # ................................
+    def __init__(self, name, user_id, metadata=None, metadata_url=None,
+                 epsg_code=None, bbox=None, map_units=None, mod_time=None,
+                 scenarios=None, scen_package_id=None):
+        """Constructor."""
+        ServiceObject.__init__(
+            self, user_id, scen_package_id, LMServiceType.SCEN_PACKAGES,
+            metadata_url=metadata_url, mod_time=mod_time)
+        LMSpatialObject.__init__(self, epsg_code, bbox, map_units)
         self.name = name
-        self.loadScenpkgMetadata(metadata)
-        
-        self._scenarios = {}
-        self.setScenarios(scenarios)
-        if self._bbox is None:
-            self.resetBBox()
-        
-# .............................................................................
-    def resetBBox(self):
-        bboxList = [scen.bbox for scen in self._scenarios.values()]
-        minBbox = self.intersectBoundingBoxes(bboxList)
-        self._setBBox(minBbox)
+        self.load_scenpkg_metadata(metadata)
 
-# .............................................................................
-    def addScenario(self, scen):
-        """
-        @summary: Add a scenario to an ScenPackage.  
-        @note: metadataUrl or scenario code (unique for a user), is used 
-                 to ensure that a scenario is not duplicated in the ScenPackage.  
+        self._scenarios = {}
+        self.set_scenarios(scenarios)
+        if self._bbox is None:
+            self.reset_bbox()
+
+    # ................................
+    def reset_bbox(self):
+        """Reset the scenario package bounding box."""
+        bbox_list = [scen.bbox for scen in list(self._scenarios.values())]
+        min_bbox = self.intersect_bboxes(bbox_list)
+        self._set_bbox(min_bbox)
+
+    # ................................
+    def add_scenario(self, scen):
+        """Add a scenario to an ScenPackage.
+
+        Note:
+            - metadata_url or scenario code (unique for a user), is used
+                to ensure that a scenario is not duplicated in the ScenPackage.
         """
         if isinstance(scen, Scenario):
-            if scen.getUserId() == self.getUserId():
-                if self.getScenario(code=scen.code, 
-                                          metadataUrl=scen.metadataUrl) is None:
+            if scen.get_user_id() == self.get_user_id():
+                if self.get_scenario(
+                        code=scen.code, metadata_url=scen.metadata_url
+                        ) is None:
                     self._scenarios[scen.code] = scen
             else:
-                raise LMError(['Cannot add user {} Scenario to user {} ScenPackage'
-                                    .format(scen.getUserId(), self.getUserId())])
+                raise LMError(
+                    'Cannot add user {} scenario to {} ScenPackage'.format(
+                        scen.get_user_id(), self.get_user_id()))
         else:
-            raise LMError(['Cannot add {} as a Scenario'.format(type(scen))])
-            
-# .............................................................................
-    def getScenario(self, code=None, metadataUrl=None):
+            raise LMError('Cannot add {} as a Scenario'.format(type(scen)))
+
+    # ................................
+    def get_scenario(self, code=None, metadata_url=None):
+        """Return a scenario from the ScenPackage with the specified metadata_url.
+
+        Args:
+            metadata_url: metadata_url for which to find matching scenario
+            code: code for which to find matching scenario with user_id
+
+        Returns:
+            Scenario object with the given metadata_url, or user_id/code
+                combination. None if not found.
         """
-        @summary Gets a scenario from the ScenPackage with the specified metadataUrl
-        @param metadataUrl: metadataUrl for which to find matching scenario
-        @param userId: user for which to find matching scenario with code
-        @param code: code for which to find matching scenario with userId
-        @return the LmServer.legion.Scenario object with the given metadataUrl, 
-                 or userId/code combination. None if not found.
-        """
-        for scen in self._scenarios:
-            if code is not None:
-                try:
-                    scen = self._scenarios[code]
-                except:
-                    pass
-                else:
-                    return scen
-            elif metadataUrl is not None:
-                for code, scen in self._scenarios.iteritems():
-                    if scen.metadataUrl == metadataUrl:
-                        return scen
+        for scen in self._scenarios.values():
+            if code and scen.code.lower() == code.lower():
+                return scen
+            elif (metadata_url 
+                  and not (scen.metadata_url.endswith(ID_PLACEHOLDER)) 
+                  and scen.metadata_url == scen.metadata_url):
+                return scen
         return None
 
-    # ...............................................
-    # layers property code overrides the same methods in layerset.LayerSet
+    # ................................
     @property
     def scenarios(self):
+        """Return the package's scenarios."""
         return self._scenarios
-        
-    def setScenarios(self, scens):
-        """
-        @summary: sets the scenarios in the ScenPackage
-        @param scens: list of scenarios
-        """
+
+    # ................................
+    def set_scenarios(self, scens):
+        """Set the scenarios of the package."""
         self._scenarios = {}
         if scens:
             for scen in scens:
-                self.addScenario(scen)
+                self.add_scenario(scen)
 
-# ...............................................
-    def dumpScenpkgMetadata(self):
-        return super(ScenPackage, self)._dumpMetadata(self.scenpkgMetadata)
- 
-# ...............................................
-    def loadScenpkgMetadata(self, newMetadata):
-        self.scenpkgMetadata = super(ScenPackage, self)._loadMetadata(newMetadata)
+    # ................................
+    def dump_scenpkg_metadata(self):
+        """Dump the scenario package metadata to a string."""
+        return super(ScenPackage, self)._dump_metadata(
+            self.scen_package_metadata)
 
-# ...............................................
-    def addScenpkgMetadata(self, newMetadataDict):
-        self.scenpkgMetadata = super(ScenPackage, self)._addMetadata(newMetadataDict, 
-                                             existingMetadataDict=self.scenpkgMetadata)
+    # ................................
+    def load_scenpkg_metadata(self, new_metadata):
+        """Load scenario package metadata."""
+        self.scen_package_metadata = super(ScenPackage, self)._load_metadata(
+            new_metadata)
+
+    # ................................
+    def add_scenpkg_metadata(self, new_metadata_dict):
+        """Add scenario package metadata."""
+        self.scen_package_metadata = super(ScenPackage, self)._add_metadata(
+            new_metadata_dict,
+            existing_metadata_dict=self.scen_package_metadata)
 
 
 # .........................................................................
 class Scenario(MapLayerSet):
-    """         
-    Class to hold a set of Raster object environmental data layers 
-    that are used together for creating or projecting a niche model
+    """Class containing environmental data layers used to create SDMs
     """
-# .............................................................................
-# Constructor
-# .............................................................................
-    # ...............................................         
-    def __init__(self, code, userId, epsgcode, metadata={},
-                     metadataUrl=None, 
-                     units=None, res=None, 
-                     gcmCode=None, altpredCode=None, dateCode=None,
-                     bbox=None, modTime=None, 
-                     layers=None, scenarioid=None):
-        """
-        @summary Constructor for the scenario class 
-        @copydoc LmServer.base.layerset.MapLayerSet::__init__()
-        @param code: The code for this set of layers
-        @param res: size of each side of a pixel (assumes square pixels)
-        @param modTime: (optional) Last modification time of the object (any of 
-                                the points (saved in the PBJ) included in this 
-                                OccurrenceSet) in modified julian date format; 
-                                0 if points have not yet been collected and saved
-        @param layers: list of Raster layers of environmental data
-        @param scenarioid: The scenarioId in the database
+    # ................................
+    def __init__(self, code, user_id, epsg_code, metadata=None,
+                 metadata_url=None, units=None, res=None, gcm_code=None,
+                 alt_pred_code=None, date_code=None, bbox=None, mod_time=None,
+                 layers=None, scenario_id=None):
+        """Constructor
+
+        Args:
+            code: The code for this set of layers
+            res: size of each side of a pixel (assumes square pixels)
+            layers: list of Raster layers of environmental data
+            scenario_id: The scenarioId in the database
         """
         self._layers = []
         # layers are set not set in LayerSet or Layerset - done here to check
         # that each layer is an EnvLayer
-        MapLayerSet.__init__(self, code, 
-                                    url=metadataUrl, 
-                                    epsgcode=epsgcode, userId=userId, dbId=scenarioid,
-                                    bbox=bbox, mapunits=units, modTime=modTime,
-                                    serviceType=LMServiceType.SCENARIOS,
-                                    mapType=LMFileType.SCENARIO_MAP)
-        # aka MapLayerSet.name     
+        MapLayerSet.__init__(
+            self, code, metadata_url=metadata_url, epsg_code=epsg_code,
+            user_id=user_id, db_id=scenario_id, bbox=bbox, map_units=units,
+            mod_time=mod_time, service_type=LMServiceType.SCENARIOS,
+            map_type=LMFileType.SCENARIO_MAP)
+        # aka MapLayerSet.name
         self.code = code
 
-        self.gcmCode=gcmCode
-        self.altpredCode=altpredCode
-        self.dateCode=dateCode
-        self.loadScenMetadata(metadata)
-        
+        self.gcm_code = gcm_code
+        self.alt_pred_code = alt_pred_code
+        self.date_code = date_code
+        self.load_scenario_metadata(metadata)
+
         # Private attributes
-        self._scenarioId = scenarioid
-        self._setLayers(layers)
-        self._setRes(res) 
-        self.setMapPrefix()
-        self.setLocalMapFilename()
-                
-    # ...............................................
-    def setId(self, scenid):
+        self._scenario_id = scenario_id
+        self._set_layers(layers)
+        self._set_res(res)
+        self.set_map_prefix()
+        self.set_local_map_filename()
+
+    # ................................
+    def set_id(self, scenario_id):
+        """Set the database id on the object.
+
+        Args:
+            scenario_id: The database identifier for the Scenario
         """
-        @summary: Sets the database id on the object
-        @param scenid: The database id for the object
-        """
-        MapLayerSet.setId(self, scenid)
+        MapLayerSet.set_id(self, scenario_id)
 
-# ...............................................
-    def dumpScenMetadata(self):
-        return super(Scenario, self)._dumpMetadata(self.scenMetadata)
- 
-# ...............................................
-    def loadScenMetadata(self, newMetadata):
-        self.scenMetadata = super(Scenario, self)._loadMetadata(newMetadata)
+    # ................................
+    def dump_scenario_metadata(self):
+        """Dump scenario metadata to string."""
+        return super(Scenario, self)._dump_metadata(self.scen_metadata)
 
-# ...............................................
-    def addScenMetadata(self, newMetadataDict):
-        self.scenMetadata = super(Scenario, self)._addMetadata(newMetadataDict, 
-                                             existingMetadataDict=self.scenMetadata)
+    # ................................
+    def load_scenario_metadata(self, new_metadata):
+        """Load scenario metadata."""
+        self.scen_metadata = super(Scenario, self)._load_metadata(new_metadata)
 
+    # ................................
+    def add_scenario_metadata(self, new_metadata_dict):
+        """Add scenario metadata."""
+        self.scen_metadata = super(Scenario, self)._add_metadata(
+            new_metadata_dict, existing_metadata_dict=self.scen_metadata)
 
-    # ...............................................
-    # layers property code overrides the same methods in layerset.LayerSet
+    # ................................
     @property
     def layers(self):
-        return self._layers
-        
-    def _setLayers(self, lyrs):
+        """Return the layers in the scenario.
+
+        Note:
+            layers property code overrides the same methods in LayerSet
         """
-        @todo: Overrides LayerSet._setLayers by requiring identical resolution and 
-                 mapunits for all layers.
+        return self._layers
+
+    # ................................
+    def _set_layers(self, lyrs):
+        """Set the layers of the scenario
+
+        Todo:
+            Overrides LayerSet._set_layers by requiring identical resolution
+                and mapunits for all layers.
         """
         self._layers = []
         if lyrs:
             for lyr in lyrs:
-                self.addLayer(lyr) 
-            self._bbox = MapLayerSet._getIntersectBounds(self)
-    
-#     # ...............................................
-#     def _setUnits(self, units):
-#         if units is not None:
-#             self._units = units 
-#         elif len(self._layers) > 0:
-#             self._units = self._layers[0].mapUnits
-#         else:
-#             self._units = None
-#             
-#     @property
-#     def units(self):
-#         if self._units is None and len(self._layers) > 0:
-#             self._units = self._layers[0].mapUnits
-#         return self._units    
-        
-    # ...............................................         
-    def _setRes(self, res):
+                self.add_layer(lyr)
+            self._bbox = self.intersect_bboxes
+
+    # ................................
+    def _set_res(self, res):
+        """Set the resolution of the scenario
+        """
         if res is not None:
-            self._resolution = res 
+            self._resolution = res
         elif len(self._layers) > 0:
             self._resolution = self._layers[0].resolution
         else:
             self._resolution = None
-            
+
+    # ................................
     @property
     def resolution(self):
+        """Return the resolution of the scenario."""
         if self._resolution is None and len(self._layers) > 0:
             self._resolution = self._layers[0].resolution
         return self._resolution
-    
-# .............................................................................
-    def _getMapsetUrl(self):
-        """
-        @note: Overrides MapLayerset._getMapsetUrl  
-        """
-        return self.metadataUrl
 
-# .........................................................................
-# Public Methods
-# .........................................................................
-    
-    def addLayer(self, lyr):
-        """
-        @summary: Add a layer to the scenario.  
-        @param lyr: Layer (layer.Raster) to add to this scenario.
-        @raise LMError: on layer that is not EnvLayer 
+    # ................................
+    def _get_mapset_url(self):
+        return self.metadata_url
+
+    # ................................
+    def add_layer(self, lyr):
+        """Add a layer to the scenario.
+
+        Args:
+            lyr: Layer (layer.Raster) to add to this scenario.
+
+        Raises:
+            LMError: on layer that is not EnvLayer
         """
         if lyr is not None:
-            if lyr.getId() is None or self.getLayer(lyr.metadataUrl) is None:
+            if lyr.get_id() is None or self.get_layer(
+                    lyr.metadata_url) is None:
                 if isinstance(lyr, EnvLayer):
                     self._layers.append(lyr)
-                    self._bbox = MapLayerSet._getIntersectBounds(self)
-                    # Set mapPrefix only if does not exist. Could be in multiple 
-                    # mapfiles, but all should use same url/mapPrefix.
-                    if lyr.mapPrefix is None:
-                        lyr._setMapPrefix(scencode=self.code)
-                    mapfname = self.createLocalMapFilename()
-                    lyr.setLocalMapFilename(mapfname=mapfname)
+                    # Set map_prefix only if does not exist. Could be in
+                    #    multiple mapfiles, but all should use
+                    #    same url/map_prefix.
+                    if lyr.map_prefix is None:
+                        lyr._set_map_prefix(scen_code=self.code)
+                    map_fname = self.create_local_map_filename()
+                    lyr.set_local_map_filename(map_fname=map_fname)
                 else:
                     raise LMError(['Attempt to add non-EnvLayer'])
 
-# ...............................................
-    def setLayers(self, lyrs):
-        """
-        @summary: Add layers to the scenario.  
-        @param lyrs: List of Layers (layer.Raster) to add to this scenario.
-        @raise LMError: on layer that is not an EnvLayer 
+    # ................................
+    def set_layers(self, lyrs):
+        """Set the layers for the scenario.
+
+        Args:
+            lyrs: List of Layers (layer.Raster) to add to this scenario.
+
+        Raises:
+            LMError: on layer that is not an EnvLayer
         """
         for lyr in lyrs:
             if not isinstance(lyr, EnvLayer):
                 raise LMError('Incompatible Layer type {}'.format(type(lyr)))
         self._layers = lyrs
-        self._bbox = MapLayerSet._getIntersectBounds(self)
+        self._bbox = self.intersect_bboxes
 
-# ...............................................
-    def createMapPrefix(self, lyrname=None):
+    # ................................
+    def create_map_prefix(self, lyr_name=None):
+        """Return the OGC service URL prefix for this object.
+
+        Returns:
+            str - URL representing a webservice request for maps of this object
         """
-        @summary Gets the OGC service URL prefix for this object
-        @return URL string representing a webservice request for maps of this object
-        """
-        mapprefix = self._earlJr.constructMapPrefixNew(ftype=LMFileType.SCENARIO_MAP, 
-                                                        objCode=self.code, lyrname=lyrname, 
-                                                        usr=self._userId, epsg=self._epsg)
-        return mapprefix
-     
-    def _setMapPrefix(self, mapprefix=None):
-        if mapprefix is None:
-            mapprefix = self.createMapPrefix()
-        self._mapPrefix = mapprefix
-    
+        return self._earl_jr.construct_map_prefix_new(
+            f_type=LMFileType.SCENARIO_MAP, obj_code=self.code,
+            lyr_name=lyr_name, usr=self._user_id, epsg=self._epsg)
+
+    # ................................
+    def _set_map_prefix(self, map_prefix=None):
+        if map_prefix is None:
+            map_prefix = self.create_map_prefix()
+        self._map_prefix = map_prefix
+
+    # ................................
     @property
-    def mapPrefix(self): 
-        return self._mapPrefix
+    def map_prefix(self):
+        return self._map_prefix
 
-# ...............................................
-    def createLocalMapFilename(self):
-        """
-        @summary: Find mapfile containing this layer.  
-        """
-        mapfname = self._earlJr.createFilename(self._mapType,
-                                                            objCode=self.code, 
-                                                            usr=self._userId, 
-                                                            epsg=self._epsg)
-        return mapfname
-    
+    # ................................
+    def create_local_map_filename(self):
+        """Find mapfile containing this layer."""
+        return self._earl_jr.create_filename(
+            self._map_type, obj_code=self.code, usr=self._user_id,
+            epsg=self._epsg)

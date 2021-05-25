@@ -1,125 +1,105 @@
-#!/bin/bash
-"""
-@summary: This script creates a makeflow for splitting / sorting / grouping a 
-             CSV file for occurrence set creation
-@author: CJ Grady
-@version: 1.0.0
-@status: beta
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+# !/bin/bash
+"""Script for creating a splitting / sorting / grouping makeflow for CSV
 """
 import argparse
 import os
 
-from LmBackend.command.multi import (OccurrenceBucketeerCommand,
-                         OccurrenceSorterCommand)#, OccurrenceSplitterCommand)
+from LmBackend.command.multi import (
+    OccurrenceBucketeerCommand, OccurrenceSorterCommand)
+from LmBackend.command.server import TouchFileCommand
+from LmServer.legion.process_chain import MFChain
 
-from LmServer.legion.processchain import MFChain
-from LmBackend.command.server import LmTouchCommand
 
 # .............................................................................
-def getRulesForFile(inFn, groupPos, width=1, depth=1, basename='', 
-                    headers=False, pos=0, outDir='.'):
-   """
-   @summary: Gets a list of Makeflow rules for splitting a CSV file into many 
-                CSVs based on the group field
-   @param inFn: The CSV input file name
-   @param groupPos: The field in the CSV file to use for grouping
-   @param width: The number of characters to use for grouping at each iteration
-   @param depth: The depth of the grouping (ex. 12/34/56 has a depth of 3 and 
-                    width of 2)
-   @param basename: The base name of the output bucket files
-   @param headers: Does the input file have a header row
-   @param pos: The position in the group field to use for bucketing
-   """
-   rules = []
-   if depth == 0:
-      # Sort
-      sortedFn = os.path.join(outDir, '{}_sorted.csv'.format(basename))
-      
-      sortCmd = OccurrenceSorterCommand(inFn, sortedFn, groupPos)
-      rules.append(sortCmd.getMakeflowRule())
-      
-      # TODO: Add split command (unknown outputs)
-      # Split
-      #splitCmd = OccurrenceSplitterCommand(groupPos, sortedFn, outDir, 
-      #                                     prefix='taxon_')
-      #rules.append(splitCmd.getMakeflowRule())
-   else:
-      # More splitting
-      baseNames = []
-      for i in range(10**width):
-         bn = '{}{}'.format(basename, (str(i) + '0'*width)[0:width])
-         baseNames.append((bn, os.path.join(outDir, '{}.csv'.format(bn))))
-      
-      # Add out directory touch rule
-      touchFn = os.path.join(outDir, 'touch.out')
-      touchCmd = LmTouchCommand(touchFn)
-      rules.append(touchCmd.getMakeflowRule(local=True))
-      bucketeerCmd = OccurrenceBucketeerCommand(os.path.join(outDir, basename), 
-                                                groupPos, inFn, 
-                                                position=pos, width=width, 
-                                                headerRow=headers)
-      bucketeerCmd.inputs.append(touchFn)
-      bucketeerCmd.outputs.extend([bFn for _, bFn in baseNames])
-      
-      rules.append(bucketeerCmd.getMakeflowRule())
-      
-      # Recurse
-      for bn, bFn in baseNames:
-         rules.extend(getRulesForFile(bFn, groupPos, width=width, 
-                                    depth=depth-1, basename=bn, headers=False, 
-                                    pos=pos+width, outDir=outDir))
-   return rules
-         
+def get_rules_for_file(in_filename, group_position, width=1, depth=1,
+                       basename='', headers=False, pos=0, out_dir='.'):
+    """Gets a list of Makeflow rules for splitting the CSV file.
+
+    Args:
+        in_filename: The CSV input file name
+        group_position: The field in the CSV file to use for grouping
+        width: The number of characters to use for grouping at each iteration
+        depth: The depth of the grouping (ex. 12/34/56 has a depth of 3 and
+            width of 2)
+        basename: The base name of the output bucket files
+        headers: Does the input file have a header row
+        pos: The position in the group field to use for bucketing
+    """
+    rules = []
+    if depth == 0:
+        # Sort
+        sorted_fn = os.path.join(out_dir, '{}_sorted.csv'.format(basename))
+
+        sort_cmd = OccurrenceSorterCommand(
+            in_filename, sorted_fn, group_position)
+        rules.append(sort_cmd.get_makeflow_rule())
+    else:
+        # More splitting
+        base_names = []
+        for i in range(10 ** width):
+            b_name = '{}{}'.format(basename, (str(i) + '0' * width)[0:width])
+            base_names.append(
+                (b_name, os.path.join(out_dir, '{}.csv'.format(b_name))))
+
+        # Add out directory touch rule
+        touch_fn = os.path.join(out_dir, 'touch.out')
+        touch_cmd = TouchFileCommand(touch_fn)
+        rules.append(touch_cmd.get_makeflow_rule(local=True))
+        bucketeer_cmd = OccurrenceBucketeerCommand(
+            os.path.join(out_dir, basename), group_position, in_filename,
+            position=pos, width=width, header_row=headers)
+        bucketeer_cmd.inputs.append(touch_fn)
+        bucketeer_cmd.outputs.extend([bfn for _, bfn in base_names])
+
+        rules.append(bucketeer_cmd.get_makeflow_rule())
+
+        # Recurse
+        for base_n, base_filename in base_names:
+            rules.extend(
+                get_rules_for_file(
+                    base_filename, group_position, width=width, depth=depth-1,
+                    basename=base_n, headers=False, pos=pos + width,
+                    out_dir=out_dir))
+    return rules
+
+
+# .............................................................................
+def main():
+    """Main method for script
+    """
+    # width, depth, input files,
+    parser = argparse.ArgumentParser(
+        description=(
+            'This script generates a Makeflow file for processing raw '
+            'CSV data'))
+
+    # workspace
+    parser.add_argument('outfile_filename', type=str, help='Write DAG here')
+    parser.add_argument(
+        'group_position', type=int,
+        help='The position of the field to group on')
+    parser.add_argument(
+        'width', type=int, help='Use this many characters for buckets')
+    parser.add_argument('depth', type=int, help='Recurse this many levels')
+    parser.add_argument('user_id', type=str, help='User id for workflow')
+    parser.add_argument(
+        'input_filename', type=str, nargs='+', help='Input CSV file')
+    parser.add_argument(
+        'out_dir', type=str, help='Directory to store output CSVs')
+
+    args = parser.parse_args()
+
+    mf_chain = MFChain(args.user_id)
+
+    # Recursively create rules
+    for filename in args.input_filename:
+        rules = get_rules_for_file(
+            filename, args.group_position, width=args.width, depth=args.depth,
+            basename='bucket_', headers=True, out_dir=args.out_dir)
+        mf_chain.add_commands(rules)
+    mf_chain.write(args.outfile_filename)
+
+
 # .............................................................................
 if __name__ == '__main__':
-   
-   #width, depth, input files,    
-   parser = argparse.ArgumentParser(
-              description='This script generates a Makeflow file for processing raw CSV data')
-
-   # workspace
-
-   parser.add_argument('outputFilename', type=str, help='Write DAG here')
-   parser.add_argument('groupPosition', type=int, 
-                                  help='The position of the field to group on')
-   parser.add_argument('width', type=int, 
-                                   help='Use this many characters for buckets')
-   parser.add_argument('depth', type=int, help='Recurse this many levels')
-   parser.add_argument('userId', type=str, help='User id for workflow')
-   parser.add_argument('inputFilename', type=str, nargs='+', 
-                                                         help='Input CSV file')
-   parser.add_argument('outDir', type=str, help='Directory to store output CSVs')
-   
-   args = parser.parse_args()
-   
-   mf = MFChain(args.userId)
-      
-   # Recursively create rules
-   for fn in args.inputFilename:
-      rules = getRulesForFile(fn, args.groupPosition, width=args.width, 
-                            depth=args.depth, basename='bucket_', headers=True,
-                            outDir=args.outDir)
-      mf.addCommands(rules)
-   mf.write(args.outputFilename)
-   
+    main()

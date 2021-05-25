@@ -5,8 +5,8 @@ import json
 import os
 
 from LmBackend.common.lmconstants import MaskMethod, RegistryKey
-from LmCommon.common.lmconstants import LMFormat, ProcessType
-from LmCommon.common.readyfile import readyFilename
+from LmCommon.common.lmconstants import LMFormat, ProcessType, ENCODING
+from LmCommon.common.ready_file import ready_filename
 
 # Local dictionary keys for determining the type of masks to create
 DO_ASCII = 'do_ascii'
@@ -19,10 +19,12 @@ PAVS_FILENAME = 'pavs.json'
 SNIPPETS_FILENAME = 'snippets.xml'
 STOCKPILE_FILENAME = 'stockpile.json'
 
+
 # .............................................................................
-class ParameterSweepConfiguration(object):
+class ParameterSweepConfiguration:
     """This class handles configuration of a parameter sweep
     """
+
     # ........................................
     def __init__(self, work_dir=''):
         """Constructor
@@ -51,9 +53,9 @@ class ParameterSweepConfiguration(object):
         """
         try:
             config = json.load(fn_or_flo)
-        except:
+        except AttributeError:
             # Try to load as if argument is a file name
-            with open(fn_or_flo) as in_file:
+            with open(fn_or_flo, 'r', encoding=ENCODING) as in_file:
                 config = json.load(in_file)
         my_obj = cls(work_dir=config[RegistryKey.WORK_DIR])
         my_obj.masks = config[RegistryKey.MASK]
@@ -61,19 +63,20 @@ class ParameterSweepConfiguration(object):
         my_obj.occurrence_sets = config[RegistryKey.OCCURRENCE]
         my_obj.pavs = config[RegistryKey.PAV]
         my_obj.projections = config[RegistryKey.PROJECTION]
-        #my_obj.work_dir = config[RegistryKey.WORK_DIR]
-        #my_obj.log_filename = os.path.join(my_obj.work_dir, LOG_FILENAME)
-        #my_obj.metrics_filename = os.path.join(
+        # my_obj.work_dir = config[RegistryKey.WORK_DIR]
+        # my_obj.log_filename = os.path.join(my_obj.work_dir, LOG_FILENAME)
+        # my_obj.metrics_filename = os.path.join(
         #    my_obj.work_dir, METRICS_FILENAME)
-        #my_obj.snippets_filename = os.path.join(
+        # my_obj.snippets_filename = os.path.join(
         #    my_obj.work_dir, SNIPPETS_FILENAME)
-        #my_obj.stockpile_filename = os.path.join(
+        # my_obj.stockpile_filename = os.path.join(
         #    my_obj.work_dir, STOCKPILE_FILENAME)
-        #my_obj.pavs_filename = os.path.join(my_obj.work_dir, PAVS_FILENAME)
+        # my_obj.pavs_filename = os.path.join(my_obj.work_dir, PAVS_FILENAME)
         return my_obj
 
     # ........................................
-    def _process_algorithm(self, algorithm):
+    @staticmethod
+    def _process_algorithm(algorithm):
         """Generates an identifier and JSON for an algorithm
 
         Args:
@@ -84,20 +87,21 @@ class ParameterSweepConfiguration(object):
         algorithm_info = [algorithm.code]
         # This is the object that will be returned
         algorithm_object = {
-            RegistryKey.ALGORITHM_CODE : algorithm.code,
-            RegistryKey.PARAMETER : []
+            RegistryKey.ALGORITHM_CODE: algorithm.code,
+            RegistryKey.PARAMETER: []
         }
-        
-        for param in algorithm._parameters.keys():
+
+        for param in algorithm.parameters.keys():
             algorithm_object[RegistryKey.PARAMETER].append(
                 {
-                    RegistryKey.NAME : param,
-                    RegistryKey.VALUE : algorithm._parameters[param]
+                    RegistryKey.NAME: param,
+                    RegistryKey.VALUE: algorithm.parameters[param]
                 })
-            algorithm_info.append((param, str(algorithm._parameters[param])))
-        
-        identifier = md5(str(set(algorithm_info))).hexdigest()[:16]
-        
+            algorithm_info.append((param, str(algorithm.parameters[param])))
+            
+        tmp = str(set(algorithm_info)).encode(ENCODING)
+        identifier = md5(tmp).hexdigest()[:16]
+
         return identifier, algorithm_object
 
     # ........................................
@@ -112,11 +116,10 @@ class ParameterSweepConfiguration(object):
         # Determine mask id
         mask_id = None
         if mask_info is not None:
-            mask_id = md5(
-                str(set([(k, mask_info[k]) for k in mask_info.keys()]))
-                ).hexdigest()[:16]
+            tmp = str(set((k, val) for k, val in mask_info.items())).encode(ENCODING)
+            mask_id = md5(tmp).hexdigest()[:16]
             # See if the mask has been defined, if not, add it
-            if not mask_id in self.masks.keys():
+            if mask_id not in self.masks.keys():
                 self.masks[mask_id] = mask_info
                 self.masks[mask_id][
                     RegistryKey.PATH] = os.path.join(
@@ -125,28 +128,29 @@ class ParameterSweepConfiguration(object):
                 self.masks[mask_id][DO_ASCII] = True
             elif ext == LMFormat.GTIFF.ext:
                 self.masks[mask_id][DO_TIFF] = True
-                
+
         return mask_id
 
     # ........................................
-    def _process_scenario(self, scenario, ext):
+    @staticmethod
+    def _process_scenario(scenario, ext):
         """Generates an identifier and JSON for scenario layers
 
         Args:
             scenario : A Scenario object populated with layers
             ext : The raster extension to use for layers (.tif or .asc)
         """
-        identifier = 'scenario_{}_{}'.format(scenario.getId(), ext)
-        layer_obj = {RegistryKey.LAYER : []}
+        identifier = 'scenario_{}_{}'.format(scenario.get_id(), ext)
+        layer_obj = {RegistryKey.LAYER: []}
 
         for lyr in scenario.layers:
             layer_obj[RegistryKey.LAYER].append(
                 {
-                    RegistryKey.IDENTIFIER : 'layer-{}'.format(lyr.getId()),
-                    RegistryKey.PATH : '{}{}'.format(os.path.splitext(
-                        lyr.getDLocation())[0], ext)})
+                    RegistryKey.IDENTIFIER: 'layer-{}'.format(lyr.get_id()),
+                    RegistryKey.PATH: '{}{}'.format(os.path.splitext(
+                        lyr.get_dlocation())[0], ext)})
         return identifier, layer_obj
-        
+
     # ........................................
     def add_occurrence_set(self, process_type, occ_set_id, url_fn_or_key,
                            out_filename, big_out_filename, max_points,
@@ -176,9 +180,9 @@ class ParameterSweepConfiguration(object):
                 add_me = False
         if add_me:
             self.occurrence_sets.append(
-                (process_type, occ_set_id, url_fn_or_key, out_filename, 
+                (process_type, occ_set_id, url_fn_or_key, out_filename,
                  big_out_filename, max_points, metadata, delimiter))
-    
+
     # ........................................
     def add_pav_intersect(self, shapegrid_filename, pav_id, projection_id,
                           pav_filename, squid, min_presence, max_presence,
@@ -249,16 +253,16 @@ class ParameterSweepConfiguration(object):
         # Process model and projection scenarios
         mdl_scn_id, mdl_scn = self._process_scenario(model_scenario, ext)
         prj_scn_id, prj_scn = self._process_scenario(projection_scenario, ext)
-        
+
         model_id = '{}-{}-{}'.format(
             occ_set_id, algorithm_identifier, mdl_scn_id)
         # Process masks
         mdl_mask_id = self._process_mask(model_mask, ext)
-        
+
         prj_mask_id = self._process_mask(projection_mask, ext)
 
         # Check if model has been defined and define if necessary
-        if not model_id in self.models.keys():
+        if model_id not in self.models.keys():
             if int(process_type) == ProcessType.ATT_PROJECT:
                 mdl_process_type = ProcessType.ATT_MODEL
                 mdl_ruleset_path = os.path.join(
@@ -274,23 +278,23 @@ class ParameterSweepConfiguration(object):
                     'Cannot process process type: {}, {}'.format(
                         process_type, type(process_type)))
             self.models[model_id] = {
-                RegistryKey.PROCESS_TYPE : mdl_process_type,
-                RegistryKey.OCCURRENCE_SET_ID : occ_set_id,
-                RegistryKey.OCCURRENCE_SET_PATH : occ_shp_filename,
-                RegistryKey.ALGORITHM : algo,
-                RegistryKey.SCENARIO : mdl_scn,
-                RegistryKey.MASK_ID : mdl_mask_id,
-                RegistryKey.RULESET_PATH : mdl_ruleset_path
+                RegistryKey.PROCESS_TYPE: mdl_process_type,
+                RegistryKey.OCCURRENCE_SET_ID: occ_set_id,
+                RegistryKey.OCCURRENCE_SET_PATH: occ_shp_filename,
+                RegistryKey.ALGORITHM: algo,
+                RegistryKey.SCENARIO: mdl_scn,
+                RegistryKey.MASK_ID: mdl_mask_id,
+                RegistryKey.RULESET_PATH: mdl_ruleset_path
             }
 
         # Check if model and projection scenarios match, if so, update model
         if mdl_scn_id == prj_scn_id:
             self.models[model_id].update({
-                RegistryKey.PROJECTION_ID : projection_id,
-                RegistryKey.SCALE_PARAMETERS : scale_parameters,
-                RegistryKey.MULTIPLIER : multiplier,
-                RegistryKey.PROJECTION_PATH : projection_path,
-                RegistryKey.PACKAGE_PATH : package_path
+                RegistryKey.PROJECTION_ID: projection_id,
+                RegistryKey.SCALE_PARAMETERS: scale_parameters,
+                RegistryKey.MULTIPLIER: multiplier,
+                RegistryKey.PROJECTION_PATH: projection_path,
+                RegistryKey.PACKAGE_PATH: package_path
             })
         else:
             self.projections.append([
@@ -326,14 +330,14 @@ class ParameterSweepConfiguration(object):
             if process_type in [ProcessType.GBIF_TAXA_OCCURRENCE,
                                 ProcessType.USER_TAXA_OCCURRENCE]:
                 input_files.add(url_fn_or_key)
-        
+
         # Shapegrids
         for pav_config in self.pavs:
             # pav_config = (shapegrid filename, pav id, projection id,
             #                pav filename, squid, min presence, max presence
             #                min coverage)
             input_files.add(pav_config[0])
-        
+
         # Only return relative paths.  Makeflow doesn't want absolute paths.
         relative_input_files = [
             fn for fn in list(input_files
@@ -345,16 +349,15 @@ class ParameterSweepConfiguration(object):
         """Returns a generator for mask creation
         """
         for mask_id in self.masks.keys():
-            
             mask_config = self.masks[mask_id]
             method = mask_config[RegistryKey.METHOD]
             mask_basename = mask_config[RegistryKey.PATH]
-            
+
             if DO_ASCII in mask_config.keys():
                 do_asc = mask_config[DO_ASCII]
             else:
                 do_asc = False
-            
+
             if DO_TIFF in mask_config.keys():
                 do_tif = mask_config[DO_TIFF]
             else:
@@ -362,7 +365,7 @@ class ParameterSweepConfiguration(object):
 
             # Always return: method, mask id, out basename, do ascii, do tiff
             config_list = [method, mask_id, mask_basename, do_asc, do_tif]
-            
+
             # Individual masking methods
             if method == MaskMethod.HULL_REGION_INTERSECT:
                 # Add region layer, buffer, and occurrence set id
@@ -372,8 +375,9 @@ class ParameterSweepConfiguration(object):
                     mask_config[RegistryKey.OCCURRENCE_SET_PATH])
             elif method == MaskMethod.BLANK_MASK:
                 # Add template layer path for blank mask creation
-                config_list.append(mask_config[RegistryKey.TEMPLATE_LAYER_PATH])
-            
+                config_list.append(
+                    mask_config[RegistryKey.TEMPLATE_LAYER_PATH])
+
             yield config_list
 
     # ........................................
@@ -381,10 +385,10 @@ class ParameterSweepConfiguration(object):
         """Returns a generator for model creation
         """
         for model_id in self.models.keys():
-            
             # Always return: process type, model id, occurrence set id,
             #    algorithm, model scenario, and mask id
-            # Always: process_type, model_id, occ_set_id, algorithm, model_scenario, mask_id
+            # Always: process_type, model_id, occ_set_id, algorithm,
+            #    model_scenario, mask_id
             model_config = [
                 self.models[model_id][RegistryKey.PROCESS_TYPE],
                 model_id,
@@ -395,7 +399,7 @@ class ParameterSweepConfiguration(object):
                 self.models[model_id][RegistryKey.MASK_ID],
                 self.models[model_id][RegistryKey.RULESET_PATH]
             ]
-            
+
             # If we are projecting onto the same scenario, these keys will be
             #    present
             try:
@@ -413,9 +417,9 @@ class ParameterSweepConfiguration(object):
             except KeyError:
                 # Should not project onto this scenario
                 pass
-            
+
             yield model_config
-    
+
     # ........................................
     def get_occurrence_set_config(self):
         """Returns a generator for occurrence set configurations
@@ -445,14 +449,14 @@ class ParameterSweepConfiguration(object):
             self.snippets_filename,
             self.stockpile_filename,
             self.pavs_filename]
-        
+
         if work_dir is None:
             return output_files
-        else:
-            new_output_files = []
-            for fn in output_files:
-                new_output_files.append(os.path.join(work_dir, fn))
-            return new_output_files
+
+        new_output_files = []
+        for file_name in output_files:
+            new_output_files.append(os.path.join(work_dir, file_name))
+        return new_output_files
 
     # ........................................
     def get_pav_config(self):
@@ -486,17 +490,17 @@ class ParameterSweepConfiguration(object):
                 configuration should be saved in JSON format.
         """
         config = {
-            RegistryKey.MASK : self.masks,
-            RegistryKey.MODEL : self.models,
-            RegistryKey.OCCURRENCE : self.occurrence_sets,
-            RegistryKey.PAV : self.pavs,
-            RegistryKey.PROJECTION : self.projections,
-            RegistryKey.WORK_DIR : self.work_dir
+            RegistryKey.MASK: self.masks,
+            RegistryKey.MODEL: self.models,
+            RegistryKey.OCCURRENCE: self.occurrence_sets,
+            RegistryKey.PAV: self.pavs,
+            RegistryKey.PROJECTION: self.projections,
+            RegistryKey.WORK_DIR: self.work_dir
         }
-        
+
         if not hasattr(fn_or_flo, 'write'):
-            readyFilename(fn_or_flo, overwrite=True)
-            with open(fn_or_flo, 'w') as out_f:
+            ready_filename(fn_or_flo, overwrite=True)
+            with open(fn_or_flo, 'w', encoding=ENCODING) as out_f:
                 json.dump(config, out_f)
         else:
             json.dump(config, fn_or_flo)

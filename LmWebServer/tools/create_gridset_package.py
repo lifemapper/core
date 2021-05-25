@@ -1,30 +1,8 @@
-"""
-@summary: Create a package to be returned to a client based on a gridset
-@author: CJ Grady
-@status: alpha
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
+"""Create a package to be returned to a client based on a gridset
 
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-@todo: Move this as necessary
-@todo: Probably want to split of EML generating code to separate module(s)
+Todo:
+     * Move this as necessary
+     * Probably want to split of EML generating code to separate module(s)
 """
 import argparse
 from collections import defaultdict
@@ -32,191 +10,205 @@ import json
 import os
 import zipfile
 
-from LmCommon.common.lmconstants import LMFormat, MatrixType
-from LmCommon.common.lmXml import tostring
-from LmCommon.common.matrix import Matrix
+from lmpy import Matrix
 
+from LmCommon.common.lm_xml import tostring
+from LmCommon.common.lmconstants import LMFormat, MatrixType, ENCODING
 from LmServer.common.lmconstants import TEMP_PATH
 from LmServer.common.log import ConsoleLogger
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.db.borg_scribe import BorgScribe
+from LmWebServer.formatters.eml_formatter import make_eml
+from LmWebServer.formatters.geo_json_formatter import geo_jsonify_flo
 
-from LmWebServer.formatters.emlFormatter import makeEml
-from LmWebServer.formatters.geoJsonFormatter import geoJsonify_flo
 
 # .............................................................................
-def createHeaderLookup(headers, squids=False, scribe=None, userId=None):
-   """
-   @summary: Generate a header lookup to be included in the package metadata
-   """
-   def getHeaderDict(header, idx):
-      return {
-         'header' : header,
-         'index' : idx
-      }
-      
-   def getSquidHeaderDict(header, idx, scribe, userId):
-      taxon = scribe.getTaxon(squid=header, userId=userId)
-      ret = getHeaderDict(header, idx)
-      
-      for attrib, key in [('scientificName', 'scientific_name'),
-                          ('canonicalName', 'canonical_name'),
-                          ('rank', 'taxon_rank'),
-                          ('kingdom', 'taxon_kingdom'),
-                          ('phylum', 'taxon_phylum'),
-                          ('txClass', 'taxon_class'),
-                          ('txOrder', 'taxon_order'),
-                          ('family', 'taxon_family'),
-                          ('genus', 'taxon_genus')
-                         ]:
-         val = getattr(taxon, attrib)
-         if val is not None:
-            ret[key] = val
-      return ret
-   
-      
-   if squids and scribe and userId:
-      return [getSquidHeaderDict(
-                  headers[i], i, scribe, userId) for i in xrange(len(headers))]
-   else:
-      return [getHeaderDict(headers[i], i) for i in xrange(len(headers))]
+def create_header_lookup(headers, squids=False, scribe=None, user_id=None):
+    """Generate a header lookup to be included in the package metadata
+    """
+
+    def get_header_dict(header, idx):
+        return {
+            'header': header,
+            'index': idx
+        }
+
+    def get_squid_header_dict(header, idx, scribe, user_id):
+        taxon = scribe.get_taxon(squid=header, user_id=user_id)
+        ret = get_header_dict(header, idx)
+
+        for attrib, key in [
+                ('scientificName', 'scientific_name'),
+                ('canonicalName', 'canonical_name'),
+                ('rank', 'taxon_rank'),
+                ('kingdom', 'taxon_kingdom'),
+                ('phylum', 'taxon_phylum'),
+                ('txClass', 'taxon_class'),
+                ('txOrder', 'taxon_order'),
+                ('family', 'taxon_family'),
+                ('genus', 'taxon_genus')]:
+            val = getattr(taxon, attrib)
+            if val is not None:
+                ret[key] = val
+        return ret
+
+    if squids and scribe and user_id:
+        return [
+            get_squid_header_dict(
+                headers[i], i, scribe, user_id) for i in range(len(headers))]
+
+    return [get_header_dict(headers[i], i) for i in range(len(headers))]
+
 
 # .............................................................................
 def mung(data):
-   """
-   @summary: Replace a list of values with a map from the non-zero values to
-                the indexes at which they occur
-   """
-   munged = defaultdict(list)
-   for i, datum in enumerate(data):
-      if datum != 0:
-         munged[datum].append(i)
-   return munged
+    """Replace a list of values with a map from non-zero values
+    """
+    munged = defaultdict(list)
+    for i, datum in enumerate(data):
+        if datum != 0:
+            munged[datum].append(i)
+    return munged
+
 
 # .............................................................................
-def assemble_package_for_gridset(gridset, outfile, scribe, userId):
-   """
-   @summary: Creates an output zip file from the gridset
-   """
-   print('Assembling package: {}'.format(outfile))
-   print('Creating EML')
-   gsEml = tostring(makeEml(gridset))
-   with zipfile.ZipFile(outfile, 
-                        mode='w', 
-                        compression=zipfile.ZIP_DEFLATED,
-                        allowZip64=True) as outZip:
-      print('Write out EML')
-      outZip.writestr('gridset_{}.eml'.format(gridset.getId()), gsEml)
-      print('Write tree')
-      outZip.write(gridset.tree.getDLocation(), 
-                   os.path.basename(gridset.tree.getDLocation()))
-      print('Getting shapegrid')
-      sg = gridset.getShapegrid()
-      matrices = gridset.getMatrices()
-      i = 0
-      print('{} matrices'.format(len(matrices)))
-      for mtx in matrices:
-         i += 1
-         print('Matrix: ({} of {}) {}'.format(i, len(matrices), 
-                                              mtx.getDLocation()))
-         print(' - Loading matrix')
-         mtxObj = Matrix.load(mtx.getDLocation())
-         print(' - Loaded')
+def assemble_package_for_gridset(gridset, out_file, scribe, user_id):
+    """Creates an output zip file from the gridset
+    """
+    print(('Assembling package: {}'.format(out_file)))
+    print('Creating EML')
+    gs_eml = tostring(make_eml(gridset))
+    with zipfile.ZipFile(
+            out_file, mode='w', compression=zipfile.ZIP_DEFLATED,
+            allowZip64=True) as out_zip:
+        print('Write out EML')
+        out_zip.writestr('gridset_{}.eml'.format(gridset.get_id()), gs_eml)
+        print('Write tree')
+        out_zip.write(
+            gridset.tree.get_dlocation(),
+            os.path.basename(gridset.tree.get_dlocation()))
+        print('Getting shapegrid')
+        shapegrid = gridset.get_shapegrid()
+        matrices = gridset.get_matrices()
+        i = 0
+        print(('{} matrices'.format(len(matrices))))
+        for mtx in matrices:
+            i += 1
+            print(('Matrix: ({} of {}) {}'.format(
+                i, len(matrices), mtx.get_dlocation())))
+            print(' - Loading matrix')
+            mtx_obj = Matrix.load(mtx.get_dlocation())
+            print(' - Loaded')
 
-         # Need to get geojson where we can
-         if mtx.matrixType in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
-            mtxFn = '{}{}'.format(
-               os.path.splitext(
-                  os.path.basename(mtx.getDLocation()))[0], 
-                                  LMFormat.GEO_JSON.ext)
-            
-            print(' - Creating SQUID lookup')
-            hlfn = 'squidLookup.json'
-            outZip.writestr(hlfn, json.dumps(createHeaderLookup(
-                                                mtxObj.getColumnHeaders(), 
-                                                squids=True, 
-                                                scribe=scribe, userId=userId),
-                                             indent=3))
-            
-            # Make a temporary file
-            tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
-            with open(tempFn, 'w') as tempF:
-               print(' - Getting GeoJSON')
-               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
-                           transform=mung)
-            
-         elif mtx.matrixType == MatrixType.ANC_PAM:
-            mtxFn = '{}{}'.format(
-               os.path.splitext(
-                  os.path.basename(mtx.getDLocation()))[0], 
-                                  LMFormat.GEO_JSON.ext)
-            
-            print(' - Creating node lookup')
-            hlfn = 'nodeLookup.json'
-            outZip.writestr(hlfn, json.dumps(createHeaderLookup(
-                                                   mtxObj.getColumnHeaders()),
-                                             indent=3))
-            
-            # Make a temporary file
-            tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
-            with open(tempFn, 'w') as tempF:
-               print(' - Getting GeoJSON')
-               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                           mtxJoinAttrib=0, ident=0, headerLookupFilename=hlfn,
-                           transform=mung)
-            
-         elif mtx.matrixType in [MatrixType.SITES_COV_OBSERVED, 
-                            MatrixType.SITES_COV_RANDOM, 
-                            MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
-            mtxFn = '{}{}'.format(
-               os.path.splitext(
-                  os.path.basename(mtx.getDLocation()))[0], 
-                                  LMFormat.GEO_JSON.ext)
-            
-            # Make a temporary file
-            tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
-            with open(tempFn, 'w') as tempF:
-               print(' - Getting GeoJSON')
-               geoJsonify_flo(tempF, sg.getDLocation(), matrix=mtxObj, 
-                              mtxJoinAttrib=0, ident=0)
-         else:
-            print(' - Write non Geo-JSON matrix')
-            mtxFn = '{}{}'.format(
-               os.path.splitext(
-                  os.path.basename(mtx.getDLocation()))[0], 
-                                  LMFormat.CSV.ext)
-            # Make a temporary file
-            tempFn = os.path.join(TEMP_PATH, mtxFn)
-            print(' - Temporary file name: {}'.format(tempFn))
-            with open(tempFn, 'w') as tempF:
-               print(' - Getting CSV')
-               mtxObj.writeCSV(tempF)
+            # Need to get geojson where we can
+            if mtx.matrix_type in [MatrixType.PAM, MatrixType.ROLLING_PAM]:
+                mtx_file_name = '{}{}'.format(
+                    os.path.splitext(
+                        os.path.basename(
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
 
-         print(' - Zipping {}'.format(tempFn))
-         outZip.write(tempFn, mtxFn)
-            
-         print(' - Delete temp file')
-         os.remove(tempFn)
+                print(' - Creating SQUID lookup')
+                hlfn = 'squidLookup.json'
+                out_zip.writestr(
+                    hlfn, json.dumps(
+                        create_header_lookup(
+                            mtx_obj.get_column_headers(), squids=True,
+                            scribe=scribe, user_id=user_id), indent=4))
+
+                # Make a temporary file
+                temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
+                print((' - Temporary file name: {}'.format(temp_file_name)))
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
+                    print(' - Getting GeoJSON')
+                    geo_jsonify_flo(
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=hlfn, transform=mung)
+
+            elif mtx.matrix_type == MatrixType.ANC_PAM:
+                mtx_file_name = '{}{}'.format(
+                    os.path.splitext(
+                        os.path.basename(
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
+
+                print(' - Creating node lookup')
+                hlfn = 'nodeLookup.json'
+                out_zip.writestr(
+                    hlfn, json.dumps(
+                        create_header_lookup(mtx_obj.get_column_headers()),
+                        indent=4))
+
+                # Make a temporary file
+                temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
+                print((' - Temporary file name: {}'.format(temp_file_name)))
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
+                    print(' - Getting GeoJSON')
+                    geo_jsonify_flo(
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
+                        mtx_join_attrib=0, ident=0,
+                        header_lookup_filename=hlfn, transform=mung)
+
+            elif mtx.matrix_type in [
+                    MatrixType.SITES_COV_OBSERVED, MatrixType.SITES_COV_RANDOM,
+                    MatrixType.SITES_OBSERVED, MatrixType.SITES_RANDOM]:
+                mtx_file_name = '{}{}'.format(
+                    os.path.splitext(
+                        os.path.basename(
+                            mtx.get_dlocation()))[0], LMFormat.GEO_JSON.ext)
+
+                # Make a temporary file
+                temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
+                print((' - Temporary file name: {}'.format(temp_file_name)))
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
+                    print(' - Getting GeoJSON')
+                    geo_jsonify_flo(
+                        temp_f, shapegrid.get_dlocation(), matrix=mtx_obj,
+                        mtx_join_attrib=0, ident=0)
+            else:
+                print(' - Write non Geo-JSON matrix')
+                mtx_file_name = '{}{}'.format(
+                    os.path.splitext(
+                        os.path.basename(
+                            mtx.get_dlocation()))[0], LMFormat.CSV.ext)
+                # Make a temporary file
+                temp_file_name = os.path.join(TEMP_PATH, mtx_file_name)
+                print((' - Temporary file name: {}'.format(temp_file_name)))
+                with open(temp_file_name, 'w', encoding=ENCODING) as temp_f:
+                    print(' - Getting CSV')
+                    mtx_obj.write_csv(temp_f)
+
+            print((' - Zipping {}'.format(temp_file_name)))
+            out_zip.write(temp_file_name, mtx_file_name)
+
+            print(' - Delete temp file')
+            os.remove(temp_file_name)
+
+
+# ..........................................................................
+def main():
+    """Main method for script.
+    """
+    parser = argparse.ArgumentParser(
+        description='This script creates a package of gridset outputs')
+
+    parser.add_argument('gridset_id', type=int, help='The gridset id number')
+    parser.add_argument(
+        'out_file', type=str,
+        help='The file location to write the output package')
+
+    args = parser.parse_args()
+
+    scribe = BorgScribe(ConsoleLogger())
+    scribe.open_connections()
+
+    gridset = scribe.get_gridset(
+        gridset_id=args.gridset_id, fill_matrices=True)
+
+    assemble_package_for_gridset(
+        gridset, args.out_file, scribe, gridset.get_user_id())
+
+    scribe.close_connections()
+
 
 # ..........................................................................
 if __name__ == '__main__':
-   parser = argparse.ArgumentParser(
-                description='This script creates a package of gridset outputs')
-   
-   parser.add_argument('gsId', type=int, help='The gridset id number')
-   parser.add_argument('out_file', type=str, 
-                       help='The file location to write the output package')
-   
-   args = parser.parse_args()
-   
-   scribe = BorgScribe(ConsoleLogger())
-   scribe.openConnections()
-   
-   gs = scribe.getGridset(gridsetId=args.gsId, fillMatrices=True)
-   
-   assemble_package_for_gridset(gs, args.out_file, scribe, gs.getUserId())
-
-   scribe.closeConnections()
+    main()

@@ -7,7 +7,8 @@ Todo:
 """
 import os
 
-from LmCommon.common.lmXml import deserialize, fromstring
+from LmCommon.common.lm_xml import deserialize, fromstring
+
 
 # .............................................................................
 def validate_xml_file(xml_filename):
@@ -22,9 +23,9 @@ def validate_xml_file(xml_filename):
         try:
             with open(xml_filename) as in_xml:
                 xml_str = in_xml.read()
-            xml_obj = deserialize(fromstring(xml_str))
+            _ = deserialize(fromstring(xml_str))
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'

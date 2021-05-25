@@ -20,7 +20,7 @@ Current versions
 
 #. **Stop the mattDaemon** as lmwriter::
 
-     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/mattDaemon.py stop
+     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
 
 #. **Caution** If want to **completely destroy** existing install, including
    deleting the database and clearing lm data from filesystem, run::
@@ -169,3 +169,64 @@ Check LmCompute
      * installComputeCronJobs.log
      * transformData.log (transformData must be run manually by user after reboot)
 
+Accepted species from GBIF:
+https://www.gbif.org/species/search?rank=SPECIES&dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&status=ACCEPTED&advanced=1
+
+Troubleshooting
+----------------
+   
+If the database updates failed, it may be because pgbouncer failed to 
+restart, so:
+   
+   #. Check for lock files in /var/run/pgbouncer/, /var/lock/subsys/ , and
+      /var/run/postgresql/ (owned by pgbouncer).
+   #. Double check that pgbouncer is not running
+   #. Delete lock files
+   #. Restart pgbouncer
+   
+If you are installing on a new machine, you will    
+   #. Re-run the failed command::  
+           
+      # /rocks/bin/initLM
+         
+   #. Check the output in /tmp/initLM.log
+   
+Unable to open database on port 6432 (pgbouncer)
+-------------------------------------------------
+Fail message:: 
+Failed to open Borg (user=sdlapp dbname=borg host=notyeti-191 port=6432): 
+('could not connect to server: Connection refused\n\tIs the server running on 
+host "notyeti-191" (192.168.191.1) and accepting\n\tTCP/IP connections on port 6432?\n',)
+
+Clue:: Server is running on public IP, not private
+
+Solution:: config.lmserver.ini should have FQDN in DB_HOSTNAME 
+           (i.e. notyeti-191.lifemapper.org)
+
+Fix::  When running initLM (on reboot, after install), subcommand
+       rocks/bin/updateCfg should fill in FQDN 
+       
+Fail message:: 
+>>> scribe.open_connections()
+30 Mar 2021 12:14 MainThread.borg_scribe.open_connections 
+line 61 ERROR    Failed to open Borg (user=sdlapp dbname=borg host=notyeti-194.lifemapper.org port=6432): 
+('ERROR:  no more connections allowed (max_client_conn)\n',)
+False
+
+and
+
+[root@notyeti-194 ~]# psql -U admin -d borg -p 6432
+psql: could not connect to server: No such file or directory
+        Is the server running locally and accepting
+        connections on Unix domain socket "/var/run/postgresql/.s.PGSQL.6432"?
+
+
+Clue:: No more connections allowed (max_client_conn), 
+       look at value in /etc/pgbouncer/pgbouncer.ini, max_client_conn = 0, 
+
+Solution::  change max_client_conn = (500 * feCPUCount), also fix 
+            default_pool_size = (200 * feCPUCount) and 
+            reserve_pool_size = (20 * feCPUCount) 
+
+Reason:: updateCfg failed the first time through because compute nodes had not
+         been added to cluster, so value was computed incorrectly 

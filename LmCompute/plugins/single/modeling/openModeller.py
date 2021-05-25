@@ -2,23 +2,25 @@
 """
 import os
 
+from LmBackend.common.lmconstants import RegistryKey
+from LmBackend.common.lmobj import LMError
 from LmBackend.common.metrics import LmMetricNames
-
-from LmCommon.common.lmconstants import JobStatus, ProcessType, LMFormat
-from LmCommon.common.lmXml import (Element, fromstring, SubElement, tostring)
-
+from LmCommon.common.lm_xml import (Element, fromstring, SubElement, tostring)
+from LmCommon.common.lmconstants import (
+    JobStatus, ProcessType, LMFormat, ENCODING)
 from LmCompute.plugins.single.modeling.base import ModelSoftwareWrapper
 from LmCompute.plugins.single.modeling.openModeller_constants import (
-    DEFAULT_FILE_TYPE, OM_DEFAULT_LOG_LEVEL, OM_MODEL_TOOL, OM_PROJECT_TOOL, 
+    DEFAULT_FILE_TYPE, OM_DEFAULT_LOG_LEVEL, OM_MODEL_TOOL, OM_PROJECT_TOOL,
     OM_VERSION)
-from LmTest.validate.xml_validator import validate_xml_file
 from LmTest.validate.raster_validator import validate_raster_file
-from LmBackend.common.lmconstants import RegistryKey
+from LmTest.validate.xml_validator import validate_xml_file
+
 
 # TODO: Should these be in constants somewhere?
-ALGORITHM_CODE_KEY = 'algorithmCode'
+# ALGORITHM_CODE_KEY = 'algorithm_code'
 PARAM_NAME_KEY = 'name'
 PARAM_VALUE_KEY = 'value'
+
 
 # .............................................................................
 class OpenModellerWrapper(ModelSoftwareWrapper):
@@ -26,71 +28,72 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
     """
     LOGGER_NAME = 'om'
     RETRY_STATUSES = []
-    
+
     # ...................................
-    def _findError(self, std_err):
+    def _find_error(self, std_err):
         """Checks for information about the error
 
         Args:
             std_err : Standard error output from the application.
         """
         status = JobStatus.OM_GENERAL_ERROR
-        
+
         # Log standard error
         self.logger.debug('Checking standard error')
         if std_err is not None:
             self.logger.debug(std_err)
-            # openModeller logs the error in a file.  Not sure what could be in 
+            # openModeller logs the error in a file.  Not sure what could be in
             #     standard error, but if something is found, check for it here
-            
+
         self.logger.debug('Checking output')
         if os.path.exists(self.get_log_filename()):
-            with open(self.get_log_filename()) as logF:
-                log_content = logF.read()
-            
+            with open(self.get_log_filename(), 'w', encoding=ENCODING) as log_f:
+                log_content = log_f.read()
+
             self.logger.debug('openModeller error log')
             self.logger.debug('-----------------------')
             self.logger.debug(log_content)
             self.logger.debug('-----------------------')
-        
+
             if log_content.find('[Error] No presence points available') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
-                 '[Error] Cannot use zero presence points for sampling') >= 0:
+                    '[Error] Cannot use zero presence points for') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_MISSING_ERROR
             elif log_content.find(
-                '[Error] Algorithm could not be initialized') >= 0:
+                    '[Error] Algorithm could not be initialized') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
-                '[Error] Cannot create model without any presence or absence'
-                ) >= 0:
+                    '[Error] Cannot create model without any presence') >= 0:
                 status = JobStatus.OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR
             elif log_content.find(
-                '[Error] XML Parser fatal error: not well-formed') >= 0:
+                    '[Error] XML Parser fatal error: not well-formed') >= 0:
                 status = JobStatus.OM_MOD_REQ_ERROR
             elif log_content.find('[Error] Unable to open file') >= 0:
                 status = JobStatus.OM_MOD_REQ_LAYER_ERROR
             elif log_content.find('[Error] Algorithm') >= 0:
                 if log_content.find(
-                    'not found', log_content.find('[Error] Algorithm')) >= 0:
+                        'not found',
+                        log_content.find('[Error] Algorithm')) >= 0:
                     status = JobStatus.OM_MOD_REQ_ALGO_INVALID_ERROR
             elif log_content.find('[Error] Parameter') >= 0:
-                if log_content.find('not set properly.\n', 
-                                    log_content.find('[Error] Parameter')) >= 0:
+                if log_content.find(
+                        'not set properly.\n',
+                        log_content.find('[Error] Parameter')) >= 0:
                     status = JobStatus.OM_MOD_REQ_ALGOPARAM_MISSING_ERROR
 
         return status
-    
+
     # ...................................
-    def create_model(self, points, layer_json, parameters_json, 
-                    mask_filename=None, crs_wkt=None):
+    def create_model(self, points, layer_json, parameters_json,
+                     mask_filename=None, crs_wkt=None):
         """Create an openModeller model
 
         Args:
             points : A list of (local_id, x, y) point tuples.
             layer_json : Climate layer information in a JSON document.
-            mask_filename : If provided, use this layer as a mask for the model.
-            crs_wkt : Well-Known text describing the map projection of the 
+            mask_filename : If provided, use this layer as a mask for the model
+            crs_wkt : Well-Known text describing the map projection of the
                 points.
 
         Note:
@@ -103,10 +106,10 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             parameters_json[RegistryKey.ALGORITHM_CODE])
         self.metrics.add_metric(LmMetricNames.NUMBER_OF_FEATURES, len(points))
         self.metrics.add_metric(LmMetricNames.SOFTWARE_VERSION, OM_VERSION)
-        
+
         # Process layers
         layer_filenames = self._process_layers(layer_json)
-        
+
         # Create request
         omr = OmModelRequest(
             points, self.species_name, crs_wkt, layer_filenames,
@@ -114,25 +117,25 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         # Generate the model request XML file
         model_request_filename = os.path.join(
             self.work_dir, 'model_request.xml')
-        with open(model_request_filename, 'w') as reqF:
+        with open(model_request_filename, 'w', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
             if cnt.startswith("<?xml version"):
                 tmp = cnt.split('\n')
                 cnt = '\n'.join(tmp[1:])
 
-            reqF.write(cnt)
-        
+            req_f.write(cnt)
+
         model_options = [
             '-r {}'.format(model_request_filename),
             '-m {}'.format(self.get_ruleset_filename()),
             '--log-level {}'.format(OM_DEFAULT_LOG_LEVEL),
             '--log-file {}'.format(self.get_log_filename())
         ]
-        
+
         self._run_tool(
             self._build_command(OM_MODEL_TOOL, model_options), num_tries=3)
-        
+
         # If success, check model output
         if self.metrics.get_metric(
                 LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
@@ -161,30 +164,30 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         self.metrics.add_metric(
             LmMetricNames.PROCESS_TYPE, ProcessType.ATT_PROJECT)
         self.metrics.add_metric(
-            LmMetricNames.ALGORITHM_CODE, 
+            LmMetricNames.ALGORITHM_CODE,
             parameters_json[RegistryKey.ALGORITHM_CODE])
         self.metrics.add_metric(LmMetricNames.SOFTWARE_VERSION, OM_VERSION)
-        
+
         # Process layers
         layer_filenames = self._process_layers(layer_json)
-        
+
         # Build request
         # Generate the projection request XML file
         prj_request_filename = os.path.join(self.work_dir, 'proj_request.xml')
         omr = OmProjectionRequest(
             ruleset_filename, layer_filenames, mask_filename=mask_filename)
-        
-        with open(prj_request_filename, 'w') as reqF:
+
+        with open(prj_request_filename, 'w', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
             if cnt.startswith("<?xml version"):
                 tmp = cnt.split('\n')
                 cnt = '\n'.join(tmp[1:])
 
-            reqF.write(cnt)
-        
+            req_f.write(cnt)
+
         status_filename = os.path.join(self.work_dir, 'status.out')
-        
+
         prj_options = [
             '-r {}'.format(prj_request_filename),
             '-m {}'.format(self.get_projection_filename()),
@@ -192,10 +195,10 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
             '--log-file {}'.format(self.get_log_filename()),
             '--stat-file {}'.format(status_filename)
         ]
-        
+
         self._run_tool(
             self._build_command(OM_PROJECT_TOOL, prj_options), num_tries=3)
-        
+
         # If success, check projection output
         if self.metrics.get_metric(
                 LmMetricNames.STATUS) < JobStatus.GENERAL_ERROR:
@@ -218,34 +221,40 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         """
         return os.path.join(
             self.work_dir, 'projection{}'.format(LMFormat.GTIFF.ext))
-    
+
     # ...................................
     def get_ruleset_filename(self):
         """Gets the ruleset filename
         """
         return os.path.join(
             self.work_dir, 'ruleset{}'.format(LMFormat.XML.ext))
-    
+
+
 # .............................................................................
-class OmRequest(object):
+class OmRequest:
     """Base class for openModeller requests
     """
+
     # .................................
     def __init__(self):
         if self.__class__ == OmRequest:
             raise Exception('OmRequest base class should not be used directly')
-        
+
     # .................................
-    def generate(self):
-        raise Exception, 'generate method must be overridden by a subclass'
+    @staticmethod
+    def generate():
+        """Base method to generate a request
+        """
+        raise LMError('generate method must be overridden by a subclass')
+
 
 # .............................................................................
 class OmModelRequest(OmRequest):
     """Class for generating openModeller model requests
     """
-    
+
     # .................................
-    def __init__(self, points, points_label, crs_wkt, layer_filenames, 
+    def __init__(self, points, points_label, crs_wkt, layer_filenames,
                  algorithm_json, mask_filename=None):
         """openModeller model request constructor
 
@@ -261,20 +270,21 @@ class OmModelRequest(OmRequest):
             * Take options and statistic options as inputs
             * Constants
         """
+        super().__init__(self)
         self.options = [
             # Ignore duplicate points (same coordinates)
-            #('OccurrencesFilter', 'SpatiallyUnique'),
+            # ('OccurrencesFilter', 'SpatiallyUnique'),
             # Ignore duplicate points (same environment values)
-            #('OccurrencesFilter', 'EnvironmentallyUnique')
+            # ('OccurrencesFilter', 'EnvironmentallyUnique')
             ]
         self.stat_options = {
-            'ConfusionMatrix' : {
-                'Threshold' : '0.5'
+            'ConfusionMatrix': {
+                'Threshold': '0.5'
             },
-            'RocCurve' : {
-                'Resolution' : '15',
-                'BackgroundPoints' : '10000',
-                'MaxOmission' : '1.0'
+            'RocCurve': {
+                'Resolution': '15',
+                'BackgroundPoints': '10000',
+                'MaxOmission': '1.0'
             }
         }
 
@@ -285,44 +295,45 @@ class OmModelRequest(OmRequest):
         self.algorithm_code = algorithm_json[RegistryKey.ALGORITHM_CODE]
         self.algorithm_parameters = algorithm_json[RegistryKey.PARAMETER]
         self.mask_filename = mask_filename
-        
+
     # .................................
     def generate(self):
         """Generates a model request string.
-        
+
         Generates a model request string by building an XML tree and then
         serializing it
         """
         # Parent Element
         request_element = Element('ModelParameters')
-        
+
         # Sampler Element
         sampler_element = SubElement(request_element, 'Sampler')
         environment_element = SubElement(
             sampler_element, 'Environment', attrib={
-                'NumLayers' : str(len(self.layer_filenames))})
+                'NumLayers': str(len(self.layer_filenames))})
 
         for lyr_filename in self.layer_filenames:
             SubElement(
-                environment_element, 'Map', attrib={'Id' : lyr_filename, 
-                                                    'IsCategorical' : '0'})
+                environment_element, 'Map',
+                attrib={'Id': lyr_filename, 'IsCategorical': '0'})
         if self.mask_filename is not None:
             SubElement(
                 environment_element, 'Mask', attrib={'Id': self.mask_filename})
-        
-        presence_element = SubElement(
-            sampler_element, 'Presence', attrib={'Label' : self.points_label})
 
-        #SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
-        
-        for local_id, x, y in self.points:
-            SubElement(presence_element, 'Point',
-                       attrib={'Id': local_id, 'X': x, 'Y': y})
+        presence_element = SubElement(
+            sampler_element, 'Presence', attrib={'Label': self.points_label})
+
+        # SubElement(presence_element, 'CoordinateSystem', value=self.crs_wkt)
+
+        for local_id, x_coord, y_coord in self.points:
+            SubElement(
+                presence_element, 'Point',
+                attrib={'Id': local_id, 'X': x_coord, 'Y': y_coord})
 
         # Algorithm Element
         algorithm_element = SubElement(
             request_element, 'Algorithm', attrib={'Id': self.algorithm_code})
-        
+
         algorithm_parameters_element = SubElement(
             algorithm_element, 'Parameters')
         for param in self.algorithm_parameters:
@@ -330,33 +341,35 @@ class OmModelRequest(OmRequest):
                 algorithm_parameters_element, 'Parameter',
                 attrib={'Id': param[PARAM_NAME_KEY],
                         'Value': param[PARAM_VALUE_KEY]})
-        
+
         # Options Element
         options_element = SubElement(request_element, 'Options')
         for name, value in self.options:
             SubElement(options_element, name, value=value)
 
-        # Statistics Element        
+        # Statistics Element
         stats_element = SubElement(request_element, 'Statistics')
         SubElement(
             stats_element, 'ConfusionMatrix',
-            attrib={'Threshold': self.stat_options['ConfusionMatrix'
-                                                   ]['Threshold']})
+            attrib={
+                'Threshold': self.stat_options['ConfusionMatrix']['Threshold']
+                })
         SubElement(
             stats_element, 'RocCurve',
             attrib={
-                'Resolution': self.stat_options['RocCurve']['Resolution'], 
-                'BackgroundPoints': self.stat_options['RocCurve'
-                                                      ]['BackgroundPoints'],
+                'Resolution': self.stat_options['RocCurve']['Resolution'],
+                'BackgroundPoints': self.stat_options[
+                    'RocCurve']['BackgroundPoints'],
                 'MaxOmission': self.stat_options['RocCurve']['MaxOmission']})
 
         return tostring(request_element)
+
 
 # .............................................................................
 class OmProjectionRequest(OmRequest):
     """Class for generating openModeller projection requests
     """
-    
+
     # .................................
     def __init__(self, ruleset_filename, layer_filenames, mask_filename=None):
         """Constructor for OmProjectionRequest class
@@ -366,16 +379,17 @@ class OmProjectionRequest(OmRequest):
             layer_filenames : A list of layers to project the ruleset on to.
             mask_filename : An optional mask layer for the projection.
         """
+        super().__init__(self)
         self.layer_filenames = layer_filenames
         self.mask_filename = mask_filename
-        
+
         # Get the algorithm section out of the ruleset
-        with open(ruleset_filename) as ruleset_in:
+        with open(ruleset_filename, 'r', encoding=ENCODING) as ruleset_in:
             ruleset = ruleset_in.read()
             mdl_element = fromstring(ruleset)
             # Find the algorithm element, and pull it out
             self.algorithm_element = mdl_element.find('Algorithm')
-        
+
     # .................................
     def generate(self):
         """Generates a projection request string.
@@ -386,20 +400,21 @@ class OmProjectionRequest(OmRequest):
         request_element = Element('ProjectionParameters')
         # Append algorithm section
         request_element.append(self.algorithm_element)
-        
+
         # Environment section
         env_element = SubElement(
-            request_element, 'Environment',  
+            request_element, 'Environment',
             attrib={'NumLayers': str(len(self.layer_filenames))})
-        for lyrFn in self.layer_filenames:
+        for lyr_fn in self.layer_filenames:
             SubElement(
-                env_element, 'Map', attrib={'Id': lyrFn, 'IsCategorical': '0'})
-        
+                env_element, 'Map',
+                attrib={'Id': lyr_fn, 'IsCategorical': '0'})
+
         if self.mask_filename is None:
             self.mask_filename = self.layer_filenames[0]
 
         SubElement(env_element, 'Mask', attrib={'Id': self.mask_filename})
-        
+
         # OutputParameters Element
         output_parameters_element = SubElement(
             request_element, 'OutputParameters',
@@ -407,6 +422,5 @@ class OmProjectionRequest(OmRequest):
         SubElement(
             output_parameters_element, 'TemplateLayer',
             attrib={'Id': self.mask_filename})
-        
-        return tostring(request_element)
 
+        return tostring(request_element)

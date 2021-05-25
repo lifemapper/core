@@ -1,17 +1,18 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """This script calculates corrected P-values for F-pseudo values.
 """
 import argparse
 
-from LmCommon.common.matrix import Matrix
 from LmCommon.statistics.permutation_testing import correct_p_values
 from LmCompute.plugins.multi.mcpa.mcpa import get_p_values
+from lmpy import Matrix
+
 
 # .............................................................................
-if __name__ == "__main__":
+def main():
+    """Main method for script
+    """
     parser = argparse.ArgumentParser(
-                   description="This script calculates and corrects P-Values")
+        description="This script calculates and corrects P-Values")
 
     parser.add_argument(
         'observed_filename', type=str,
@@ -25,33 +26,36 @@ if __name__ == "__main__":
     parser.add_argument(
         'f_value_filename', nargs='+', type=str,
         help='A file of F-values or a stack of F-Values')
-   
+
     args = parser.parse_args()
-   
+
     # Load the matrices
     test_values = []
     num_values = 0
-   
+
     for f_val in args.f_value_filename:
         test_mtx = Matrix.load(f_val)
-      
+
         # Add the values to the test values list
         test_values.append(test_mtx)
-      
+
         # Add to the number of values
-        if test_mtx.data.ndim == 3: # Stack of values
-            num_values += test_mtx.data.shape[2]
+        if test_mtx.ndim == 3:  # Stack of values
+            num_values += test_mtx.shape[2]
         else:
             num_values += 1
-   
+
     obs_vals = Matrix.load(args.observed_filename)
     p_values = get_p_values(obs_vals, test_values,
                             num_permutations=num_values)
-   
-    with open(args.p_values_filename, 'w') as p_val_f:
-        p_values.save(p_val_f)
-      
+
+    p_values.write(args.p_values_filename)
+
     bh_values = correct_p_values(p_values)
-   
-    with open(args.bh_values_filename, 'w') as bh_val_f:
-        bh_values.save(bh_val_f)
+
+    bh_values.write(args.bh_values_filename)
+
+
+# .............................................................................
+if __name__ == "__main__":
+    main()

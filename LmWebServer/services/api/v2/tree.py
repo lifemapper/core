@@ -1,61 +1,59 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for trees
-"""
+"""This module provides REST services for trees"""
 import cherrypy
 import dendropy
-import mx.DateTime
 
 from LmCommon.common.lmconstants import HTTPStatus, DEFAULT_TREE_SCHEMA
+from LmCommon.common.time import gmt
 from LmServer.legion.tree import Tree
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from lmpy.tree import TreeWrapper
+
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathTreeId')
+@cherrypy.popargs('path_tree_id')
 class TreeService(LmService):
     """This class is responsible for tree services.
 
     Note:
         * The dispatcher is responsible for calling the correct method.
     """
+
     # ................................
-    def DELETE(self, pathTreeId):
+    def DELETE(self, path_tree_id):
         """Attempts to delete a tree
 
         Args:
-            pathTreeId (int) : The id of the tree to delete
+            path_tree_id (int) : The id of the tree to delete
         """
-        tree = self.scribe.getTree(treeId=pathTreeId)
+        tree = self.scribe.get_tree(tree_id=path_tree_id)
 
         if tree is None:
             raise cherrypy.HTTPError(
-                HTTPStatus.NOT_FOUND, "Tree {} not found".format(pathTreeId))
-        
+                HTTPStatus.NOT_FOUND, "Tree {} not found".format(path_tree_id))
+
         # If allowed to, delete
-        if checkUserPermission(self.getUserId(), tree, HTTPMethod.DELETE):
-            success = self.scribe.deleteObject(tree)
+        if check_user_permission(self.get_user_id(), tree, HTTPMethod.DELETE):
+            success = self.scribe.delete_object(tree)
             if success:
                 cherrypy.response.status = HTTPStatus.NO_CONTENT
-                return 
-            else:
-                # TODO: How can this happen?  Make sure we catch those cases and 
-                #             respond appropriately.  We don't want 500 errors
-                raise cherrypy.HTTPError(
-                    HTTPStatus.INTERNAL_SERVER_ERROR, 'Failed to delete tree')
-        else:
+                return
+
             raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User does not have permission to delete this tree')
+                HTTPStatus.INTERNAL_SERVER_ERROR, 'Failed to delete tree')
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User does not have permission to delete this tree')
 
     # ................................
-    @lmFormatter
-    def GET(self, pathTreeId=None, limit=100, offset=0, name=None,
-            isBinary=None, isUltrametric=None, hasBranchLengths=None,
-            metaString=None, afterTime=None, beforeTime=None, urlUser=None,
+    @lm_formatter
+    def GET(self, path_tree_id=None, limit=100, offset=0, name=None,
+            is_binary=None, is_ultrametric=None, has_branch_lengths=None,
+            meta_string=None, after_time=None, before_time=None, url_user=None,
             **params):
         """Attempts to retrieve a tree or list of trees matching parameters
 
@@ -63,24 +61,27 @@ class TreeService(LmService):
             Should we add the following parameters?
                 - minimum number of tips?
         """
-        if pathTreeId is None:
+        if path_tree_id is None:
             return self._list_trees(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                beforeTime=beforeTime, isBinary=isBinary,
-                isUltrametric=isUltrametric, hasBranchLengths=hasBranchLengths,
-                limit=limit, metaString=metaString, name=name, offset=offset)
-        elif pathTreeId.lower() == 'count':
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, is_binary=is_binary,
+                is_ultrametric=is_ultrametric,
+                has_branch_lengths=has_branch_lengths, limit=limit,
+                meta_string=meta_string, name=name, offset=offset)
+
+        if path_tree_id.lower() == 'count':
             return self._count_trees(
-                self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                beforeTime=beforeTime, isBinary=isBinary,
-                isUltrametric=isUltrametric, hasBranchLengths=hasBranchLengths,
-                metaString=metaString, name=name)
-        else:
-            return self._get_tree(pathTreeId)
-        
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                before_time=before_time, is_binary=is_binary,
+                is_ultrametric=is_ultrametric,
+                has_branch_lengths=has_branch_lengths, meta_string=meta_string,
+                name=name)
+
+        return self._get_tree(path_tree_id)
+
     # ................................
-    @lmFormatter
-    def POST(self, name=None, treeSchema=DEFAULT_TREE_SCHEMA, **params):
+    @lm_formatter
+    def POST(self, name=None, tree_schema=DEFAULT_TREE_SCHEMA, **params):
         """Posts a new tree
 
         Todo:
@@ -89,85 +90,89 @@ class TreeService(LmService):
         if name is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST, 'Must provide name for tree')
-        tree = dendropy.Tree.get(file=cherrypy.request.body, schema=treeSchema)
-        
-        new_tree = Tree(name, userId=self.getUserId())
-        updated_tree = self.scribe.findOrInsertTree(new_tree)
-        updated_tree.setTree(tree)
-        updated_tree.writeTree()
-        updated_tree.modTime = mx.DateTime.gmt().mjd
-        self.scribe.updateObject(updated_tree)
-        
+        tree = TreeWrapper.get(
+            file=cherrypy.request.body, schema=tree_schema)
+
+        new_tree = Tree(name, user_id=self.get_user_id())
+        updated_tree = self.scribe.find_or_insert_tree(new_tree)
+        updated_tree.set_tree(tree)
+        updated_tree.write_tree()
+        updated_tree.mod_time = gmt().mjd
+        self.scribe.update_object(updated_tree)
+
         return updated_tree
-    
+
     # ................................
-    def _count_trees(self, userId, afterTime=None, beforeTime=None,
-                     isBinary=None, isUltrametric=None, hasBranchLengths=None,
-                     metaString=None, name=None):
+    def _count_trees(self, user_id, after_time=None, before_time=None,
+                     is_binary=None, is_ultrametric=None,
+                     has_branch_lengths=None, meta_string=None, name=None):
         """Counts the tree objects matching the specified criteria
 
         Args:
-            userId (str) THe user to count trees for.  Note that this may not
+            user_id (str) THe user to count trees for.  Note that this may not
                 be the same user logged into the system.
-            afterTime (MJD float) : Return trees modified after this time.
-            beforeTime (MJD float) : Return trees modified before this time.
-            isBinary (bool) : Only return trees that are binary.
-            isUltrametric (bool) : Only return trees that are ultrametric.
-            hasBranchLengths (bool) : Only return trees that have branch
+            after_time (MJD float) : Return trees modified after this time.
+            before_time (MJD float) : Return trees modified before this time.
+            is_binary (bool) : Only return trees that are binary.
+            is_ultrametric (bool) : Only return trees that are ultrametric.
+            has_branch_lengths (bool) : Only return trees that have branch
                 lengths.
-            metaString () : ?
-            name (str) : Return trees with this name. 
+            meta_string () : ?
+            name (str) : Return trees with this name.
         """
-        tree_count = self.scribe.countTrees(
-            userId=userId, name=name, isBinary=isBinary,
-            isUltrametric=isUltrametric, hasBranchLengths=hasBranchLengths,
-            metastring=metaString, afterTime=afterTime, beforeTime=beforeTime)
-        # Format return
-        # Set headers
-        return {"count" : tree_count}
+        tree_count = self.scribe.count_trees(
+            user_id=user_id, name=name, is_binary=is_binary,
+            is_ultrametric=is_ultrametric,
+            has_branch_lengths=has_branch_lengths,
+            meta_string=meta_string, after_time=after_time,
+            before_time=before_time)
+
+        return {'count': tree_count}
 
     # ................................
-    def _get_tree(self, pathTreeId):
+    def _get_tree(self, path_tree_id):
         """Attempt to get a tree
 
         Args:
-            pathTreeId (int) : The database ID of the tree to retrieve.
+            path_tree_id (int) : The database ID of the tree to retrieve.
         """
-        tree = self.scribe.getTree(treeId=pathTreeId)
+        tree = self.scribe.get_tree(tree_id=path_tree_id)
         if tree is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND, 'Tree {} was not found'.format(
-                    pathTreeId))
-        if checkUserPermission(self.getUserId(), tree, HTTPMethod.GET):
+                    path_tree_id))
+        if check_user_permission(self.get_user_id(), tree, HTTPMethod.GET):
             return tree
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User {} does not have permission to access tree {}'.format(
-                    self.getUserId(), pathTreeId))
-    
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to access tree {}'.format(
+                self.get_user_id(), path_tree_id))
+
     # ................................
-    def _list_trees(self, userId, afterTime=None, beforeTime=None,
-                    isBinary=None, isUltrametric=None, hasBranchLengths=None,
-                    limit=100, metaString=None, name=None, offset=0):
+    def _list_trees(self, user_id, after_time=None, before_time=None,
+                    is_binary=None, is_ultrametric=None,
+                    has_branch_lengths=None, limit=100, meta_string=None,
+                    name=None, offset=0):
         """Lists tree objects matching the specified criteria.
 
         Args:
-            userId (str) THe user to count trees for.  Note that this may not
+            user_id (str) THe user to count trees for.  Note that this may not
                 be the same user logged into the system.
-            afterTime (MJD float) : Return trees modified after this time.
-            beforeTime (MJD float) : Return trees modified before this time.
-            isBinary (bool) : Only return trees that are binary.
-            isUltrametric (bool) : Only return trees that are ultrametric.
-            hasBranchLengths (bool) : Only return trees that have branch
+            after_time (MJD float) : Return trees modified after this time.
+            before_time (MJD float) : Return trees modified before this time.
+            is_binary (bool) : Only return trees that are binary.
+            is_ultrametric (bool) : Only return trees that are ultrametric.
+            has_branch_lengths (bool) : Only return trees that have branch
                 lengths.
             limit (int) : The maximum number of trees to return.
-            metaString () : ?
+            meta_string () : ?
             name (str) : Return trees with this name.
             offset (int) : Start returning trees this many from the first.
         """
-        tree_atoms = self.scribe.listTrees(
-            offset, limit, userId=userId, name=name, isBinary=isBinary,
-            isUltrametric=isUltrametric, hasBranchLengths=hasBranchLengths,
-            metastring=metaString, afterTime=afterTime, beforeTime=beforeTime)
+        tree_atoms = self.scribe.list_trees(
+            offset, limit, user_id=user_id, name=name, is_binary=is_binary,
+            is_ultrametric=is_ultrametric,
+            has_branch_lengths=has_branch_lengths, meta_string=meta_string,
+            after_time=after_time, before_time=before_time)
         return tree_atoms

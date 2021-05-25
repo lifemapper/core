@@ -1,252 +1,67 @@
 """Module containing multi-species command wrappers
 """
 from LmBackend.command.base import _LmCommand
-from LmBackend.common.lmconstants import CMD_PYBIN, MULTI_SPECIES_SCRIPTS_DIR
+from LmBackend.common.lmconstants import MULTI_SPECIES_SCRIPTS_DIR
 
-# .............................................................................
-class BuildShapegridCommand(_LmCommand):
-    """This command will build a shapegrid
-
-    Todo:
-        * Document arguments
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'build_shapegrid.py'
-
-    # ................................
-    def __init__(self, shapegridFilename, minX, minY, maxX, maxY, cellSize, 
-                     epsg, numSides, cutoutWKTFilename=None):
-        """Construct the command object
-        """
-        _LmCommand.__init__(self)
-        self.outputs.append(shapegridFilename)
-        
-        self.args = '{} {} {} {} {} {} {} {}'.format(
-            shapegridFilename, minX, minY, maxX, maxY, cellSize, epsg,
-            numSides)
-        
-        if cutoutWKTFilename is not None:
-            self.inputs.append(cutoutWKTFilename)
-            self.opt_args = ' --cutoutWktFn={}'.format(cutoutWKTFilename)
-
-# .............................................................................
-class CalculateStatsCommand(_LmCommand):
-    """This command will calculate statistics for a PAM
-
-    Todo:
-        * Determine if we want to continue supporting this as a stand alone
-            command since MultiSpeciesRunCommand provides the same
-            functionality
-        * Document arguments
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'calculate_pam_stats.py'
-
-    # ................................
-    def __init__(self, pamFilename, sitesFilename, speciesFilename, 
-                 diversityFilename, treeFilename=None, schluter=False,
-                 speciesCovarianceFilename=None, sitesCovarianceFilename=None):
-        """Construct the command object
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pamFilename)
-        self.outputs.extend([sitesFilename, speciesFilename, diversityFilename])
-        
-        self.args = '{} {} {} {}'.format(
-            pamFilename, sitesFilename, speciesFilename, diversityFilename)
-
-        if treeFilename is not None:
-            self.inputs.append(treeFilename)
-            self.opt_args += ' -t {}'.format(treeFilename)
-            
-        if schluter:
-            self.opt_args += ' --schluter'
-            
-        if speciesCovarianceFilename is not None:
-            self.outputs.append(speciesCovarianceFilename)
-            self.opt_args += ' --speciesCovFn={}'.format(
-                speciesCovarianceFilename)
-        
-        if sitesCovarianceFilename is not None:
-            self.outputs.append(sitesCovarianceFilename)
-            self.opt_args += ' --sitCovFn={}'.format(sitesCovarianceFilename)
 
 # .............................................................................
 class CreateAncestralPamCommand(_LmCommand):
     """This command will create an ancestral PAM from a PAM and tree
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'create_ancestral_pam.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'create_ancestral_pam.py'
 
     # ................................
-    def __init__(self, pamFilename, treeFilename, outputFilename):
+    def __init__(self, pam_file_name, tree_file_name, output_file_name):
         """Construct the command object
 
         Args:
-            pamFilename: The file path to the PAM to use
-            treeFilename: The file path to the tree to use
-            outputFilename: The file path to store the output matrix
+            pam_file_name: The file path to the PAM to use
+            tree_file_name: The file path to the tree to use
+            output_file_name: The file path to store the output matrix
         """
         _LmCommand.__init__(self)
-        self.inputs.extend([pamFilename, treeFilename])
-        self.outputs.append(outputFilename)
+        self.inputs.extend([pam_file_name, tree_file_name])
+        self.outputs.append(output_file_name)
         self.args = '{} {} {}'.format(
-            pamFilename, treeFilename, outputFilename)
+            pam_file_name, tree_file_name, output_file_name)
 
-# .............................................................................
-class EncodeHypothesesCommand(_LmCommand):
-    """This command will encode biogeographic hypotheses with a shapegrid
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'encode_hypotheses.py'
-
-    # ................................
-    def __init__(self, shapegridFilename, layerFilenames, outputFilename,
-                 eventField=None):
-        """Construct the command object
-
-        Args:
-            shapegridFilename: The file location of the shapegrid to use for
-                encoding
-            layerFilenames: File location(s) of layers to encode
-            outputFilename: The file location to store the encoded matrix
-            eventField: Use this field in the layers to determine events
-        """
-        _LmCommand.__init__(self)
-        
-        self.sgFn = shapegridFilename
-        if not isinstance(layerFilenames, list):
-            layerFilenames = [layerFilenames]
-
-        self.args = '{} {} {}'.format(
-            shapegridFilename, outputFilename, ' '.join(layerFilenames))
-        if eventField is not None:
-            self.opt_args += ' -e {}'.format(eventField)
-
-        self.inputs.append(shapegridFilename)
-        self.inputs.extend(layerFilenames)
-        
-        self.outputs.append(outputFilename)
 
 # .............................................................................
 class EncodePhylogenyCommand(_LmCommand):
     """This command will encode a tree and PAM into a matrix
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'encode_phylogeny.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'encode_phylogeny.py'
 
     # ................................
-    def __init__(self, treeFilename, pamFilename, outMtxFilename,
-                 mashedPotato=None):
+    def __init__(self, tree_file_name, pam_file_name, out_mtx_file_name):
         """Construct the command object
 
         Args:
-            treeFilename: The file location of the tree to use for encoding
-            pamFilename: The file location of the PAM to use for encoding
-            outMtxFilename: The file location to write the encoded tree
-            mashedPotato: The file location of the mashed potato
+            tree_file_name: The file location of the tree to use for encoding
+            pam_file_name: The file location of the PAM to use for encoding
+            out_mtx_file_name: The file location to write the encoded tree
 
         Todo:
-            * Evaluate if we can remove mashedPotato
+            * Evaluate if we can remove mashed_potato_file_name
         """
         _LmCommand.__init__(self)
-        
-        self.inputs.extend([treeFilename, pamFilename])
-        self.outputs.append(outMtxFilename)
-        
+
+        self.inputs.extend([tree_file_name, pam_file_name])
+        self.outputs.append(out_mtx_file_name)
+
         self.args = '{} {} {}'.format(
-            treeFilename, pamFilename, outMtxFilename)
-        if mashedPotato is not None:
-            self.opt_args += ' -m {}'.format(mashedPotato)
-            self.inputs.append(mashedPotato)
-        
-# # .............................................................................
-# class McpaCorrectPValuesCommand(_LmCommand):
-#     """This command will correct the P-values generated by MCPA
-#     """
-#     relDir = MULTI_SPECIES_SCRIPTS_DIR
-#     scriptName = 'mcpa_correct_pvalues.py'
-# 
-#     # ................................
-#     def __init__(self, observedFilename, outPvaluesFilename, bhValuesFilename,
-#                  fValueFilenames):
-#         """Construct the command object
-# 
-#         Args:
-#             observedFilename: The file location of the observed values to test
-#             outPvaluesFilename: The file location to store the P-values
-#             bhValuesFilename: The file location to store the Benjamini-Hochberg
-#                 ouptut matrix used for determining significant results
-#             fValueFilenames: The file location or list of file locations of
-#                 F-values or a stack of F-values to correct
-#         """
-#         _LmCommand.__init__(self)
-#         
-#         if not isinstance(fValueFilenames, list):
-#             fValueFilenames = [fValueFilenames]
-# 
-#         self.inputs.append(observedFilename)
-#         self.inputs.extend(fValueFilenames)
-#         self.outputs.extend([outPvaluesFilename, bhValuesFilename])
-#         
-#         self.args = '{} {} {} {}'.format(
-#             observedFilename, outPvaluesFilename, bhValuesFilename, 
-#             ' '.join(fValueFilenames))
+            tree_file_name, pam_file_name, out_mtx_file_name)
 
-# .............................................................................
-class McpaRunCommand(_LmCommand):
-    """This command will perform one run of MCPA
-
-    Note:
-        This will likely be obsolete in favor of MultiSpeciesRun
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'mcpa_run.py'
-
-    # ................................
-    def __init__(self, pam_filename, tree_mtx_filename, grim_filename,
-                 bg_filename, obs_filename=None, f_mtx_filename=None,
-                 randomize=False, num_permutations=1):
-        """Construct the command object
-
-        Args:
-            pam_filename: The file location of the PAM Matrix to use
-            tree_mtx_filename: The file location of the encoded phylogenetic
-                tree Matrix to use
-            grim_filename: The file location of the grim Matrix
-            bg_filename: The file location of the encoded biogeographic
-                hypotheses Matrix to use
-            obs_filename: If provided, write the observed semi-partial
-                correlation values Matrix here (only for observed runs).
-            f_mtx_filename: If provided, write the F-values Matrix, or stack,
-                to this location
-            randomize: If True, perform a randomized run
-            num_permutations: If randomizing, perform this many runs in this
-                call
-        """
-        _LmCommand.__init__(self)
-        self.args = ' {} {} {} {}'.format(
-            pam_filename, tree_mtx_filename, grim_filename, bg_filename)
-        self.inputs.extend(
-            [pam_filename, tree_mtx_filename, grim_filename, bg_filename])
-        
-        if obs_filename is not None:
-            self.outputs.append(obs_filename)
-            self.opt_args += ' -co {}'.format(obs_filename)
-     
-        if f_mtx_filename is not None:
-            self.outputs.append(f_mtx_filename)
-            self.opt_args += ' -fo {}'.format(f_mtx_filename)
-     
-        if randomize:
-            self.opt_args += ' --randomize -n {}'.format(num_permutations)
 
 # .............................................................................
 class MultiSpeciesRunCommand(_LmCommand):
     """This command performs an observed or randomized multi-species run
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'multi_species_run.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'multi_species_run.py'
+
     # ................................
     def __init__(self, pam_filename, num_permutations, do_pam_stats, do_mcpa,
                  parallel=False, grim_filename=None, biogeo_filename=None,
@@ -277,14 +92,14 @@ class MultiSpeciesRunCommand(_LmCommand):
                 encoded phylogenetic tree matrix to be used in MCPA
             tree_filename (:obj: `str`, optional): The file location of the
                 tree to be used for PAM stats
-            diversity_stats_filename (:obj: `str`, optional): The file location
-                to store PAM diversity statistics
+            diversity_stats_filename (:obj: `str`, optional): The file
+                location to store PAM diversity statistics
             site_stats_filename (:obj: `str`, optional): The file location to
                 store PAM site statistics
             species_stats_filename (:obj: `str`, optional): The file location
                 to store PAM species statistics
-            site_covariance_filename (:obj: `str`, optional): The file location
-                to store PAM site covariance matrix
+            site_covariance_filename (:obj: `str`, optional): The file
+                location to store PAM site covariance matrix
             species_covariance_filename (:obj: `str`, optional): The file
                 location to store PAM species covariance matrix
             mcpa_output_filename (:obj: `str`, optional): The file location to
@@ -314,7 +129,7 @@ class MultiSpeciesRunCommand(_LmCommand):
             self.opt_args += ' -t {}'.format(tree_filename)
         if pam_success_filename is not None:
             self.inputs.append(pam_success_filename)
-            
+
         # Outputs
         if diversity_stats_filename is not None:
             self.outputs.append(diversity_stats_filename)
@@ -345,163 +160,126 @@ class MultiSpeciesRunCommand(_LmCommand):
             self.opt_args += ' --mcpa_f_matrix_filename={}'.format(
                 mcpa_f_matrix_filename)
 
+
 # .............................................................................
 class OccurrenceBucketeerCommand(_LmCommand):
     """This command will split a CSV into buckets based on the group field
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'occurrence_bucketeer.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'occurrence_bucketeer.py'
 
     # ................................
-    def __init__(self, outBasename, groupPosition, inFilename, position=None,
-                 width=None, headerRow=False):
+    def __init__(self, out_base_name, group_position, in_file_name,
+                 position=None, width=None, header_row=False):
         """Construct the command object
 
         Args:
-            outBasename: The base name to use for output files
-            groupPosition: The field to use for grouping / bucketing
-            inFilename: A file location or list of file locations to use as
+            out_base_name: The base name to use for output files
+            group_position: The field to use for grouping / bucketing
+            in_file_name: A file location or list of file locations to use as
                 input
             position: The position in the group field to use for bucketing
             width: The number of characters to use for bucketing
-            headerRow: Does the input file have a header row?
+            header_row: Does the input file have a header row?
         """
         _LmCommand.__init__(self)
-        
-        if not isinstance(inFilename, list):
-            inFilename = [inFilename]
-        
-        self.inputs.extend(inFilename)
-        
+
+        if not isinstance(in_file_name, list):
+            in_file_name = [in_file_name]
+
+        self.inputs.extend(in_file_name)
+
         # Outputs are unknown unless you know the data
-        #self.outputs.append()
-        
+        # self.outputs.append()
+
         self.args = '{} {} {}'.format(
-            outBasename, groupPosition, ' '.join(inFilename))
-        
+            out_base_name, group_position, ' '.join(in_file_name))
+
         if position is not None:
             self.opt_args += ' -pos {}'.format(position)
-        
+
         if width is not None:
             self.opt_args += ' -num {}'.format(width)
-        
-        if headerRow:
+
+        if header_row:
             self.opt_args += ' -header'
+
 
 # .............................................................................
 class OccurrenceSorterCommand(_LmCommand):
     """This command will sort a CSV file on a group field
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'occurrence_sorter.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'occurrence_sorter.py'
 
     # ................................
-    def __init__(self, inFilename, outFilename, groupPosition):
+    def __init__(self, in_file_name, out_file_name, group_position):
         """Construct the command object
 
         Args:
-            inFilename: The CSV input file to sort
-            outFilename: The file location of the output CSV
-            groupPosition: The field position to use for sorting
+            in_file_name: The CSV input file to sort
+            out_file_name: The file location of the output CSV
+            group_position: The field position to use for sorting
         """
         _LmCommand.__init__(self)
-        self.inputs.append(inFilename)
-        self.outputs.append(outFilename)
-        
-        self.args = '{} {} {}'.format(outFilename, groupPosition, inFilename)
+        self.inputs.append(in_file_name)
+        self.outputs.append(out_file_name)
+
+        self.args = '{} {} {}'.format(
+            out_file_name, group_position, in_file_name)
+
 
 # .............................................................................
 class OccurrenceSplitterCommand(_LmCommand):
     """This command will split a sorted CSV file on a group field
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'occurrence_splitter.py'
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'occurrence_splitter.py'
 
     # ................................
-    def __init__(self, groupPosition, inFilename, outDir, prefix=None):
+    def __init__(self, group_position, in_file_name, out_dir, prefix=None):
         """Construct the command object
 
         Args:
-            groupPosition: The field to group on
-            inFilename: The input CSV file
-            outDir: A directory location to write the output files
-            prefix: A filename prefix to use for the output files
+            group_position: The field to group on
+            in_file_name: The input CSV file
+            out_dir: A directory location to write the output files
+            prefix: A file name prefix to use for the output files
         """
         _LmCommand.__init__(self)
-        self.inputs.append(inFilename)
+        self.inputs.append(in_file_name)
         # output files are not deterministic from inputs, need to look at file
-        #self.outputs.append()
-        
-        self.args = '{} {} {}'.format(groupPosition, inFilename, outDir)
+        # self.outputs.append()
+
+        self.args = '{} {} {}'.format(group_position, in_file_name, out_dir)
         if prefix is not None:
             self.opt_args += ' -p {}'.format(prefix)
-        
-# .............................................................................
-class RandomizeGradyCommand(_LmCommand):
-    """This command will randomize a PAM using CJ's method
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'grady_randomize.py'
 
-    # ................................
-    def __init__(self, pamFilename, randPamFilename):
-        """Construct the command object
-
-        Args:
-            pamFilename: The file location of the PAM to randomize
-            randPamFilename: The file location to write the randomized PAM
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pamFilename)
-        self.outputs.append(randPamFilename)
-        
-        self.args = '{} {}'.format(pamFilename, randPamFilename)
-
-# .............................................................................
-class RandomizeSwapCommand(_LmCommand):
-    """This command will randomize a PAM using the swap method
-    """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'swap_randomize.py'
-
-    # ................................
-    def __init__(self, pamFilename, numSwaps, outFilename):
-        """Construct the command object
-
-        Args:
-            pamFilename: The file location of the PAM
-            numSwaps: The number of successful swaps to perform
-            outFilename: The file location to write the randomized PAM
-        """
-        _LmCommand.__init__(self)
-        self.inputs.append(pamFilename)
-        self.outputs.append(outFilename)
-        
-        self.args = '{} {} {}'.format(pamFilename, numSwaps, outFilename)
 
 # .............................................................................
 class SyncPamAndTreeCommand(_LmCommand):
     """This command synchronizes a PAM and Tree for MCPA computations
     """
-    relDir = MULTI_SPECIES_SCRIPTS_DIR
-    scriptName = 'sync_pam_and_tree.py'
-    
+    relative_directory = MULTI_SPECIES_SCRIPTS_DIR
+    script_name = 'sync_pam_and_tree.py'
+
     # ................................
-    def __init__(self, inPamFilename, outPamFilename, inTreeFilename,
-                 outTreeFilename, metadataFilename):
+    def __init__(self, in_pam_file_name, out_pam_file_name, in_tree_file_name,
+                 out_tree_file_name, metadata_file_name):
         """Construct the command object
 
         Args:
-            inPamFilename: The file location of the PAM to prune
-            outPamFilename: The file location to write the pruned PAM
-            inTreeFilename: The file location of the tree to prune
-            outTreeFilename: The file location to write the pruned tree
-            metadataFilename: The file location to write the summary metadata
+            in_pam_file_name: The file location of the PAM to prune
+            out_pam_file_name: The file location to write the pruned PAM
+            in_tree_file_name: The file location of the tree to prune
+            out_tree_file_name: The file location to write the pruned tree
+            metadata_file_name: The file location to write the summary metadata
         """
         _LmCommand.__init__(self)
-        self.inputs.extend([inPamFilename, inTreeFilename])
-        self.outputs.extend([outPamFilename, outTreeFilename, metadataFilename])
-        
+        self.inputs.extend([in_pam_file_name, in_tree_file_name])
+        self.outputs.extend(
+            [out_pam_file_name, out_tree_file_name, metadata_file_name])
+
         self.args = '{} {} {} {} {}'.format(
-            inPamFilename, outPamFilename, inTreeFilename, outTreeFilename,
-            metadataFilename)
+            in_pam_file_name, out_pam_file_name, in_tree_file_name,
+            out_tree_file_name, metadata_file_name)

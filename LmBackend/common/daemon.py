@@ -9,25 +9,28 @@ import time
 
 from LmCommon.common.log import DaemonLogger
 
-# ............................................................................. 
-class DaemonCommands(object):
+
+# .............................................................................
+class DaemonCommands:
     """Class containing command constants
     """
     START = 'start'
     STOP = 'stop'
     RESTART = 'restart'
-    
-# ............................................................................. 
-class Daemon(object):
+
+
+# .............................................................................
+class Daemon:
     """A generic daemon class.
 
     Usage: subclass the Daemon class and override the run() method
     """
+
     # .............................
     def __init__(self, pidfile, log=None):
         self.pidfile = pidfile
         # Default variable to indicate that the process should continue
-        self.keepRunning = True 
+        self.keep_running = True
         # Register signals
         if log is not None:
             self.log = log
@@ -38,9 +41,9 @@ class Daemon(object):
             else:
                 pid = 'unknown'
             self.log = DaemonLogger(pid)
-        
-        signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
-        signal.signal(signal.SIGUSR1, self._receiveSignal) # Update signal
+
+        signal.signal(signal.SIGTERM, self._receive_signal)  # Stop signal
+        signal.signal(signal.SIGUSR1, self._receive_signal)  # Update signal
 
     # ..........................................................................
 
@@ -49,9 +52,11 @@ class Daemon(object):
     # ============================
     # .............................
     def daemonize(self):
-        """
-        @summary: do the UNIX double-fork magic, see Stevens' "Advanced
-                Programming in the UNIX Environment" for details (ISBN 0201563177)
+        """Do the UNIX double-fork magic
+
+        See:
+            Stevens' "Advanced Programming in the UNIX Environment"
+                (ISBN 0201563177)
                 http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         """
         try:
@@ -59,40 +64,43 @@ class Daemon(object):
             if pid > 0:
                 # exit first parent
                 sys.exit(0)
-        except OSError, e:
-            self.log.error("Fork #1 failed: %d (%s)" % e.errno, e.strerror)
+        except OSError as err:
+            self.log.error(
+                'Fork #1 failed: {} ({})'.format(err.errno, err.strerror))
             sys.exit(1)
-         
+
         # decouple from parent environment
         os.chdir("/")
         os.setsid()
         os.umask(0)
-         
+
         # do second fork
         try:
             pid = os.fork()
             if pid > 0:
                 # exit from second parent
                 sys.exit(0)
-        except OSError, e:
-            self.log.error("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
+        except OSError as err:
+            self.log.error(
+                'Fork #2 failed: {} ({})'.format(err.errno, err.strerror))
             sys.exit(1)
-        
+
         # redirect standard file descriptors
-        
+
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
-         
+        with open(self.pidfile, 'w') as pid_out_f:
+            pid_out_f.write('{}\n'.format(pid))
+
     # .............................
     def delpid(self):
         """Final cleanup operation of removing the pid file
         """
         os.remove(self.pidfile)
- 
+
     # .............................
-    def _receiveSignal(self, sig_num, stack):
+    def _receive_signal(self, sig_num, stack):
         """Handler used to receive signals
 
         Args:
@@ -100,14 +108,15 @@ class Daemon(object):
             stack: The stack at the time of the signal
         """
         if sig_num == signal.SIGUSR1:
-            self.onUpdate()
-            signal.signal(signal.SIGUSR1, self._receiveSignal) # Update signal
+            self.on_update()
+            # Update signal
+            signal.signal(signal.SIGUSR1, self._receive_signal)
         elif sig_num == signal.SIGTERM:
-            self.onShutdown()
+            self.on_shutdown()
         else:
-            message = 'Unknown signal: {}'.format(sig_num)
+            message = 'Unknown signal: {}, stack: {}'.format(sig_num, stack)
             self.log.error(message)
-    
+
     # ..........................................................................
 
     # ============================
@@ -119,24 +128,23 @@ class Daemon(object):
         """
         # Check for a pidfile to see if the daemon already runs
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pid_f:
+                pid = int(pid_f.read().strip())
         except IOError:
             pid = None
-        
+
         if pid:
             msg = 'pidfile {} already exists. Deamon already running?'.format(
                 self.pidfile)
             self.log.error(msg)
             print(msg)
             sys.exit(1)
-        
+
         # Start the daemon
         self.daemonize()
         self.initialize()
         self.run()
-    
+
     # .............................
     def stop(self):
         """Stop the daemon
@@ -148,14 +156,14 @@ class Daemon(object):
                 pid = int(in_pid.read().strip())
         except IOError:
             pass
-        
+
         if not pid:
             msg = 'pidfile {} does not exist. Daemon not running?'.format(
                 self.pidfile)
             self.log.error(msg)
-            return # not an error in a restart
-        
-        # Try killing the daemon process         
+            return  # not an error in a restart
+
+        # Try killing the daemon process
         try:
             max_time = 60  # Try to kill process for 60 seconds
             wait_time = 0
@@ -173,43 +181,42 @@ class Daemon(object):
             else:
                 self.log.error(str(err))
                 sys.exit(1)
-    
+
     # .............................
     def restart(self):
         """Restart the daemon
         """
         self.stop()
         self.start()
-    
+
     # .............................
     def status(self):
         """Check the status of the daemon
         """
         # Check for a pidfile to see if the daemon is running
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pid_f:
+                pid = int(pid_f.read().strip())
         except IOError:
             pid = None
-        
+
         if pid:
             cmd = 'ps -Alf | grep {} | grep -v grep | wc -l'.format(pid)
-            info, err = subprocess.Popen(
+            info, _ = subprocess.Popen(
                 cmd, shell=True, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE).communicate()
             count = int(info.rstrip('\n'))
-            
+
             if count == 1:
                 msg = 'Status: Process {} is running at PID {}'.format(
                     self.__class__.__name__, pid)
             else:
-                msg = ('Process {} is not running at PID {},'
-                       'but lock file {} exists').format(
-                           self.__class__.__name__, pid)
+                msg = (
+                    'Process {} is not running at PID {}, but {}'.format(
+                        self.__class__.__name__, pid, 'lock file exists'))
         else:
             msg = 'Process {} is not running'.format(self.__class__.__name__)
-            
+
         self.log.info(msg)
         print(msg)
         sys.exit(1)
@@ -224,30 +231,29 @@ class Daemon(object):
         """
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with open(self.pidfile, 'r') as pid_f:
+                pid = int(pid_f.read().strip())
         except IOError:
             pid = None
-        
+
         if not pid:
             msg = 'pidfile {} does not exist.  Daemon not running?'.format(
                 self.pidfile)
             self.log.error(msg)
-            return # not an error in a restart
-        
-        # Try killing the daemon process         
+            return  # not an error in a restart
+
+        # Try killing the daemon process
         try:
             os.kill(pid, signal.SIGUSR1)
-        except OSError, err:
+        except OSError as err:
             err = str(err)
             if err.find("No such process") > 0:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:
-                print(str(err))
+                print(err)
                 sys.exit(1)
-    
+
     # ..........................................................................
 
     # ======================
@@ -257,70 +263,21 @@ class Daemon(object):
     def initialize(self):
         """This function should be used to initialize the daemon process
         """
-        pass
-    
+
     # .............................
-    def onUpdate(self):
+    def on_update(self):
         """Do whatever is necessary to update the daemon
         """
-        pass
-    
+
     # .............................
-    def onShutdown(self):
+    def on_shutdown(self):
         """Perform a graceful shutdown operation of the daemon process.
         """
-        self.keepRunning = False
-    
+        self.keep_running = False
+
     # .............................
     def run(self):
         """Main run method for a daemon process.
         """
-        #while self.keepRunning:
-            # do stuff
-        pass
-    
-# .............................................................................
-# Example usage
-# .............................................................................
-# class MyDaemon(Daemon):
-#     # .............................
-#     def initialize(self):
-#         logging.basicConfig()
-#     
-#     # .............................
-#     def run(self):
-#         x = 0
-#         while self.keepRunning:
-#             self.log.debug("On x = %s" % x)
-#             x += 1
-#             sleep(1)
-#         logging.debug("self.cont: %s" % self.cont)
-#     
-#     # .............................
-#     def onUpdate(self):
-#         logging.debug("Update signal caught!")
-#         
-#     # .............................
-#     def onShutdown(self):
-#         logging.debug("Shutdown signal caught!")
-#         Daemon.onShutdown(self)
-# .............................................................................
-# if __name__ == "__main__":
-#     
-#     daemon = MyDaemon('/tmp/my-daemon.pid')
-#     
-#     if len(sys.argv) == 2:
-#         if sys.argv[1].lower() == 'start':
-#             daemon.start()
-#         elif sys.argv[1].lower() == 'stop':
-#             daemon.stop()
-#         elif sys.argv[1].lower() == 'update':
-#             daemon.update()
-#         elif sys.argv[1].lower() == 'restart':
-#             daemon.restart()
-#         else:
-#             print "Unknown command"
-#             sys.exit(2)
-#     else:
-#         print "usage: %s start|stop|restart|update" % sys.argv[0]
-#         sys.exit(2)
+        # while self.keep_running:
+        # do stuff

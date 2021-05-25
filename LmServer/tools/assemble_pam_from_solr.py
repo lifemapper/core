@@ -8,14 +8,14 @@ import argparse
 import numpy as np
 from osgeo import ogr
 
-from LmCommon.common.lmconstants import LMFormat, JobStatus
-from LmCommon.compression.binaryList import decompress
-from LmCommon.common.readyfile import readyFilename
-
+from LmCommon.common.lmconstants import LMFormat, JobStatus, ENCODING
+from LmCommon.common.ready_file import ready_filename
+from LmCommon.compression.binary_list import decompress
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.log import ConsoleLogger
-from LmServer.common.solr import queryArchiveIndex
-from LmServer.db.borgscribe import BorgScribe
+from LmServer.common.solr import query_archive_index
+from LmServer.db.borg_scribe import BorgScribe
+
 
 # .............................................................................
 def _get_row_headers_from_shapegrid(shapegrid_filename):
@@ -26,18 +26,19 @@ def _get_row_headers_from_shapegrid(shapegrid_filename):
             get headers
     """
     ogr.RegisterAll()
-    drv = ogr.GetDriverByName(LMFormat.getDefaultOGR().driver)
-    ds = drv.Open(shapegrid_filename)
-    lyr = ds.GetLayer(0)
-    
+    drv = ogr.GetDriverByName(LMFormat.get_default_ogr().driver)
+    dataset = drv.Open(shapegrid_filename)
+    lyr = dataset.GetLayer(0)
+
     row_headers = []
-    
+
     for j in range(lyr.GetFeatureCount()):
-        curFeat = lyr.GetFeature(j)
-        siteIdx = curFeat.GetFID()
-        x, y = curFeat.geometry().Centroid().GetPoint_2D()
-        row_headers.append((siteIdx, x, y))
+        cur_feat = lyr.GetFeature(j)
+        site_idx = cur_feat.GetFID()
+        x_coord, y_coord = cur_feat.geometry().Centroid().GetPoint_2D()
+        row_headers.append((site_idx, x_coord, y_coord))
     return sorted(row_headers)
+
 
 # .............................................................................
 def assemble_pam(pam_id):
@@ -50,50 +51,51 @@ def assemble_pam(pam_id):
         * Use Solr parameter for PAM id once that is in full use
     """
     scribe = BorgScribe(ConsoleLogger())
-    scribe.openConnections()
-    
-    pam = scribe.getMatrix(mtxId=pam_id)
-    
-    matches = queryArchiveIndex(gridSetId=pam.gridsetId, userId=pam.user)
-    mtx_cols = scribe.listMatrixColumns(
-        0, 10000, matrixId=pam.getId(), userId=pam.user)
-    mtx_col_ids = [int(c.id) for c in mtx_cols]
+    scribe.open_connections()
+
+    pam = scribe.get_matrix(mtx_id=pam_id)
+
+    matches = query_archive_index(gridset_id=pam.gridset_id, user_id=pam.user)
+    mtx_cols = scribe.list_matrix_columns(
+        0, 10000, matrix_id=pam.get_id(), user_id=pam.user)
+    mtx_col_ids = [int(c.get_id()) for c in mtx_cols]
 
     # ......................
     def _match_in_column_ids(match):
         """Filter function to determine if a matrix column is in the PAM
         """
-        return int(match[SOLR_FIELDS.ID]) in mtx_col_ids 
+        return int(match[SOLR_FIELDS.ID]) in mtx_col_ids
+
     # Filter matches
-    filtered_matches = filter(_match_in_column_ids, matches)
-    
+    filtered_matches = list(filter(_match_in_column_ids, matches))
+
     # Create empty PAM
-    shapegrid = pam.getShapegrid()
-    rows = shapegrid.featureCount
-    
-    row_headers = _get_row_headers_from_shapegrid(shapegrid.getDLocation())
-    
+    shapegrid = pam.get_shapegrid()
+    rows = shapegrid.feature_count
+
+    row_headers = _get_row_headers_from_shapegrid(shapegrid.get_dlocation())
+
     pam_data = np.zeros((rows, len(filtered_matches)), dtype=np.int)
 
     # Decompress
     column_headers = []
-    for i in range(len(filtered_matches)):
-        match = filtered_matches[i]
+    for i, match in enumerate(filtered_matches):
         column_headers.append(match[SOLR_FIELDS.SQUID])
         pam_data[:, i] = decompress(match[SOLR_FIELDS.COMPRESSED_PAV])
-    
-    pam.data = pam_data
-    pam.setHeaders({'0' : row_headers, '1' : column_headers})
-    
-    pam.updateStatus(JobStatus.COMPLETE)
-    scribe.updateObject(pam)
-    with open(pam.getDLocation(), 'w') as out_f:
-        pam.save(out_f)
-    scribe.closeConnections()
+
+    pam.set_data(pam_data, headers={'0': row_headers, '1': column_headers})
+
+    pam.update_status(JobStatus.COMPLETE)
+    scribe.update_object(pam)
+    pam.write(pam.get_dlocation())
+    scribe.close_connections()
     return pam
 
+
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method of script
+    """
     parser = argparse.ArgumentParser(
         description='Assemble a PAM from Solr matches')
     parser.add_argument(
@@ -101,21 +103,23 @@ if __name__ == '__main__':
     parser.add_argument(
         'success_filename', type=str,
         help='File location to write success status')
-    
+
     args = parser.parse_args()
-    
+
     pam_id = args.pam_id
     try:
-        pam = assemble_pam(pam_id)
+        _pam = assemble_pam(pam_id)
         success = 1
     except Exception as e:
-        print(str(e))
+        print((str(e)))
         success = 0
+        raise e
 
-    readyFilename(args.success_filename)
-    with open(args.success_filename, 'w') as out_f:
+    ready_filename(args.success_filename)
+    with open(args.success_filename, 'w', encoding=ENCODING) as out_f:
         out_f.write(str(success))
 
-    
-    
-    
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

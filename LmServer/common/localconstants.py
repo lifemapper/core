@@ -1,91 +1,72 @@
-"""
-@summary: Local configuration values for LmServer
-@license: gpl2
-@copyright: Copyright (C) 2015, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Local configuration values for LmServer
 """
 import os
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (SERVER_ENV_HEADING, BoomKeys,
-      SERVER_PIPELINE_HEADING, SERVER_DB_HEADING, SERVER_MATT_DAEMON_HEADING)
+from LmCommon.common.lmconstants import (
+    SERVER_ENV_HEADING, BoomKeys, SERVER_PIPELINE_HEADING, SERVER_DB_HEADING,
+    SERVER_MATT_DAEMON_HEADING)
 
-cfg = Config()
+CFG = Config()
 
 # LmServer (LmDbServer and LmWebServer)
-PUBLIC_FQDN = cfg.get(SERVER_ENV_HEADING, 'PUBLIC_FQDN')
-PUBLIC_USER = cfg.get(SERVER_ENV_HEADING, 'PUBLIC_USER')
-APP_PATH = cfg.get(SERVER_ENV_HEADING, 'APP_PATH')
-DATA_PATH = cfg.get(SERVER_ENV_HEADING, 'DATA_PATH')
-SHARED_DATA_PATH = cfg.get(SERVER_ENV_HEADING, "SHARED_DATA_PATH")
-SCRATCH_PATH = cfg.get(SERVER_ENV_HEADING, 'SCRATCH_PATH')
-PID_PATH = cfg.get(SERVER_ENV_HEADING, 'PID_PATH')
+PUBLIC_FQDN = CFG.get(SERVER_ENV_HEADING, 'PUBLIC_FQDN')
+PUBLIC_USER = CFG.get(SERVER_ENV_HEADING, 'PUBLIC_USER')
+APP_PATH = CFG.get(SERVER_ENV_HEADING, 'APP_PATH')
+DATA_PATH = CFG.get(SERVER_ENV_HEADING, 'DATA_PATH')
+SHARED_DATA_PATH = CFG.get(SERVER_ENV_HEADING, "SHARED_DATA_PATH")
+SCRATCH_PATH = CFG.get(SERVER_ENV_HEADING, 'SCRATCH_PATH')
+PID_PATH = CFG.get(SERVER_ENV_HEADING, 'PID_PATH')
 BOOM_PID_FILE = os.path.join(PID_PATH, 'daboom.pid')
-LM_DISK = cfg.get(SERVER_ENV_HEADING, 'LM_DISK')
-SPECIES_DIR = cfg.get(SERVER_ENV_HEADING, 'SPECIES_DATA_DIR')
+LM_DISK = CFG.get(SERVER_ENV_HEADING, 'LM_DISK')
+SPECIES_DIR = CFG.get(SERVER_ENV_HEADING, 'SPECIES_DATA_DIR')
 
-# TEMP_PATH = cfg.get(SERVER_ENV_HEADING, 'TEMP_PATH')
+# TEMP_PATH = CFG.get(SERVER_ENV_HEADING, 'TEMP_PATH')
 
-SMTP_SERVER = cfg.get(SERVER_ENV_HEADING, 'SMTP_SERVER')
-SMTP_SENDER = cfg.get(SERVER_ENV_HEADING, 'SMTP_SENDER')
-WEBSERVICES_ROOT = cfg.get(SERVER_ENV_HEADING, 'WEBSERVICES_ROOT')
+SMTP_SERVER = CFG.get(SERVER_ENV_HEADING, 'SMTP_SERVER')
+SMTP_SENDER = CFG.get(SERVER_ENV_HEADING, 'SMTP_SENDER')
+WEBSERVICES_ROOT = CFG.get(SERVER_ENV_HEADING, 'WEBSERVICES_ROOT')
 
 # Installed data and software versions
-p = cfg.get(SERVER_ENV_HEADING, 'PYTHON')
-PYTHON_VERSION = p[len('python'):]
-PG_VERSION = cfg.get(SERVER_ENV_HEADING, 'PG_VERSION')
-LMCODE_VERSION = cfg.get(SERVER_ENV_HEADING, 'LMCODE_VERSION')
-LMVIZ_VERSION = cfg.get(SERVER_ENV_HEADING, 'LMVIZ_VERSION')
-GBIF_VERSION = cfg.get(SERVER_ENV_HEADING, 'GBIF_VERSION')
+PY_STR = CFG.get(SERVER_ENV_HEADING, 'PYTHON')
+PYTHON_VERSION = PY_STR[len('python'):]
+PG_VERSION = CFG.get(SERVER_ENV_HEADING, 'PG_VERSION')
+LMCODE_VERSION = CFG.get(SERVER_ENV_HEADING, 'LMCODE_VERSION')
+LMVIZ_VERSION = CFG.get(SERVER_ENV_HEADING, 'LMVIZ_VERSION')
+GBIF_VERSION = CFG.get(SERVER_ENV_HEADING, 'GBIF_VERSION')
 
 # BoomKeys
-POINT_COUNT_MIN = cfg.getint(SERVER_PIPELINE_HEADING, BoomKeys.POINT_COUNT_MIN)
-POINT_COUNT_MAX = cfg.getint(SERVER_PIPELINE_HEADING, 'POINT_COUNT_MAX')
-DEFAULT_EPSG = cfg.getint(SERVER_PIPELINE_HEADING, 'DEFAULT_EPSG')
+POINT_COUNT_MIN = CFG.getint(SERVER_PIPELINE_HEADING, BoomKeys.POINT_COUNT_MIN)
+POINT_COUNT_MAX = CFG.getint(SERVER_PIPELINE_HEADING, 'POINT_COUNT_MAX')
+DEFAULT_EPSG = CFG.getint(SERVER_PIPELINE_HEADING, 'DEFAULT_EPSG')
 
-TROUBLESHOOTERS = cfg.getlist(SERVER_PIPELINE_HEADING, BoomKeys.TROUBLESHOOTERS)
-CONNECTION_PORT = int(cfg.get(SERVER_DB_HEADING, 'CONNECTION_PORT'))
-DB_HOSTNAME = cfg.get(SERVER_DB_HEADING, 'DB_HOSTNAME')
+TROUBLESHOOTERS = CFG.getlist(
+    SERVER_PIPELINE_HEADING, BoomKeys.TROUBLESHOOTERS)
+CONNECTION_PORT = int(CFG.get(SERVER_DB_HEADING, 'CONNECTION_PORT'))
+DB_HOSTNAME = CFG.get(SERVER_DB_HEADING, 'DB_HOSTNAME')
 
 # Makeflow
-MAX_MAKEFLOWS = cfg.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_MAKEFLOWS')
-MAX_WORKERS = cfg.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_WORKERS')
+MAX_MAKEFLOWS = CFG.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_MAKEFLOWS')
+MAX_WORKERS = CFG.getint(SERVER_MATT_DAEMON_HEADING, 'MAX_WORKERS')
 try:
-    WORKER_PATH = cfg.get(SERVER_MATT_DAEMON_HEADING, 'WORKER_PATH')
-except:
+    WORKER_PATH = CFG.get(SERVER_MATT_DAEMON_HEADING, 'WORKER_PATH')
+except Exception:
     WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
 
 try:
-    MASTER_WORKER_PATH = cfg.get(SERVER_MATT_DAEMON_HEADING, 'MASTER_WORKER_PATH')
-except:
+    MASTER_WORKER_PATH = CFG.get(
+        SERVER_MATT_DAEMON_HEADING, 'MASTER_WORKER_PATH')
+except Exception:
     MASTER_WORKER_PATH = os.path.join(SCRATCH_PATH, 'worker')
-   
+
 # Catalog server
-CS_PORT = cfg.get(SERVER_MATT_DAEMON_HEADING, 'CATALOG_SERVER_PORT')
-EXTRA_CS_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 'EXTRA_CS_OPTIONS')
+CS_PORT = CFG.get(SERVER_MATT_DAEMON_HEADING, 'CATALOG_SERVER_PORT')
+EXTRA_CS_OPTIONS = CFG.get(SERVER_MATT_DAEMON_HEADING, 'EXTRA_CS_OPTIONS')
 
 # Extra options (appended to the default options
-EXTRA_WORKER_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
-                                                      'EXTRA_WORKER_OPTIONS')
-EXTRA_MAKEFLOW_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
-                                                      'EXTRA_MAKEFLOW_OPTIONS')
-EXTRA_WORKER_FACTORY_OPTIONS = cfg.get(SERVER_MATT_DAEMON_HEADING, 
-                                                'EXTRA_WORKER_FACTORY_OPTIONS')
+EXTRA_WORKER_OPTIONS = CFG.get(
+    SERVER_MATT_DAEMON_HEADING, 'EXTRA_WORKER_OPTIONS')
+EXTRA_MAKEFLOW_OPTIONS = CFG.get(
+    SERVER_MATT_DAEMON_HEADING, 'EXTRA_MAKEFLOW_OPTIONS')
+EXTRA_WORKER_FACTORY_OPTIONS = CFG.get(
+    SERVER_MATT_DAEMON_HEADING, 'EXTRA_WORKER_FACTORY_OPTIONS')

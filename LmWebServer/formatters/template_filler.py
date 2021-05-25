@@ -1,17 +1,19 @@
 """This module contains functions for filling in templated strings
 """
 
+
 # .............................................................................
-class TemplateFiller(object):
+class TemplateFiller:
     """Class responsible for filling templated strings
     """
+
     # ..............................
     def __init__(self, indicator='##', **args):
         self.indicator = indicator
         arg_dict = dict(args)
         self.param_dict = {}
         # Convert keys to lower case
-        for k in arg_dict.keys():
+        for k in list(arg_dict.keys()):
             self.param_dict[k.lower()] = arg_dict[k]
 
     # ..............................
@@ -28,7 +30,7 @@ class TemplateFiller(object):
         """
         tokens = template_str.split(self.indicator)
         return self._process_tokens(tokens)
-    
+
     # ..............................
     def _process_tokens(self, tokens):
         """Process a list of tokens and return a string
@@ -100,7 +102,8 @@ class TemplateFiller(object):
                         # Process as a replace string
                         if token.lower().find('.') > 0:
                             token_parts = token.lower().split('.')
-                            token_val = self.param_dict[token_parts[0]][token_parts[1]]
+                            token_val = self.param_dict[
+                                token_parts[0]][token_parts[1]]
                         else:
                             token_val = self.param_dict[token.lower()]
                         ret_str += token_val

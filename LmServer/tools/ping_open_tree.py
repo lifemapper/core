@@ -2,10 +2,10 @@
 """
 import random
 
-from LmDbServer.tools.partnerData import (
-    get_ottids_from_gbifids, induced_subtree)
-from LmServer.notifications.email import EmailNotifier
+from ot_service_wrapper import get_ottids_from_gbifids, induced_subtree
+
 from LmServer.common.localconstants import TROUBLESHOOTERS
+from LmServer.notifications.email import EmailNotifier
 
 GBIF_IDS = [
     1008601, 1008622, 1008754, 1023454, 1029509, 1035200, 1040592, 1044951,
@@ -31,25 +31,28 @@ def get_gbif_id_subset():
     random.shuffle(GBIF_IDS)
     return GBIF_IDS[:random.randint(3, len(GBIF_IDS))]
 
+
 # .............................................................................
 def report_failure(msg):
     """Report failure to Lifemapper troubleshooters
     """
     notifier = EmailNotifier()
-    notifier.sendMessage(TROUBLESHOOTERS, 'Open Tree Service failure', msg)
+    notifier.send_message(TROUBLESHOOTERS, 'Open Tree Service failure', msg)
 
 
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main method of script
+    """
     # Get subset of gbif ids
     test_ids = get_gbif_id_subset()
     # ping open tree
     try:
         id_map = get_ottids_from_gbifids(test_ids)
         ott_ids = []
-        for k, v in id_map.items():
-            if v is not None:
-                ott_ids.append(v)
+        for _, val in id_map.items():
+            if val is not None:
+                ott_ids.append(val)
         # Get the tree
         induced_subtree(ott_ids)
         print('Success')
@@ -58,4 +61,8 @@ if __name__ == '__main__':
             str(e), test_ids)
         report_failure(msg)
         print('Failure')
-    
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

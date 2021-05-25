@@ -5,9 +5,9 @@ Todo:
     * Determine if file or file-like object, then validate
     * Generalize
 """
+import csv
 import os
 
-from LmCommon.common.unicodeCsv import UnicodeReader
 
 # .............................................................................
 def validate_csv_file(csv_filename, read_lines=False):
@@ -22,15 +22,14 @@ def validate_csv_file(csv_filename, read_lines=False):
     if os.path.exists(csv_filename):
         try:
             with open(csv_filename) as in_csv:
-                reader = UnicodeReader(in_csv)
+                reader = csv.reader(in_csv)
                 if read_lines:
-                    for line in reader:
+                    for _ in reader:
                         pass
             valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'
-    
+
     return valid, msg
-    

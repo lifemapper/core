@@ -1,182 +1,192 @@
 """This module wraps interactions with Solr
 """
-from ast import literal_eval
-from mx.DateTime import DateTimeFromMJD
-import urllib2
-
-from LmServer.common.lmconstants import (
-     SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER, 
-     SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
-from LmServer.common.log import SolrLogger
-from LmServer.common.localconstants import PUBLIC_USER
 import json
-from urllib2 import URLError
+from urllib.error import URLError
+import urllib.request
+
+from LmBackend.common.lmobj import LMError
+from LmCommon.common.lmconstants import ENCODING
+from LmCommon.common.time import LmTime
+from LmServer.common.lmconstants import (
+    SnippetFields, SOLR_ARCHIVE_COLLECTION, SOLR_FIELDS, SOLR_SERVER,
+    SOLR_SNIPPET_COLLECTION, SOLR_TAXONOMY_COLLECTION, SOLR_TAXONOMY_FIELDS)
+from LmServer.common.log import SolrLogger
+
 
 # .............................................................................
-def buildSolrDocument(docPairs):
+def build_solr_document(doc_pairs):
+    """Build a document for a Solr POST from the key, value pairs.
+
+    Args:
+        doc_pairs: A list of lists of [field name, value] pairs --
+            [[(field name, value)]]
+
+    Returns:
+        a bytes object, suitable for posting to a solr/HTTP service
+
+    Note:
+        When writing the results to a file (encoded), solr_doc must first
+        be decoded
     """
-    @summary: Builds a document for a Solr POST from the key, value pairs
-    @param docPairs: A list of lists of [field name, value] pairs -- 
-                              [[(field name, value)]]
-    """
-    if not docPairs:
-        raise Exception, "Must provide at least one pair for Solr POST"
-    
-    # We want to allow multiple documents.  Make sure that field pairs is a list
-    #     of lists of tuples
-    elif not isinstance(docPairs[0][0], (list, tuple)):
-        docPairs = [docPairs]
-    
-    docLines = ['<add>']
-    for fieldPairs in docPairs:
-        docLines.append('    <doc>')
-        for fName, fVal in fieldPairs:
+    if not doc_pairs:
+        raise Exception("Must provide at least one pair for Solr POST")
+
+    # We want to allow multiple documents.  Make sure that field pairs is a
+    #     list of lists of tuples
+    if not isinstance(doc_pairs[0][0], (list, tuple)):
+        doc_pairs = [doc_pairs]
+
+    doc_lines = ['<add>']
+    for field_pairs in doc_pairs:
+        doc_lines.append('    <doc>')
+        for f_name, f_val in field_pairs:
             # Only add the field if the value is not None
-            if fVal is not None: 
-                docLines.append(
+            if f_val is not None:
+                doc_lines.append(
                     '        <field name="{}">{}</field>'.format(
-                        fName, str(fVal).replace('&', '&amp;')))
-        docLines.append('    </doc>')
-    docLines.append('</add>')
-    return '\n'.join(docLines)
+                        f_name, str(f_val).replace('&', '&amp;')))
+        doc_lines.append('    </doc>')
+    doc_lines.append('</add>')
+    tmpstr = '\n'.join(doc_lines)
+    solr_doc = tmpstr.encode(encoding=ENCODING)
+    return solr_doc
+
 
 # .............................................................................
-def postSolrDocument(collection, docFilename):
+def post_solr_document(collection, doc_filename):
+    """Post a document to a Solr index.
+
+    Args:
+        collection: The name of the Solr core (index) to add this document to
+        doc_filename: The file location of the document to post
     """
-    @summary: Posts a document to a Solr index
-    @param collection: The name of the Solr core (index) to add this document to
-    @param docFilename: The file location of the document to post
-    """
-    return _post(collection, docFilename, 
-                     headers={'Content-Type': 'text/xml'})
-    
+    return _post(
+        collection, doc_filename, headers={'Content-Type': 'text/xml'})
+
+
 # .............................................................................
-def _post(collection, docFilename, headers=None):
-    """
-    @summary: Post a document to a Solr index
-    """
+def _post(collection, doc_filename, headers=None):
+    """Post a document to a Solr index."""
     if not headers:
         headers = {}
     url = '{}{}/update?commit=true'.format(SOLR_SERVER, collection)
-    
-    with open(docFilename) as inF:
-        data = inF.read()
-    
-    req = urllib2.Request(url, data=data, headers=headers)
-    return urllib2.urlopen(req).read()
-    
+
+    with open(doc_filename, 'r', encoding=ENCODING) as in_file:
+        data_str = in_file.read()
+    # urllib requires byte data for post
+    data_bytes = data_str.encode(encoding=ENCODING)
+    req = urllib.request.Request(url, data=data_bytes, headers=headers)
+    return urllib.request.urlopen(req).read()
+
+
 # .............................................................................
-def _query(collection, qParams=None, fqParams=None,
-                otherParams='wt=python&indent=true'):
-    """
-    @summary: Perform a query on a Solr index
-    @param collection: The Solr collection (index / core) to query
-    @param qParams: Parameters to include in the query section of the Solr query
-    @param fqParams: Parameters to include in the filter section of the query
-    @param otherParams: Other parameters to pass to Solr
+def _query(collection, q_params=None, fq_params=None,
+           other_params='wt=json&indent=true'):
+    """Perform a query on a Solr index.
+
+    Args:
+        collection: The Solr collection (index / core) to query
+        q_params: Parameters to include in the query section of the Solr query
+        fq_params: Parameters to include in the filter section of the query
+        other_params: Other parameters to pass to Solr
     """
     log = SolrLogger()
-    queryParts = []
-    if qParams:
-        qParts = []
-        for k, v in qParams:
-            if v is not None:
-                if isinstance(v, list):
-                    if len(v) > 1:
-                        qParts.append('{}:({})'.format(k, '+OR+'.join(v)))
+    query_parts = []
+    if q_params:
+        q_parts = []
+        for k, val in q_params:
+            if val is not None:
+                if isinstance(val, list):
+                    if len(val) > 1:
+                        q_parts.append('{}:({})'.format(k, '+OR+'.join(val)))
                     else:
-                        qParts.append('{}:{}'.format(k, v[0]))
+                        q_parts.append('{}:{}'.format(k, val[0]))
                 else:
-                    qParts.append('{}:{}'.format(k, v).replace(' ', '+'))
+                    q_parts.append('{}:{}'.format(k, val).replace(' ', '+'))
         # If we have at least one query parameter
-        if qParts:
-            queryParts.append('q={}'.format('+AND+'.join(qParts)))
-    
-    if fqParams:
-        fqParts = []
-        for k, v in fqParams:
-            if v is not None:
-                if isinstance(v, list):
-                    if len(v) > 1:
-                        fqParts.append('{}:({})'.format(k, ' '.join(v)))
-                    else:
-                        fqParts.append('{}:{}'.format(k, v[0]))
-                else:
-                    fqParts.append('{}:{}'.format(k, v))
-        # If we have at least one filter parameter
-        if fqParts:
-            queryParts.append('fq={}'.format('+AND+'.join(fqParts)))
-    
-    if len(queryParts) == 0:
-        queryParts.append('q=*:*')
+        if q_parts:
+            query_parts.append('q={}'.format('+AND+'.join(q_parts)))
 
-    if otherParams is not None:
-        queryParts.append(otherParams)
-    
-    url = '{}{}/select?{}'.format(SOLR_SERVER, collection, '&'.join(queryParts))
+    if fq_params:
+        fq_parts = []
+        for k, val in fq_params:
+            if val is not None:
+                if isinstance(val, list):
+                    if len(val) > 1:
+                        fq_parts.append('{}:({})'.format(k, ' '.join(val)))
+                    else:
+                        fq_parts.append('{}:{}'.format(k, val[0]))
+                else:
+                    fq_parts.append('{}:{}'.format(k, val))
+        # If we have at least one filter parameter
+        if fq_parts:
+            query_parts.append('fq={}'.format('+AND+'.join(fq_parts)))
+
+    if len(query_parts) == 0:
+        query_parts.append('q=*:*')
+
+    if other_params is not None:
+        query_parts.append(other_params)
+
+    url = '{}{}/select?{}'.format(
+        SOLR_SERVER, collection, '&'.join(query_parts))
     try:
-        res = urllib2.urlopen(url)
-    except URLError, e:
-        log.error('URLError on urlopen for {}: {}'.format(url, str(e)))
+        res = urllib.request.urlopen(url)
+    except URLError as err:
+        log.error('URLError on urlopen for {}: {}'.format(url, str(err)), err)
         raise
-    except Exception, e:
-        log.error('Exception on urlopen for {}: {}'.format(url, str(e)))
+    except Exception as err:
+        log.error('Exception on urlopen for {}: {}'.format(url, str(err)), err)
         raise
-    
-    retcode = res.getcode()
-    try:
-        resp = res.read()
-    except Exception, e:
-        log.error('Exception, code {}, on response read for {}: {}'
-              .format(retcode, url, str(e)))
-        raise
-    else:
-        rDict = literal_eval(resp)
-        return rDict
+
+    # retcode = res.getcode()
+    return json.load(res)
+
 
 # .............................................................................
 def raw_query(collection, query_string):
-    """Performs a raw solr query and returns the unprocessed results
-    """
+    """Perform a raw solr query and return the unprocessed results."""
     url = '{}{}/select?{}'.format(SOLR_SERVER, collection, query_string)
-    res = urllib2.urlopen(url)
+    res = urllib.request.urlopen(url)
     return res.read()
+
 
 # .............................................................................
 def add_taxa_to_taxonomy_index(sciname_objects):
-    """Create a solr document and post it for the provided objects
-    """
+    """Create a solr document and post it for the provided objects."""
     doc_pairs = []
     for sno in sciname_objects:
         doc_pairs.append([
-                   [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonicalName],
-                   [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientificName],
-                   [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.txClass],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.sourceTaxonKey],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.txOrder],
-                   [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-                   [SOLR_TAXONOMY_FIELDS.USER_ID, sno.userId],
-                   [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-                    sno.taxonomySourceId],
-                   [SOLR_TAXONOMY_FIELDS.ID, sno.getId()]
+            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonical_name],
+            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientific_name],
+            [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
+            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.class_],
+            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
+            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.source_taxon_key],
+            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
+            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.order_],
+            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
+            [SOLR_TAXONOMY_FIELDS.USER_ID, sno.user_id],
+            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
+             sno.taxonomy_source_id],
+            [SOLR_TAXONOMY_FIELDS.ID, sno.get_id()]
         ])
-    post_doc = buildSolrDocument(doc_pairs)
+    post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.
     # TODO: Modify _post to accept a string or file like object as well
-    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
-                                           SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
-                          headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
-    
+    url = '{}{}/update?commit=true'.format(
+        SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
+    req = urllib.request.Request(
+        url, data=post_doc, headers={'Content-Type': 'text/xml'})
+    response = urllib.request.urlopen(req)
+    return response.read()
+
+
 # .............................................................................
 def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
-    """Create a solr document and post it for the provided objects
-    
+    """Create a solr document and post it for the provided objects.
+
     Note:
         Should have the following keys
             taxonid,
@@ -211,19 +221,20 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
             [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
             [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']]
         ])
-    post_doc = buildSolrDocument(doc_pairs)
+    post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.
     # TODO: Modify _post to accept a string or file like object as well
-    url = '{}{}/update?commit=true'.format(SOLR_SERVER, 
-                                           SOLR_TAXONOMY_COLLECTION)
-    req = urllib2.Request(url, data=post_doc, 
-                          headers={'Content-Type' : 'text/xml'})
-    return urllib2.urlopen(req).read()
+    url = '{}{}/update?commit=true'.format(
+        SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
+    req = urllib.request.Request(
+        url, data=post_doc, headers={'Content-Type': 'text/xml'})
+    return urllib.request.urlopen(req).read()
+
 
 # .............................................................................
 def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
                               occ_id=None, squid=None, user_id=None):
-    """Deletes records from the archive index
+    """Delete records from the archive index.
 
     Args:
         gridset_id (:obj:`int`, optional): The database identifier of a gridset
@@ -243,8 +254,8 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
         * Must provide at least one input parameter so as to not accidentally
             delete everything in the index
     """
-    if gridset_id is None and pav_id is None and sdmproject_id is None and \
-            occ_id is None and squid is None and user_id is None:
+    if all(item is None for item in [
+            gridset_id, pav_id, sdmproject_id, occ_id, squid, user_id]):
         raise Exception('Must provide at least one query parameter')
     if isinstance(pav_id, (list, tuple)):
         pav_id = '({})'.format(' OR '.join([str(p) for p in pav_id]))
@@ -258,132 +269,122 @@ def delete_from_archive_index(gridset_id=None, pav_id=None, sdmproject_id=None,
     ]
     query = ' AND '.join(
         ['{}:{}'.format(f, v) for (f, v) in query_parts if v is not None])
-    
+
     url = '{}{}/update?commit=true'.format(
         SOLR_SERVER, SOLR_ARCHIVE_COLLECTION)
     doc = {
-        "delete" : {
-            "query" : query
+        "delete": {
+            "query": query
         }
     }
 
-    req = urllib2.Request(
-        url, data=json.dumps(doc),
-        headers={'Content-Type' : 'application/json'})
-    return urllib2.urlopen(req).read()
+    data_str = json.dumps(doc).encode(encoding=ENCODING)
+    req = urllib.request.Request(
+        url, data=data_str, headers={'Content-Type': 'application/json'})
+    return urllib.request.urlopen(req).read()
+
 
 # .............................................................................
-def facetArchiveOnGridset(userId=None):
+def facet_archive_on_gridset(user_id=None):
+    """Query the global pam index and get the number of matches for gridsets.
+
+    TODO:
+        Consider integrating this with regular solr query
     """
-    @summary: Query the PAV archive Solr index to get the gridsets contained
-        and the number of matches for each
-    @todo: Consider integrating this with regular solr query
-    """
-    qParams = [
-        (SOLR_FIELDS.USER_ID, userId),
+    q_params = [
+        (SOLR_FIELDS.USER_ID, user_id),
         ('*', '*')
     ]
-    
-    otherParams = '&facet=true&facet.field={}&wt=python&indent=true'.format(
+
+    other_params = '&facet=true&facet.field={}&wt=python&indent=true'.format(
         SOLR_FIELDS.GRIDSET_ID)
-#     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams,
-#                                          otherParams=otherParams))
-#     return rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
     try:
-        rDict = _query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
-                      otherParams=otherParams)
-    except:
-        raise
+        r_dict = _query(
+            SOLR_ARCHIVE_COLLECTION, q_params=q_params,
+            other_params=other_params)
+    except Exception as err:
+        raise LMError(err)
     else:
-        sdata = rDict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
+        sdata = r_dict['facet_counts']['facet_fields'][SOLR_FIELDS.GRIDSET_ID]
         return sdata
-    
+
 
 # .............................................................................
-def queryArchiveIndex(algorithmCode=None, bbox=None, displayName=None,
-                      gridSetId=None, modelScenarioCode=None, pointMax=None,
-                      pointMin=None, projectionScenarioCode=None, squid=None,
-                      taxKingdom=None, taxPhylum=None, taxClass=None,
-                      taxOrder=None, taxFamily=None, taxGenus=None,
-                      taxSpecies=None, userId=None, pam_id=None):
-    """
-    @summary: Query the PAV archive Solr index
-    
-    """
-    solr_resp = None
-    qParams = [
-        (SOLR_FIELDS.ALGORITHM_CODE, algorithmCode),
-        (SOLR_FIELDS.DISPLAY_NAME, displayName),
-        (SOLR_FIELDS.GRIDSET_ID, gridSetId),
-        (SOLR_FIELDS.USER_ID, userId),
-        (SOLR_FIELDS.MODEL_SCENARIO_CODE, modelScenarioCode),
-        (SOLR_FIELDS.PROJ_SCENARIO_CODE, projectionScenarioCode),
+def query_archive_index(algorithm_code=None, bbox=None, display_name=None,
+                        gridset_id=None, model_scenario_code=None,
+                        point_max=None, point_min=None,
+                        projection_scenario_code=None, squid=None,
+                        tax_kingdom=None, tax_phylum=None, tax_class=None,
+                        tax_order=None, tax_family=None, tax_genus=None,
+                        tax_species=None, user_id=None, pam_id=None):
+    """Query the PAV archive Solr index."""
+    q_params = [
+        (SOLR_FIELDS.ALGORITHM_CODE, algorithm_code),
+        (SOLR_FIELDS.DISPLAY_NAME, display_name),
+        (SOLR_FIELDS.GRIDSET_ID, gridset_id),
+        (SOLR_FIELDS.USER_ID, user_id),
+        (SOLR_FIELDS.MODEL_SCENARIO_CODE, model_scenario_code),
+        (SOLR_FIELDS.PROJ_SCENARIO_CODE, projection_scenario_code),
         (SOLR_FIELDS.SQUID, squid),
-        (SOLR_FIELDS.TAXON_KINGDOM, taxKingdom),
-        (SOLR_FIELDS.TAXON_PHYLUM, taxPhylum),
-        (SOLR_FIELDS.TAXON_CLASS, taxClass),
-        (SOLR_FIELDS.TAXON_ORDER, taxOrder),
-        (SOLR_FIELDS.TAXON_FAMILY, taxFamily),
-        (SOLR_FIELDS.TAXON_GENUS, taxGenus),
-        (SOLR_FIELDS.TAXON_SPECIES, taxSpecies),
+        (SOLR_FIELDS.TAXON_KINGDOM, tax_kingdom),
+        (SOLR_FIELDS.TAXON_PHYLUM, tax_phylum),
+        (SOLR_FIELDS.TAXON_CLASS, tax_class),
+        (SOLR_FIELDS.TAXON_ORDER, tax_order),
+        (SOLR_FIELDS.TAXON_FAMILY, tax_family),
+        (SOLR_FIELDS.TAXON_GENUS, tax_genus),
+        (SOLR_FIELDS.TAXON_SPECIES, tax_species),
         (SOLR_FIELDS.PAM_ID, pam_id)
     ]
-    
-    if pointMax is not None or pointMin is not None:
-        pmax = pointMax
-        pmin = pointMin
-        
-        if pointMax is None:
-            pmax = '*'
-        
-        if pointMin is None:
-            pmin = '*'
-            
-        qParams.append((SOLR_FIELDS.POINT_COUNT, '%5B{}%20TO%20{}%5D'.format(
-                            pmin, pmax)))
-    
-    fqParams = []
+
+    if point_max is not None or point_min is not None:
+        pmax = point_max if point_max is not None else '*'
+        pmin = point_min if point_min is not None else '*'
+
+        q_params.append((
+            SOLR_FIELDS.POINT_COUNT, '%5B{}%20TO%20{}%5D'.format(pmin, pmax)))
+
+    fq_params = []
     if bbox is not None:
         minx, miny, maxx, maxy = bbox.split(',')
-        fqParams.append((SOLR_FIELDS.PRESENCE,
-                         '%5B{},{}%20{},{}%5D'.format(miny, minx, maxy, maxx)))
-    
-#     rDict = literal_eval(_query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, 
-#                                          fqParams=fqParams))
-#     return rDict['response']['docs']
+        fq_params.append(
+            (SOLR_FIELDS.PRESENCE, '%5B{},{}%20{},{}%5D'.format(
+                miny, minx, maxy, maxx)))
+
     try:
-        rDict = _query(SOLR_ARCHIVE_COLLECTION, qParams=qParams, fqParams=fqParams)
-    except:
-        raise
-    else:
-        sdata = rDict['response']['docs']
-        return sdata
+        r_dict = _query(
+            SOLR_ARCHIVE_COLLECTION, q_params=q_params, fq_params=fq_params)
+    except Exception as err:
+        raise LMError(err)
+
+    return r_dict['response']['docs']
+
 
 # .............................................................................
-def querySnippetIndex(ident1=None, provider=None, collection=None,
-                      catalogNumber=None, operation=None, afterTime=None,
-                      beforeTime=None, ident2=None, url=None, who=None,
-                      agent=None, why=None):
+def query_snippet_index(ident1=None, provider=None, collection=None,
+                        catalog_number=None, operation=None, after_time=None,
+                        before_time=None, ident2=None, url=None, who=None,
+                        agent=None, why=None):
+    """Query the snippet Solr index.
+
+    Args:
+        ident1: An identifier for the primary object (probably occurrence
+            point)
+        provider: The occurrence point provider
+        collection: The collection the point belongs to
+        catalog_number: The catalog number of the occurrence point
+        operation: A LmServer.common.lmconstants.SnippetOperations
+        after_time: Return hits after this time (MJD format)
+        before_time: Return hits before this time (MJD format)
+        ident2: A identifier for the secondary object (occurrence set or
+            projection)
+        url: A url for the resulting object
+        who: Who initiated the action
+        agent: The agent that initiated the action
+        why: Why the action was initiated
     """
-    @summary: Query the snippet Solr index
-    @param ident1: An identifier for the primary object (probably occurrence 
-                            point)
-    @param provider: The occurrence point provider
-    @param collection: The collection the point belongs to
-    @param catalogNumber: The catalog number of the occurrence point
-    @param operation: A LmServer.common.lmconstants.SnippetOperations
-    @param afterTime: Return hits after this time (MJD format)
-    @param beforeTime: Return hits before this time (MJD format)
-    @param ident2: A identifier for the secondary object (occurrence set or 
-                            projection)
-    @param url: A url for the resulting object
-    @param who: Who initiated the action
-    @param agent: The agent that initiated the action
-    @param why: Why the action was initiated
-    """
-    qParams = [
+    q_params = [
         (SnippetFields.AGENT, agent),
-        (SnippetFields.CATALOG_NUMBER, catalogNumber),
+        (SnippetFields.CATALOG_NUMBER, catalog_number),
         (SnippetFields.COLLECTION, collection),
         (SnippetFields.IDENT_1, ident1),
         (SnippetFields.IDENT_2, ident2),
@@ -393,42 +394,41 @@ def querySnippetIndex(ident1=None, provider=None, collection=None,
         (SnippetFields.WHO, who),
         (SnippetFields.WHY, why)
     ]
-    
-    fqParams = []
-    if afterTime is not None or beforeTime is not None:
-        if afterTime is not None:
-            aTime = DateTimeFromMJD(afterTime).strftime('%Y-%m-%dT%H:%M:%SZ')
-        else:
-            aTime = '*'
 
-        if beforeTime is not None:
-            bTime = DateTimeFromMJD(beforeTime).strftime('%Y-%m-%dT%H:%M:%SZ')
+    fq_params = []
+    if after_time is not None or before_time is not None:
+        if after_time is not None:
+            a_time = LmTime.from_mjd(after_time).strftime('%Y-%m-%dT%H:%M:%SZ')
         else:
-            bTime = '*'
-    
-        fqParams.append((SnippetFields.OP_TIME, 
-                         '%5B{}%20TO%20{}%5D'.format(aTime, bTime)))
-    
-    
-#     rDict = literal_eval(_query(SOLR_SNIPPET_COLLECTION, qParams=qParams, 
-#                                          fqParams=fqParams))
-#     return rDict['response']['docs']
+            a_time = '*'
+
+        if before_time is not None:
+            b_time = LmTime.from_mjd(
+                before_time).strftime('%Y-%m-%dT%H:%M:%SZ')
+        else:
+            b_time = '*'
+
+        fq_params.append(
+            (SnippetFields.OP_TIME,
+             '%5B{}%20TO%20{}%5D'.format(a_time, b_time)))
+
     try:
-        rDict = _query(SOLR_SNIPPET_COLLECTION, qParams=qParams, fqParams=fqParams)
-    except:
-        raise
-    else:
-        sdata = rDict['response']['docs']
-        return sdata
+        r_dict = _query(
+            SOLR_SNIPPET_COLLECTION, q_params=q_params, fq_params=fq_params)
+    except Exception as err:
+        raise LMError(err)
+
+    return r_dict['response']['docs']
+
 
 # .............................................................................
-def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None, 
-                         taxon_class=None, taxon_order=None, taxon_family=None, 
-                         taxon_genus=None, taxon_key=None, 
-                         scientific_name=None, canonical_name=None, squid=None, 
+def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
+                         taxon_class=None, taxon_order=None, taxon_family=None,
+                         taxon_genus=None, taxon_key=None,
+                         scientific_name=None, canonical_name=None, squid=None,
                          user_id=None):
-    """Query the Taxonomy index
-    
+    """Query the Taxonomy index.
+
     Args:
         taxon_kingdom: Search for matches in this kingdom
         taxon_phylum:
@@ -454,13 +454,10 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         (SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_phylum),
         (SOLR_TAXONOMY_FIELDS.USER_ID, user_id)
         ]
-#     rDict = literal_eval(_query(SOLR_TAXONOMY_COLLECTION, qParams=q_params))
-#     return rDict['response']['docs']
-    try:
-        rDict = _query(SOLR_TAXONOMY_COLLECTION, qParams=q_params)
-    except:
-        raise
-    else:
-        sdata = rDict['response']['docs']
-        return sdata
 
+    try:
+        r_dict = _query(SOLR_TAXONOMY_COLLECTION, q_params=q_params)
+    except Exception as err:
+        raise LMError(err)
+
+    return r_dict['response']['docs']

@@ -1,64 +1,70 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
 """Splits a sorted CSV file on the group field
 """
 import argparse
+import csv
 import os
-#from operator import itemgetter
 
-from LmCommon.common.unicodeCsv import UnicodeReader, UnicodeWriter
-
+from LmCommon.common.lmconstants import ENCODING
 # .............................................................................
-def groupByField(inputFilename, outDir, groupPosition, filePrefix='taxon_'):
+def group_by_field(input_filename, out_dir, group_position,
+                   file_prefix='taxon_'):
     """Creates groups from the CSV file based on the specified field
 
     Args:
-        inputFilename: The file name of the sorted input CSV file
-        outDir: The directory to store the output files
-        groupPosition: The field in the CSV to group / split on
-        filePrefix: The prefix of the output file names
+        input_filename: The file name of the sorted input CSV file
+        out_dir: The directory to store the output files
+        group_position: The field in the CSV to group / split on
+        file_prefix: The prefix of the output file names
     """
-    groupId = None
-    outF = None
+    group_id = None
+    out_file = None
 
-    with open(inputFilename) as inF:
-        reader = UnicodeReader(inF)
+    with open(input_filename, 'r', encoding=ENCODING) as in_file:
+        reader = csv.reader(in_file)
         for row in reader:
-            if row[groupPosition] != groupId:
-                groupId = row[groupPosition]
+            if row[group_position] != group_id:
+                group_id = row[group_position]
                 try:
-                    outF.close()
-                except:
+                    out_file.close()
+                except Exception:
                     pass
-                outFilename = os.path.join(
-                    outDir, '{}{}.csv'.format(filePrefix, groupId))
-                outF = open(outFilename, 'w')
-                writer = UnicodeWriter(outF)
-          
+                out_filename = os.path.join(
+                    out_dir, '{}{}.csv'.format(file_prefix, group_id))
+                out_file = open(out_filename, 'w', encoding=ENCODING)
+                writer = csv.writer(out_file)
+
             writer.writerow(row)
     try:
-        outF.close()
-    except:
+        out_file.close()
+    except Exception:
         pass
-    
+
+
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Script main method
+    """
     parser = argparse.ArgumentParser(
         description='This script takes in a CSV input file and groups it')
-    
-    parser.add_argument(
-        'groupPosition', type=int,
-        help='The position of the field to group on')
-    parser.add_argument('inputFilename', type=str, help='Input CSV file')
 
     parser.add_argument(
-        'outDir', type=str, help='Output directory to write files')
+        'group_position', type=int,
+        help='The position of the field to group on')
+    parser.add_argument('input_filename', type=str, help='Input CSV file')
+
+    parser.add_argument(
+        'out_dir', type=str, help='Output directory to write files')
     parser.add_argument(
         '-p', '--prefix', type=str, default='taxon_',
         help='Prefix for output files')
 
     args = parser.parse_args()
-    
-    groupByField(
-        args.inputFilename, args.outDir, args.groupPosition,
-        filePrefix=args.prefix)
+
+    group_by_field(
+        args.input_filename, args.out_dir, args.group_position,
+        file_prefix=args.prefix)
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

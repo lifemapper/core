@@ -10,266 +10,261 @@ Note:
 """
 import argparse
 import logging
-import mx.DateTime as dt
-import os, sys, time
+import os
+import sys
+import time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-
-from LmCommon.common.lmconstants import JobStatus, LM_USER
-
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
-                                         PUBLIC_ARCHIVE_NAME) 
-from LmServer.common.localconstants import PUBLIC_USER 
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
-from LmServer.tools.cwalken import ChristopherWalken
+from LmCommon.common.lmconstants import JobStatus, LM_USER, ENCODING
+import LmCommon.common.time as lt
 from LmDbServer.boom.boom_collate import BoomCollate
+from LmServer.base.utilities import is_lm_user
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.lmconstants import (
+    DEFAULT_RANDOM_GROUP_SIZE, LMFileType, PUBLIC_ARCHIVE_NAME)
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
+from LmServer.tools.cwalken import ChristopherWalken
 
 # Only relevant for "archive" public data, all user workflows will put all
-# spuds into a single makeflow, along with multi-species commands to follow SDMs 
+#    spuds into a single makeflow, along with multi-species commands to follow
+#    SDMs
 SPUD_LIMIT = 5000
+
 
 # .............................................................................
 class Boomer(LMObject):
+    """Iterate with ChristopherWalken through a sequence of species data
+
+    Class to iterate with a ChristopherWalken through a sequence of species
+    data, creating individual species (Spud) commands into one or more "Bushel"
+    MFChains.
+
+    Note:
+        - If working on the Public Archive, a huge, constantly updated dataset,
+            Bushel MFChains are limited to SPUD_LIMIT number of species
+            commands - the full Bushel is rotated and a new Bushel is created
+            to hold the next set of commands.
+        - In all other multi-species workflows, all spuds are put into the same
+            bushel. If the daemon is interrupted, it will write out the current
+            MFChain, and pick up where it left off with a new MFChains for
+            unprocessed species data.
+
+    Todo:
+        Next instance of boom.Walker will create new MFChains, but add data to
+            the existing Global PAM matrices.
     """
-    Class to iterate with a ChristopherWalken through a sequence of species data,    
-    creating individual species (Spud) commands into one or more "Bushel" 
-    MFChains. 
-    * If working on the Public Archive, a huge, constantly updated dataset,  
-      Bushel MFChains are limited to SPUD_LIMIT number of species commands -
-      the full Bushel is rotated and a new Bushel is created to hold the next
-      set of commands.
-    * In all other multi-species workflows, all spuds are put into the same 
-      bushel. If the daemon is interrupted, it will write out the current  
-      MFChain, and pick up where it left off with a new MFChains for 
-      unprocessed species data.
-    @todo: Next instance of boom.Walker will create new MFChains, but add data
-    to the existing Global PAM matrices.  
-    """
+
     # .............................
-    def __init__(self, configFname, successFname, log=None):      
+    def __init__(self, config_fname, success_fname, log=None):
         self.name = self.__class__.__name__.lower()
         # Logfile
         if log is None:
             secs = time.time()
-            timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+            timestamp = "{}".format(
+                time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
             logname = '{}.{}'.format(self.name, timestamp)
             log = ScriptLogger(logname, level=logging.INFO)
         self.log = log
-        
-        self.configFname = configFname
-        self._successFname = successFname
-        
-#         self.do_intersect = None
-        self.do_pam_stats = None 
-        self.do_mcpa = None 
-        # Send Database connection
+
+        self.config_fname = config_fname
+        self._success_fname = success_fname
+
+        self.do_pam_stats = None
+        self.do_mcpa = None
+        # Database connection
         self._scribe = BorgScribe(self.log)
         # iterator tool for species
         self.christopher = None
 
-#         # Dictionary of {scenCode: (potatoChain, triagePotatoFile)}
-#         self.potatoes = None
+        self.gridset = None
+        self.gridset_id = None
+        self.priority = None
+        self.pav_index_filenames = []
+        self.master_potato_head = None
 
-        # MFChain for lots of spuds 
-        self.potatoBushel = None
-        self.squidNames = None
+        # MFChain for lots of spuds
+        self.potato_bushel = None
+        self.squid_names = None
         # Stop indicator
-        self.keepWalken = False
-        
-        signal.signal(signal.SIGTERM, self._receiveSignal) # Stop signal
+        self.keep_walken = False
+
+        signal.signal(signal.SIGTERM, self._receive_signal)  # Stop signal
 
     # .............................
-    def _receiveSignal(self, sigNum, stack):
+    def _receive_signal(self, sig_num, stack):
+        """Handler used to receive signals
+
+        Args:
+            sig_num: The signal received
+            stack: The stack at the time of signal
         """
-        @summary: Handler used to receive signals
-        @param sigNum: The signal received
-        @param stack: The stack at the time of signal
-        """
-        if sigNum in (signal.SIGTERM, signal.SIGKILL):
+        if sig_num in (signal.SIGTERM, signal.SIGKILL):
             self.close()
         else:
-            message = "Unknown signal: %s" % sigNum
+            message = 'Unknown signal: {}'.format(sig_num)
             self.log.error(message)
 
     # .............................
-    def initializeMe(self):
-        """
-        @summary: Creates objects (ChristopherWalken for walking the species
-                  and MFChain objects for workflow computation requests.
-        """
-        # Send Database connection
+    def initialize_me(self):
+        """Creates objects for workflow computation requests."""
         try:
-            success = self._scribe.openConnections()
-        except Exception, e:
-            raise LMError(currargs='Exception opening database', prevargs=e.args)
-        else:
-            if not success:
-                raise LMError(currargs='Failed to open database')
-            else:
-                self.log.info('{} opened databases'.format(self.name))
-              
+            success = self._scribe.open_connections()
+        except Exception as e:
+            raise LMError('Exception opening database', e)
+        if not success:
+            raise LMError('Failed to open database')
+        self.log.info('{} opened databases'.format(self.name))
+
         try:
-            self.christopher = ChristopherWalken(self.configFname,
-                                                 scribe=self._scribe)
-            self.christopher.initializeMe()
-        except Exception, e:
-            raise LMError(currargs='Failed to initialize Chris with config {} ({})'
-                         .format(self.configFname, e))
+            self.christopher = ChristopherWalken(
+                self.config_fname, scribe=self._scribe)
+            self.christopher.initialize_me()
+        except Exception as e:
+            raise LMError(
+                'Failed to initialize Chris with config {} ({})'.format(
+                    self.config_fname, e))
         try:
-            self.gridset = self.christopher.boomGridset
-            self.gridsetId = self.christopher.boomGridset.getId()
-        except:
-            self.log.warning('Exception getting christopher.boomGridset id!!')
-        if self.gridsetId is None:
-            self.log.warning('Missing christopher.boomGridset id!!')
-        
-        self.do_pam_stats = self.christopher.compute_pam_stats 
-        self.do_mcpa = self.christopher.compute_mcpa 
+            self.gridset = self.christopher.boom_gridset
+            self.gridset_id = self.christopher.boom_gridset.get_id()
+        except Exception:
+            self.log.warning('Exception getting christopher.boom_gridset id!!')
+        if self.gridset_id is None:
+            self.log.warning('Missing christopher.boom_gridset id!!')
+
+        self.do_pam_stats = self.christopher.compute_pam_stats
+        self.do_mcpa = self.christopher.compute_mcpa
         self.priority = self.christopher.priority
-        
-        # Start where we left off 
-        self.christopher.moveToStart()
-        self.log.debug('Starting Chris at location {} ... '
-                       .format(self.christopher.currRecnum))
-        self.keepWalken = True
-        
+
+        # Start where we left off
+        self.christopher.move_to_start()
+        self.log.debug(
+            'Starting Chris at location {} ... '.format(
+                self.christopher.curr_rec_num))
+        self.keep_walken = True
+
         self.pav_index_filenames = []
         # master MF chain
-        self.masterPotatoHead = None
+        self.master_potato_head = None
         self.log.info('Create first potato')
-        self.potatoBushel = self._createBushelMakeflow()
-        self.squidNames = []
-         
+        self.potato_bushel = self._create_bushel_makeflow()
+        self.squid_names = []
+
     # .............................
-    def processOneSpecies(self):
+    def process_one_species(self):
+        """Process one species occurrence set."""
         try:
             self.log.info('Next species ...')
-            # Get Spud rules (single-species SDM) and dict of {scencode: pavFilename}
-            workdir = self.potatoBushel.getRelativeDirectory()
-            squid, spudRules, idx_success_filename = self.christopher.startWalken(
-                workdir)
+            # Get Spud rules (single-species SDM) and dict of
+            #    {scencode: pavFilename}
+            workdir = self.potato_bushel.get_relative_directory()
+            (squid, spud_rules, idx_success_filename
+             ) = self.christopher.start_walken(workdir)
             if idx_success_filename is not None:
                 self.pav_index_filenames.append(idx_success_filename)
-            
+
             # TODO: Track squids
             if squid is not None:
-                self.squidNames.append(squid)
-            
-            self.keepWalken = not self.christopher.complete
-            # TODO: Master process for occurrence only? SDM only? 
-            if spudRules:
-                self.log.debug('Processing spud for potatoes') 
-                self.potatoBushel.addCommands(spudRules)
+                self.squid_names.append(squid)
+
+            self.keep_walken = not self.christopher.complete
+            # TODO: Master process for occurrence only? SDM only?
+            if spud_rules:
+                self.log.debug('Processing spud for potatoes')
+                self.potato_bushel.add_commands(spud_rules)
                 # TODO: Don't write triage file, but don't delete code
-                #if potatoInputs:
-                #   for scencode, (pc, triagePotatoFile) in self.potatoes.iteritems():
-                #      pavFname = potatoInputs[scencode]
-                #      triagePotatoFile.write('{}: {}\n'.format(squid, pavFname))
-                #   self.log.info('Wrote spud squid to {} triage files'
-                #                 .format(len(potatoInputs)))
-                #if len(self.spudArfFnames) >= SPUD_LIMIT:
-                if not self.do_pam_stats and len(self.squidNames) >= SPUD_LIMIT:
-                    self.rotatePotatoes()
+                if not self.do_pam_stats and len(
+                        self.squid_names) >= SPUD_LIMIT:
+                    self.rotate_potatoes()
             self.log.info('-----------------')
-        except Exception, e:
+        except Exception as e:
             self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
             self.close()
             raise e
 
     # .............................
-    def _writeBushel(self):
-        """
-        """
+    def _write_bushel(self):
         # Write all spud commands in existing bushel MFChain
-        if self.potatoBushel:
-            if self.potatoBushel.jobs:
+        if self.potato_bushel:
+            if self.potato_bushel.jobs:
                 # Only collate if do_pam_stats and finished with all SDMs
                 if self.do_pam_stats and self.christopher.complete:
                     # Add multispecies rules requested in boom config file
                     collate_rules = self._get_multispecies_rules()
 
                     # Add rules to bushel workflow
-                    self.potatoBushel.addCommands(collate_rules)
-                    
-                self.potatoBushel.write()
-                self.potatoBushel.updateStatus(JobStatus.INITIALIZE)
-                self._scribe.updateObject(self.potatoBushel)
-                self.log.info('   Wrote potatoBushel {} ({} spuds)'
-                              .format(self.potatoBushel.objId, len(self.squidNames)))
-            else:
-                self.log.info('   No commands in potatoBushel {}'.format(
-                    self.potatoBushel.objId))
-        else:
-            self.log.info('   No existing potatoBushel')
+                    self.potato_bushel.add_commands(collate_rules)
 
+                self.potato_bushel.write()
+                self.potato_bushel.update_status(JobStatus.INITIALIZE)
+                self._scribe.update_object(self.potato_bushel)
+                self.log.info(
+                    '   Wrote potato_bushel {} ({} spuds)'.format(
+                        self.potato_bushel.obj_id, len(self.squid_names)))
+            else:
+                self.log.info(
+                    '   No commands in potato_bushel {}'.format(
+                        self.potato_bushel.obj_id))
+        else:
+            self.log.info('   No existing potato_bushel')
 
     # .............................
-    def rotatePotatoes(self):
-        """
-        """
-        if self.potatoBushel:
-            self._writeBushel()
-        
+    def rotate_potatoes(self):
+        """Rotate potatoes to start on next set of species."""
+        if self.potato_bushel:
+            self._write_bushel()
+
         # Create new bushel IFF do_pam_stats is False, i.e. Rolling PAM,
         #   and there are more species to process
         if not self.christopher.complete and not self.do_pam_stats:
-            self.potatoBushel = self._createBushelMakeflow()
+            self.potato_bushel = self._create_bushel_makeflow()
             self.log.info('Create new potato')
-            self.squidNames = []
-            
-    # .............................
-    def close(self):
-        self.keepWalken = False
-        self.log.info('Closing boomer ...')
-        # Stop walken the archive and saveNextStart
-        self.christopher.stopWalken()
-        self.rotatePotatoes()
+            self.squid_names = []
 
     # .............................
-    def restartWalken(self):
-        if self.christopher.complete() and self.christopher.moreDataToProcess():
+    def close(self):
+        """Close connections and stop."""
+        self.keep_walken = False
+        self.log.info('Closing boomer ...')
+        # Stop walken the archive and saveNextStart
+        self.christopher.stop_walken()
+        self.rotate_potatoes()
+
+    # .............................
+    def restart_walken(self):
+        """Restart species processing."""
+        if self.christopher.complete() and\
+                self.christopher.more_data_to_process():
             # Rename old file
-            oldfname = self.christopher.weaponOfChoice.occParser.dataFname
-            ts = dt.localtime().tuple()
-            timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(ts[0], ts[1], ts[2], ts[3], ts[4])
+            oldfname = self.christopher.weapon_of_choice.occ_parser.csv_fname
+            ts = lt.localtime().tuple()
+            timestamp = '{}{:02d}{:02d}-{:02d}{:02d}'.format(
+                ts[0], ts[1], ts[2], ts[3], ts[4])
             newfname = oldfname + '.' + timestamp
             try:
                 os.rename(oldfname, newfname)
-            except Exception, e:
-                self.log.error('Failed to rename {} to {}'.format(oldfname, newfname))
+            except Exception as e:
+                self.log.error('Failed to rename {} to {} ({})'.format(
+                    oldfname, newfname, e))
             # Restart with next file
-            self.initializeMe()
+            self.initialize_me()
 
     # ...............................................
-    def _createBushelMakeflow(self):
-        meta = {MFChain.META_CREATED_BY: self.name,
-                MFChain.META_DESCRIPTION: 'Bushel for User {}, Archive {}'
-                    .format(self.christopher.userId, self.christopher.archiveName),
-                MFChain.META_GRIDSET: self.gridsetId 
-        }
-        newMFC = MFChain(self.christopher.userId, priority=self.priority, 
-                         metadata=meta, status=JobStatus.GENERAL, 
-                         statusModTime=dt.gmt().mjd)
-        mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
-        return mfChain
-
-#     # ...............................................
-#     def _createMasterPotatoHeadMakeflow(self):
-#         meta = {MFChain.META_CREATED_BY: self.name,
-#                 MFChain.META_DESCRIPTION: 'MasterPotatoHead for User {}, Archive {}'
-#                     .format(self.christopher.userId, self.christopher.archiveName),
-#                 MFChain.META_GRIDSET: self.gridsetId 
-#         }
-#         newMFC = MFChain(self.christopher.userId, priority=self.priority, 
-#                          metadata=meta, status=JobStatus.GENERAL, 
-#                          statusModTime=dt.gmt().mjd)
-#         mfChain = self._scribe.insertMFChain(newMFC, self.gridsetId)
-#         return mfChain
+    def _create_bushel_makeflow(self):
+        meta = {
+            MFChain.META_CREATED_BY: self.name,
+            MFChain.META_DESCRIPTION:
+                'Bushel for User {}, Archive {}'.format(
+                    self.christopher.user_id, self.christopher.archive_name),
+            MFChain.META_GRIDSET: self.gridset_id
+            }
+        new_mfc = MFChain(
+            self.christopher.user_id, priority=self.priority, metadata=meta,
+            status=JobStatus.GENERAL, status_mod_time=lt.gmt().mjd)
+        return self._scribe.insert_mf_chain(new_mfc, self.gridset_id)
 
     # ...............................................
     def _get_multispecies_rules(self):
@@ -293,174 +288,301 @@ class Boomer(LMObject):
         Return:
             A list of compute rules for the gridset
         """
-        work_dir = self.potatoBushel.getRelativeDirectory()
-        bc = BoomCollate(self.gridset, dependencies=self.pav_index_filenames, 
-                         do_pam_stats=self.do_pam_stats, 
-                         do_mcpa=self.do_mcpa, 
-                         num_permutations=self.christopher.num_permutations,
-                         random_group_size=DEFAULT_RANDOM_GROUP_SIZE, 
-                         work_dir=work_dir, log=self.log)
-        rules = bc.get_collate_rules()
-        
+        work_dir = self.potato_bushel.get_relative_directory()
+        collator = BoomCollate(
+            self.gridset, dependencies=self.pav_index_filenames,
+            do_pam_stats=self.do_pam_stats, do_mcpa=self.do_mcpa,
+            num_permutations=self.christopher.num_permutations,
+            random_group_size=DEFAULT_RANDOM_GROUP_SIZE,
+            work_dir=work_dir, log=self.log)
+        rules = collator.get_collate_rules()
+
         return rules
 
     # ...............................................
-    def writeSuccessFile(self, message):
-        self.readyFilename(self._successFname, overwrite=True)
+    def write_success_file(self, message):
+        """Write out the success file."""
+        self.ready_filename(self._success_fname, overwrite=True)
         try:
-            f = open(self._successFname, 'w')
-            f.write(message)
-        except:
-            raise
-        finally:
-            f.close()
+            with open(self._success_fname, 'w', encoding=ENCODING) as out_file:
+                out_file.write(message)
+        except IOError as io_err:
+            raise LMError('Failed to write success file', io_err)
 
     # .............................
-    def processAllSpecies(self):
-        print('processAll with configFname = {}'.format(self.configFname))
+    def process_all_species(self):
+        """Read and process all species, while checking for stop signal."""
+        print(('processAll with config_fname = {}'.format(self.config_fname)))
         count = 0
-        while self.keepWalken:
-            self.processOneSpecies()
+        while self.keep_walken:
+            self.process_one_species()
             count += 1
-        if not self.keepWalken:
+        if not self.keep_walken:
             self.close()
-        self.writeSuccessFile('Boomer finished walken {} species'.format(count))
-
+        self.write_success_file(
+            'Boomer finished walken {} species'.format(count))
 
 
 # .............................................................................
-if __name__ == "__main__":
-    if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
+def main():
+    """Main method for script."""
+    if not is_lm_user():
+        print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
-    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
-                                            objCode=PUBLIC_ARCHIVE_NAME, 
-                                            usr=PUBLIC_USER)
+    default_config_file = earl.create_filename(
+        LMFileType.BOOM_CONFIG, obj_code=PUBLIC_ARCHIVE_NAME, usr=PUBLIC_USER)
     parser = argparse.ArgumentParser(
-             description=('Populate a Lifemapper archive with metadata ' +
-                          'for single- or multi-species computations ' + 
-                          'specific to the configured input data or the ' +
-                          'data package named.'))
-    parser.add_argument('--config_file', default=defaultConfigFile,
-             help=('Configuration file for the archive, gridset, and grid ' +
-                   'to be created from these data.'))
-    parser.add_argument('--success_file', default=None,
-             help=('Filename to be written on successful completion of script.'))
-    
+        description=(
+            'Populate a Lifemapper archive with metadata for single- or '
+            'multi-species computations specific to the configured input data '
+            'or the data package named.'))
+    parser.add_argument(
+        '--config_file', default=default_config_file,
+        help=('Configuration file for the archive, gridset, and grid '
+              'to be created from these data.'))
+    parser.add_argument(
+        '--success_file', default=None,
+        help=('Filename to be written on successful completion of script.'))
+
     args = parser.parse_args()
-    configFname = args.config_file
-    successFname = args.success_file
-    if not os.path.exists(configFname):
-        raise Exception('Configuration file {} does not exist'.format(configFname))
-    if successFname is None:
-        boombasename, _ = os.path.splitext(configFname)
-        successFname = boombasename + '.success'
-    
+    config_fname = args.config_file
+    success_fname = args.success_file
+    if not os.path.exists(config_fname):
+        raise LMError(
+            'Configuration file {} does not exist'.format(config_fname))
+    if success_fname is None:
+        boombasename, _ = os.path.splitext(config_fname)
+        success_fname = boombasename + '.success'
+
     secs = time.time()
     timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-    
+
     scriptname = os.path.splitext(os.path.basename(__file__))[0]
     logname = '{}.{}'.format(scriptname, timestamp)
     logger = ScriptLogger(logname, level=logging.INFO)
-    boomer = Boomer(configFname, successFname, log=logger)
-    boomer.initializeMe()
-    boomer.processAllSpecies()
-   
-"""
-from LmDbServer.boom.boomer import Boomer
+    boomer = Boomer(config_fname, success_fname, log=logger)
+    boomer.initialize_me()
+    boomer.process_all_species()
 
+
+# .............................................................................
+if __name__ == '__main__':
+    main()
+
+"""
 import logging
-import mx.DateTime as dt
-import os, sys, time
+import os
+import sys
+import time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-
 from LmCommon.common.lmconstants import JobStatus, LM_USER
-
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.lmconstants import (
-    DEFAULT_NUM_PERMUTATIONS, DEFAULT_RANDOM_GROUP_SIZE, LMFileType,
-    PUBLIC_ARCHIVE_NAME) 
-from LmServer.common.localconstants import PUBLIC_USER 
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borgscribe import BorgScribe
-from LmServer.legion.processchain import MFChain
-from LmServer.tools.cwalken import ChristopherWalken
+import LmCommon.common.time as lt
 from LmDbServer.boom.boom_collate import BoomCollate
-
-configFname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
-successFname= 'mf_3/public_boom-2019.04.12.ini.success'
-
-# configFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini'
-# successFname = '/share/lm/data/archive/cshl/prenolepis_imparis_global_10min_ppf.ini.success'
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-
-scriptname = 'testing.boomer'
-logname = '{}.{}'.format(scriptname, timestamp)
-logger = ScriptLogger(logname, level=logging.INFO)
-boomer = Boomer(configFname, successFname, log=logger)
-boomer.initializeMe()
-
-
-# squid, spudRules, idx_success_filename = boomer.christopher.startWalken(
-#     workdir)
-# boomer.processAllSpecies()
-# ##########################################################################
-# occwoc
-
-import shutil
-try:
-    import mx.DateTime as dt
-except:
-    pass
-
+from LmServer.base.utilities import is_lm_user
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.lmconstants import (
+    DEFAULT_RANDOM_GROUP_SIZE, LMFileType, PUBLIC_ARCHIVE_NAME)
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.process_chain import MFChain
+from LmServer.tools.cwalken import ChristopherWalken
 import csv
+import datetime
 import json
 import os
+import shutil
 import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.apiquery import GbifAPI
-from LmCommon.common.lmconstants import (GBIF, ProcessType, 
-                                         JobStatus, ONE_HOUR, LMFormat) 
-from LmCommon.common.occparse import OccDataParser
-from LmCommon.common.readyfile import (readyFilename)
-
+from LmCommon.common.api_query import GbifAPI
+from LmCommon.common.lmconstants import (
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
+from LmCommon.common.occ_parse import OccDataParser
+from LmCommon.common.ready_file import ready_filename
+from LmCommon.common.time import gmt, LmTime
 from LmServer.base.taxon import ScientificName
-from LmServer.common.lmconstants import LOG_PATH
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
-from LmServer.legion.occlayer import OccurrenceLayer
+from LmServer.legion.occ_layer import OccurrenceLayer
 
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
-workdir = boomer.potatoBushel.getRelativeDirectory()
-self = boomer.christopher
+from LmDbServer.boom.boomer import *
+
+SPUD_LIMIT = 5000import datetime
+import glob
+import os
+
+from LmBackend.command.server import (
+    MultiIndexPAVCommand, MultiStockpileCommand)
+from LmBackend.command.single import SpeciesParameterSweepCommand
+from LmBackend.common.lmconstants import RegistryKey, MaskMethod
+from LmBackend.common.lmobj import LMError, LMObject
+from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
+from LmCommon.common.config import Config
+from LmCommon.common.lmconstants import (
+    BoomKeys, GBIF, JobStatus, LMFormat, MatrixType, ProcessType,
+    SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING,
+    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
+    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
+from LmCommon.common.time import gmt, LmTime
+from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.lmconstants import (
+    BUFFER_KEY, CODE_KEY, DEFAULT_NUM_PERMUTATIONS, ECOREGION_MASK_METHOD,
+    LMFileType, MASK_KEY, MASK_LAYER_KEY, MASK_LAYER_NAME_KEY, PRE_PROCESS_KEY,
+    Priority, PROCESSING_KEY, SCALE_PROJECTION_MAXIMUM,
+    SCALE_PROJECTION_MINIMUM, SPECIES_DATA_PATH)
+from LmServer.common.localconstants import (findOrInsert
+    DEFAULT_EPSG, POINT_COUNT_MAX, PUBLIC_USER)
+from LmServer.common.log import ScriptLogger
+from LmServer.db.borg_scribe import BorgScribe
+from LmServer.legion.algorithm import Algorithm
+from LmServer.legion.mtx_column import MatrixColumn
+from LmServer.legion.sdm_proj import SDMProjection
+from LmServer.tools.occ_woc import (UserWoC, ExistingWoC)
+
+
+config_fname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
+success_fname = 'mf_8/public_boom-2019.04.12.ini.success'
+
+
+secs = time.time()
+timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+
+scriptname = 'testboomer'
+logname = '{}.{}'.format(scriptname, timestamp)
+logger = ScriptLogger(logname, level=logging.INFO)
+boomer = Boomer(config_fname, success_fname, log=logger)
+self = boomer
+self.initialize_me()
+
+workdir = self.potato_bushel.get_relative_directory()
+chris = self.christopher
+self = chris
+
+
+# (squid, spud_rules, idx_success_filename
+#  ) = self.start_walken(workdir)
+# ##########################################################################
+# in cwalken.start_walken
+squid = None
+spud_rules = []
+index_pavs_document_filename = None
+gs_id = 0
+curr_time = gmt().mjd
+alg = self.algs[0]
+prjs = []
+mtx_cols = []
+prj_scen = self.prj_scens[0]
+pamcode = '{}_{}'.format(prj_scen.code, alg.code)
+
+occ = self.weapon_of_choice.get_one()
+print(occ.query_count)
+
+squid = occ.squid
+
+occ_work_dir = 'occ_{}'.format(occ.get_id())
+sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
+pamcode = '{}_{}'.format(prj_scen.code, alg.code)
+
+prj = self._find_or_insert_sdm_project(
+    occ, alg, prj_scen, gmt().mjd)
+
+# if prj is not None:
+
+prjs.append(prj)
+mtx = self.global_pams[pamcode]
+mtx_col = self._find_or_insert_intersect(
+    prj, mtx, curr_time)
+if mtx_col is not None:
+    mtx_cols.append(mtx_col)
+
+do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
+self._fill_sweep_config(
+                        sweep_config, None, occ, [], [])
+
+
+algorithm_info = [algorithm.code]
+# This is the object that will be returned
+algorithm_object = {
+    RegistryKey.ALGORITHM_CODE: algorithm.code,
+    RegistryKey.PARAMETER: []
+}
+
+for param in algorithm.parameters.keys():
+    algorithm_object[RegistryKey.PARAMETER].append(
+        {
+            RegistryKey.NAME: param,
+            RegistryKey.VALUE: algorithm.parameters[param]
+        })
+    algorithm_info.append((param, str(algorithm.parameters[param])))
+
+sai = str(set(algorithm_info))
+identifier = md5(str(sai)).hexdigest()[:16]
+
+num_comps = sum([
+    len(sweep_config.occurrence_sets),
+    len(sweep_config.models),
+    len(sweep_config.projections),
+    len(sweep_config.pavs)
+    ])
+if num_comps > 0:
+    # Write the sweep config file
+    species_config_filename = os.path.join(
+        os.path.dirname(occ.get_dlocation()),
+        'species_config_{}{}'.format(
+            occ.get_id(), LMFormat.JSON.ext))
+    sweep_config.save_config(species_config_filename)
+
+    # Add sweep rule
+    param_sweep_cmd = SpeciesParameterSweepCommand(
+        species_config_filename, sweep_config.get_input_files(),
+        sweep_config.get_output_files(work_dir), work_dir)
+    spud_rules.append(param_sweep_cmd.get_makeflow_rule())
+
+    # Add stockpile rule
+    stockpile_success_filename = os.path.join(
+        work_dir, occ_work_dir, 'occ_{}stockpile.success'.format(
+            occ.get_id()))
+    stockpile_cmd = MultiStockpileCommand(
+        os.path.join(work_dir, sweep_config.stockpile_filename),
+        stockpile_success_filename,
+        pav_filename=os.path.join(
+            work_dir, sweep_config.pavs_filename))
+    spud_rules.append(
+        stockpile_cmd.get_makeflow_rule(local=True))
+
+    # Add multi-index rule if we added PAVs
+    if len(sweep_config.pavs) > 0:
+        index_pavs_document_filename = os.path.join(
+            work_dir, occ_work_dir, 'solr_pavs_post{}'.format(
+                LMFormat.XML.ext))
+        index_cmd = MultiIndexPAVCommand(
+            os.path.join(work_dir, sweep_config.pavs_filename),
+            index_pavs_document_filename)
+        spud_rules.append(index_cmd.get_makeflow_rule(local=True))
+
 
 # ##########################################################################
-# in cwalken.startWalken
 
-occ = self.weaponOfChoice.getOne()
+infname = ('/state/partition1/workspace/issues/data/'
+            'cshl/prenolepis_imparis2.csv')
+outfname = ('/state/partition1/workspace/issues/data/'
+            'cshl/prenolepis_imparis3.csv')
 
-
-# ##########################################################################
-
-infname = '/state/partition1/workspace/issues/data/cshl/prenolepis_imparis2.csv'
-outfname = '/state/partition1/workspace/issues/data/cshl/prenolepis_imparis3.csv'
-
-outf = open(outfname, 'w')
-for line in open(infname, 'r'):
+outf = open(outfname, 'w', encoding=ENCODING)
+for line in open(infname, 'r', encoding=ENCODING):
     parts = line.split('\t')
     newline = ','.join(parts)
     outf.write(newline)
-    
+
 outf.close()
 
 # ##########################################################################
-
-       
 """

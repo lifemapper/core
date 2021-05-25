@@ -1,25 +1,4 @@
-"""
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-             Lifemapper Project, lifemapper [at] ku [dot] edu, 
-             Biodiversity Institute,
-             1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-    
-             This program is free software; you can redistribute it and/or modify 
-             it under the terms of the GNU General Public License as published by 
-             the Free Software Foundation; either version 2 of the License, or (at 
-             your option) any later version.
-  
-             This program is distributed in the hope that it will be useful, but 
-             WITHOUT ANY WARRANTY; without even the implied warranty of 
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-             General Public License for more details.
-  
-             You should have received a copy of the GNU General Public License 
-             along with this program; if not, write to the Free Software 
-             Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-             02110-1301, USA.
+"""Daemon for boom process
 """
 import argparse
 import logging
@@ -29,105 +8,106 @@ import traceback
 
 from LmBackend.common.daemon import Daemon
 from LmCommon.common.lmconstants import LM_USER
-from LmServer.common.localconstants import BOOM_PID_FILE
 from LmDbServer.boom.boomer import Boomer
-from LmServer.base.utilities import isLMUser
-from LmServer.common.datalocator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.base.utilities import is_lm_user
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType, PUBLIC_ARCHIVE_NAME
+from LmServer.common.localconstants import BOOM_PID_FILE, PUBLIC_USER
 from LmServer.common.log import ScriptLogger
+
 
 # .............................................................................
 class DaBoom(Daemon):
-    """
-    Class to run the Boomer as a Daemon process
-    """
+    """Class to run the Boomer as a Daemon process."""
     # .............................
-    def __init__(self, pidfile, configFname, priority=None):
+    def __init__(self, pidfile, config_fname, success_fname, priority=None):
         # Logfile
         secs = time.time()
-        timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
+        timestamp = "{}".format(
+            time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
         logname = '{}.{}'.format(self.__class__.__name__.lower(), timestamp)
         log = ScriptLogger(logname, level=logging.INFO)
 
         Daemon.__init__(self, pidfile, log=log)
-        self.boomer = Boomer(configFname, log=log)
+        self.boomer = Boomer(config_fname, success_fname, log=log)
 
     # .............................
     def initialize(self):
-        self.boomer.initializeMe()
-        
+        """Initialize the Daemon."""
+        self.boomer.initialize_me()
+
     # .............................
     def run(self):
-        print('Running daBoom with configFname = {}'.format(self.boomer.configFname))
+        """Run the daemon."""
+        print(
+            'Running daBoom with config_fname = {}'.format(
+                self.boomer.config_fname))
         try:
-            while self.boomer.keepWalken:
-                self.boomer.processSpud()
-        except Exception, e:
-            self.log.debug('Exception {} on potato'.format(str(e)))            
-            tb = traceback.format_exc()
+            while self.boomer.keep_walken:
+                self.boomer.process_one_species()()
+        except Exception as e:
+            self.log.debug('Exception {} on potato'.format(str(e)))
+            trace_back = traceback.format_exc()
             self.log.error("An error occurred")
             self.log.error(str(e))
-            self.log.error(tb)
+            self.log.error(trace_back)
         finally:
             self.log.debug('Daboom finally stopping')
-            self.onShutdown()
-                     
+            self.on_shutdown()
+
     # .............................
-    def onUpdate(self):
-        self.log.info('Update signal caught!')
-         
-    # .............................
-    def onShutdown(self):
+    def on_shutdown(self):
+        """Shutdown the daemon and related processes."""
         self.log.info('Shutdown!')
         # Stop walken the archive and saveNextStart
         self.boomer.close()
-        Daemon.onShutdown(self)
-        
+        Daemon.on_shutdown(self)
+
     # ...............................................
     @property
-    def logFilename(self):
+    def log_filename(self):
+        """Return the log file name."""
         try:
             fname = self.log.baseFilename
-        except:
+        except AttributeError:
             fname = None
         return fname
-    
 
 
 # .............................................................................
-if __name__ == "__main__":
-    if not isLMUser():
-        print("Run this script as `{}`".format(LM_USER))
+def main():
+    """Main method for script."""
+    if not is_lm_user():
+        print(("Run this script as `{}`".format(LM_USER)))
         sys.exit(2)
     earl = EarlJr()
-    defaultConfigFile = earl.createFilename(LMFileType.BOOM_CONFIG, 
-                                                         objCode=PUBLIC_ARCHIVE_NAME, 
-                                                         usr=PUBLIC_USER)    
-#     pth = earl.createDataPath(PUBLIC_USER, LMFileType.BOOM_CONFIG)
-#     defaultConfigFile = os.path.join(pth, '{}{}'.format(PUBLIC_ARCHIVE_NAME, 
-#                                                                          LMFormat.CONFIG.ext))
+    default_config_file = earl.create_filename(
+        LMFileType.BOOM_CONFIG, obj_code=PUBLIC_ARCHIVE_NAME, usr=PUBLIC_USER)
     parser = argparse.ArgumentParser(
-                description=('Populate a Lifemapper archive with metadata ' +
-                                 'for single- or multi-species computations ' + 
-                                 'specific to the configured input data or the ' +
-                                 'data package named.'))
-    parser.add_argument('-', '--config_file', default=defaultConfigFile,
-                help=('Configuration file for the archive, gridset, and grid ' +
-                        'to be created from these data.'))
-    parser.add_argument('cmd', choices=['start', 'stop', 'restart'],
-                  help="The action that should be performed by the Boom daemon")
+        description=(
+            'Populate a Lifemapper archive with metadata for single- or '
+            'multi-species computations specific to the configured input '
+            'data or the data package named'))
+    parser.add_argument(
+        '-', '--config_file', default=default_config_file,
+        help=('Configuration file for the archive, gridset, and grid to be '
+              'created from these data'))
+    parser.add_argument(
+        'cmd', choices=['start', 'stop', 'restart'],
+        help="The action that should be performed by the Boom daemon")
 
     args = parser.parse_args()
-    configFname = args.config_file
+    config_fname = args.config_file
     cmd = args.cmd.lower()
-    
+    success_fname = './success'
+
     print('')
-    print('Running daboom with configFilename={} and command={}'
-            .format(configFname, cmd))
+    print(
+        'Running daboom with configFilename={} and command={}'.format(
+            config_fname, cmd))
     print('')
-    boomer = DaBoom(BOOM_PID_FILE, configFname)
-    
+    boomer = DaBoom(BOOM_PID_FILE, config_fname, success_fname)
+
     if cmd == 'start':
         boomer.start()
     elif cmd == 'stop':
@@ -137,8 +117,10 @@ if __name__ == "__main__":
     elif cmd == 'status':
         boomer.status()
     else:
-        print("Unknown command: {}".format(cmd))
+        print(("Unknown command: {}".format(cmd)))
         sys.exit(2)
-        
-"""
-"""
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()

@@ -1,36 +1,13 @@
-"""
-@summary: Module containing common Lifemapper constants
-
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
+"""Module containing common Lifemapper constants
 """
 try:
     from osgeo.ogr import OFTInteger, OFTReal, OFTString, OFTBinary
-except:
-    OFTInteger = 0 
-    OFTReal = 2 
+except ImportError:
+    OFTInteger = 0
+    OFTReal = 2
     OFTString = 4
     OFTBinary = 8
-   
+
 # .............................................................................
 # .    Configuration file headings
 # .............................................................................
@@ -50,7 +27,7 @@ COMPUTE_CONTACT_HEADING = 'LmCompute - contact'
 COMPUTE_OPTIONS_HEADING = 'LmCompute - options'
 COMPUTE_METRICS_HEADING = 'LmCompute - metrics'
 COMPUTE_ME_PLUGIN_HEADING = 'LmCompute - plugins - maxent'
-   
+
 # .............................................................................
 # .    Normal user                              .
 # .............................................................................
@@ -60,128 +37,134 @@ LM_USER = 'lmwriter'
 # .                               File constants                              .
 # .............................................................................
 # DATA FORMATS
-MASK_TYPECODE = 'MASK'
-ENCODING =  'utf-8'
+ENCODING = 'utf-8'
+
 
 # ............................................................................
-class BoomKeys(object):
+class BoomKeys:
     """Constants class for BOOM config document keys
     """
     # Algorithm
     ALG_CODE = 'ALG_CODE'
-    
+
     # Masking
     BUFFER = 'BUFFER'
     MODEL_MASK_NAME = 'MODEL_MASK_NAME'
     PROJECTION_MASK_NAME = 'PROJECTION_MASK_NAME'
     REGION = 'REGION'
-    
+
     # Server boom
     ARCHIVE_NAME = 'ARCHIVE_NAME'
     ARCHIVE_PRIORITY = 'ARCHIVE_PRIORITY'
     ARCHIVE_USER = 'ARCHIVE_USER'
     ARCHIVE_USER_EMAIL = 'ARCHIVE_USER_EMAIL'
-    
+
     BIOGEO_HYPOTHESES_LAYERS = 'BIOGEO_HYPOTHESES_LAYERS'
     OTHER_LAYERS = 'OTHER_LAYERS'
-    
+
     COMPUTE_PAM_STATS = 'COMPUTE_PAM_STATS'
     COMPUTE_MCPA = 'COMPUTE_MCPA'
     NUM_PERMUTATIONS = 'NUMBER_OF_PERMUTATIONS'
-    
+
     DATA_SOURCE = 'DATA_SOURCE'  # New
-#     DO_MAP_BASELINE = 'DO_MAP_BASELINE'
-    
+    # DO_MAP_BASELINE = 'DO_MAP_BASELINE'
+
     EPSG = 'EPGS'
-    
+
     GBIF_PROVIDER_FILENAME = 'GBIF_PROVIDER_FILENAME'
     GBIF_TAXONOMY_FILENAME = 'GBIF_TAXONOMY_FILENAME'
-    
+
     ASSEMBLE_PAMS = 'ASSEMBLE_PAMS'
     GRID_BBOX = 'GRID_BBOX'
-    GRID_CELL_SIZE = 'GRID_CELL_SIZE' # NEW
+    GRID_CELL_SIZE = 'GRID_CELL_SIZE'  # NEW
     GRID_NAME = 'GRID_NAME'
     GRID_NUM_SIDES = 'GRID_NUM_SIDES'
-    
+
     # These are MatrixColumn class properties, prefixed by 'INTERSECT_'
     INTERSECT_FILTER_STRING = 'INTERSECT_FILTER_STRING'
     INTERSECT_MAX_PRESENCE = 'INTERSECT_MAX_PRESENCE'
     INTERSECT_MIN_PERCENT = 'INTERSECT_MIN_PERCENT'
     INTERSECT_MIN_PRESENCE = 'INTERSECT_MIN_PRESENCE'
     INTERSECT_VAL_NAME = 'INTERSECT_VAL_NAME'
-    
+
     MAPUNITS = 'MAPUNITS'
-    
+
     OCC_DATA_NAME = 'OCC_DATA_NAME'
-    OCC_DATA_DIR = 'OCC_DATA_DIR'
-    OCC_DATA_DELIMITER = 'OCC_DATA_DELIMITER' # NEW
-    OCC_ID_FILENAME = 'OCC_ID_FILENAME' # NEw
+    OCC_DATA_DELIMITER = 'OCC_DATA_DELIMITER'  # NEW
+    OCC_ID_FILENAME = 'OCC_ID_FILENAME'  # NEw
     OCC_EXP_MJD = 'OCC_EXP_MJD'
     # TODO: Remove these later
     OCC_EXP_YEAR = 'OCC_EXP_YEAR'
     OCC_EXP_MONTH = 'OCC_EXP_MONTH'
     OCC_EXP_DAY = 'OCC_EXP_DAY'
-    
+
     POINT_COUNT_MIN = 'POINT_COUNT_MIN'
     SCENARIO_PACKAGE = 'SCENARIO_PACKAGE'
     SCENARIO_PACKAGE_MODEL_SCENARIO = 'SCENARIO_PACKAGE_MODEL_SCENARIO'
     SCENARIO_PACKAGE_PROJECTION_SCENARIOS = \
         'SCENARIO_PACKAGE_PROJECTION_SCENARIOS'
-        
+
     TAXON_ID_FILENAME = 'TAXON_ID_FILENAME'
     TAXON_NAME_FILENAME = 'TAXON_NAME_FILENAME'
-    
+
     TREE = 'TREE'
     TROUBLESHOOTERS = 'TROUBLESHOOTERS'
     USER_TAXONOMY_FILENAME = 'USER_TAXONOMY_FILENAME'
+
+
 # .............................................................................
 class FileFormat:
     """
     @summary: This class contains file format meta information
     @todo: Add GDAL / OGR type as optional parameters
     """
+
     # ...........................
-    def __init__(self, extension, mimeType, allExtensions=None, driver=None,
+    def __init__(self, extension, mime_type, all_extensions=None, driver=None,
                  options=None, default=False):
+        """Constructor
+
+        Args:
+            extension: This is the primary extension if a format has multiple
+                files
+            mime_type: The MIME-Type for this format
+            all_extensions: List of all possible extensions for this format
+            driver: GDAL or OGR driver to use when reading this format
         """
-        @summary: Constructor
-        @param extension: This is the primary extension if a format has multiple 
-                          files
-        @param mimeType: The MIME-Type for this format
-        @param allExtensions: List of all possible extensions for this format
-        @param driver: GDAL or OGR driver to use when reading this format
-        """
-        self._mimeType = mimeType
+        self._mime_type = mime_type
         self.ext = extension
         self.driver = driver
         self.options = options
-        self.isDefault = default
-        self._extensions = allExtensions
+        self.is_default = default
+        self._extensions = all_extensions
         if self._extensions is None:
             self._extensions = []
         # Add the default extension to the extensions list if not present
         if self.ext not in self._extensions:
             self._extensions.append(self.ext)
-   
-    # ...........................
-    def getExtensions(self):
+
+    # ..........................
+    def get_extensions(self):
+        """Get valid file extension for this file type
+        """
         return self._extensions
-   
+
     # ...........................
-    def getMimeType(self):
-        return self._mimeType
-   
+    def get_mime_type(self):
+        """Get the mime type for this file type
+        """
+        return self._mime_type
+
+
 # .............................................................................
 class LMFormat:
+    """Class containing known formats to Lifemapper
     """
-    @summary: Class containing known formats to Lifemapper
-    """
-    ASCII = FileFormat('.asc', 'text/plain', allExtensions=['.asc', '.prj'],
-                       driver='AAIGrid',
-                       options={'DECIMAL_PRECISION': 6, 
-                                'FORCE_CELLSIZE':'YES'})
-    CSV = FileFormat('.csv', 'text/csv',
-                     driver='CSV')
+    ASCII = FileFormat(
+        '.asc', 'text/plain', all_extensions=['.asc', '.prj'],
+        driver='AAIGrid', options={
+            'DECIMAL_PRECISION': 6, 'FORCE_CELLSIZE': 'YES'})
+    CSV = FileFormat('.csv', 'text/csv', driver='CSV')
     CONFIG = FileFormat('.ini', 'text/plain')
     EML = FileFormat('.eml', 'application/xml+eml')
     GTIFF = FileFormat('.tif', 'image/tiff', driver='GTiff', default=True)
@@ -195,162 +178,180 @@ class LMFormat:
     MATRIX = FileFormat('.lmm', 'application/octet-stream')
     METADATA = FileFormat('.meta', 'text/plain')
     MXE = FileFormat('.mxe', 'application/octet-stream')
-    NEXUS = FileFormat('.nex', 'text/plain', allExtensions=['.nex', '.nxs'])
-    NEWICK = FileFormat('.tre', 'text/plain', allExtensions=['.tre', '.nhx'])
+    NEXUS = FileFormat('.nex', 'text/plain', all_extensions=['.nex', '.nxs'])
+    NEWICK = FileFormat('.tre', 'text/plain', all_extensions=['.tre', '.nhx'])
     NUMPY = FileFormat('.npy', 'application/octet-stream')
     PARAMS = FileFormat('.params', 'text/plain')
     PICKLE = FileFormat('.pkl', 'application/octet-stream')
     PROGRESS = FileFormat('.progress', 'application/progress+json')
     PYTHON = FileFormat('.py', 'text/plain')
-    SHAPE = FileFormat('.shp', 'application/x-gzip', 
-                       allExtensions=[".shp", ".shx", ".dbf", ".prj", ".sbn", 
-                                      ".sbx", ".fbn", ".fbx", ".ain", ".aih", 
-                                      ".ixs", ".mxs", ".atx", ".shp.xml", 
-                                      ".cpg", ".qix"],
-                       driver='ESRI Shapefile',
-                       default=True,
-                       options={'MAX_STRLEN': 255})
+    SHAPE = FileFormat(
+        '.shp', 'application/x-gzip',
+        all_extensions=['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.fbn',
+                        '.fbx', '.ain', '.aih', '.ixs', '.mxs', '.atx',
+                        '.shp.xml', '.cpg', '.qix'],
+        driver='ESRI Shapefile', default=True, options={'MAX_STRLEN': 255})
     TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
     TMP = FileFormat('.tmp', 'application/octet-stream')
     TXT = FileFormat('.txt', 'text/plain')
     XML = FileFormat('.xml', 'application/xml')
     ZIP = FileFormat('.zip', 'application/zip')
-    
+
     @staticmethod
-    def GDALFormats():
+    def gdal_formats():
+        """Returns a list of GDAL raster formats"""
         return [LMFormat.ASCII, LMFormat.GTIFF, LMFormat.HFA]
-    
+
     @staticmethod
-    def getDefaultGDAL():
-        for ff in LMFormat.GDALFormats():
-            if ff.isDefault:
-                return ff
+    def get_default_gdal():
+        """Get the default gdal format"""
+        for frmt in LMFormat.gdal_formats():
+            if frmt.is_default:
+                return frmt
         return None
-    
+
     @staticmethod
-    def OGRFormats():
+    def ogr_formats():
+        """Returns a list of OGR vector formats
+        """
         return [LMFormat.SHAPE, LMFormat.CSV, LMFormat.GEO_JSON]
-    
+
     @staticmethod
-    def getDefaultOGR():
-        for ff in LMFormat.OGRFormats():
-            if ff.isDefault:
-                return ff
+    def get_default_ogr():
+        """Return the default OGR vector format
+        """
+        for frmt in LMFormat.ogr_formats():
+            if frmt.is_default:
+                return frmt
         return None
-    
+
     @staticmethod
-    def getStrlenForDefaultOGR():
-        return LMFormat.getDefaultOGR().options['MAX_STRLEN']
-    
+    def get_str_len_for_default_ogr():
+        """Get the maximum string length for the default OGR vector format
+        """
+        return LMFormat.get_default_ogr().options['MAX_STRLEN']
+
     @staticmethod
-    def SpatialFormats():
-        spFormats = [ff for ff in LMFormat.GDALFormats()]
-        spFormats.extend(LMFormat.OGRFormats())
-        return spFormats
-    
+    def spatial_formats():
+        """Returns a list of spatial file formats
+        """
+        sp_formats = LMFormat.gdal_formats()
+        sp_formats.extend(LMFormat.ogr_formats())
+        return sp_formats
+
     @staticmethod
-    def getFormatByExtension(ext):
-        for ff in (LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON, 
-                   LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML, 
-                   LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE, 
-                   LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE, 
-                   LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT, 
-                   LMFormat.XML, LMFormat.ZIP):
-            if ext == ff.ext:
-                return ff
+    def get_format_by_extension(ext):
+        """Get a FileFormat object for the specified file extension
+        """
+        for frmt in (
+                LMFormat.ASCII, LMFormat.CSV, LMFormat.GEO_JSON,
+                LMFormat.GTIFF, LMFormat.HFA, LMFormat.JSON, LMFormat.KML,
+                LMFormat.LOG, LMFormat.MAKEFLOW, LMFormat.MAP, LMFormat.MXE,
+                LMFormat.NEWICK, LMFormat.NUMPY, LMFormat.PICKLE,
+                LMFormat.SHAPE, LMFormat.TAR_GZ, LMFormat.TMP, LMFormat.TXT,
+                LMFormat.XML, LMFormat.ZIP):
+            if ext == frmt.ext:
+                return frmt
         return None
-    
+
     @staticmethod
-    def getFormatByDriver(driver):
-        for ff in LMFormat.SpatialFormats():
-            if driver == ff.driver:
-                return ff
+    def get_format_by_driver(driver):
+        """Get a FileFormat object that matches the specified driver
+        """
+        for frmt in LMFormat.spatial_formats():
+            if driver == frmt.driver:
+                return frmt
         return None
-    
+
     @staticmethod
-    def getExtensionByDriver(driver):
-        ff = LMFormat.getFormatByDriver(driver)
-        if ff is not None:
-            return ff.ext
+    def get_extension_by_driver(driver):
+        """Get the appropriate file extension for the specified driver
+        """
+        frmt = LMFormat.get_format_by_driver(driver)
+        if frmt is not None:
+            return frmt.ext
         return None
-    
+
     @staticmethod
-    def isGeo(ext=None, driver=None):
-        for ff in LMFormat.SpatialFormats():
-            if ext is not None and ext == ff.ext:
+    def is_geo(ext=None, driver=None):
+        """Return boolean indicating if format is spatial
+        """
+        for format_ in LMFormat.spatial_formats():
+            if ext is not None and ext == format_.ext:
                 return True
-            elif driver is not None and driver == ff.driver:
+            if driver is not None and driver == format_.driver:
                 return True
         return False
-    
+
     @staticmethod
-    def isOGR(ext=None, driver=None):
-        for ff in LMFormat.OGRFormats():
-            if ext is not None and ext == ff.ext:
+    def is_ogr(ext=None, driver=None):
+        """Return boolean indicating if format is OGR vector
+        """
+        for format_ in LMFormat.ogr_formats():
+            if ext is not None and ext == format_.ext:
                 return True
-            elif driver is not None and driver == ff.driver:
-                return True
-        return False
-       
-    @staticmethod
-    def OGRDrivers():
-        return [ff.driver for ff in LMFormat.OGRFormats()]
-    
-    @staticmethod
-    def isGDAL(ext=None, driver=None):
-        for ff in LMFormat.GDALFormats():
-            if ext is not None and ext == ff.ext:
-                return True
-            elif driver is not None and driver == ff.driver:
+            if driver is not None and driver == format_.driver:
                 return True
         return False
-    
+
     @staticmethod
-    def GDALDrivers():
-        return [ff.driver for ff in LMFormat.GDALFormats()]
-    
+    def ogr_drivers():
+        """Returns a list of OGR vector format drivers
+        """
+        return [format_.driver for format_ in LMFormat.ogr_formats()]
+
     @staticmethod
-    def isJSON(ext):
+    def is_gdal(ext=None, driver=None):
+        """Returns a boolean indication if the format is GDAL raster
+        """
+        for format_ in LMFormat.gdal_formats():
+            if ext is not None and ext == format_.ext:
+                return True
+            if driver is not None and driver == format_.driver:
+                return True
+        return False
+
+    @staticmethod
+    def gdal_drivers():
+        """Return a list of GDAL raster drivers
+        """
+        return [format_.driver for format_ in LMFormat.gdal_formats()]
+
+    @staticmethod
+    def is_json(ext):
+        """Return a boolean indicating if the format is JSON
+        """
         if ext in (LMFormat.GEO_JSON.ext, LMFormat.JSON.ext):
             return True
         return False
-    
+
     @staticmethod
-    def isTestable(ext):
+    def is_testable(ext):
+        """Return a boolean indicating if the format is testable
+        """
         if ext in (LMFormat.ASCII.ext, LMFormat.GTIFF.ext,
                    LMFormat.SHAPE.ext, LMFormat.JSON.ext):
             return True
         return False
 
+
 # Web object interfaces
 CSV_INTERFACE = 'csv'
 EML_INTERFACE = 'eml'
-FILE_INTERFACE = 'file'
 GEO_JSON_INTERFACE = 'geojson'
 GEOTIFF_INTERFACE = 'gtiff'
 JSON_INTERFACE = 'json'
 KML_INTERFACE = 'kml'
 NEXUS_INTERFACE = 'nexus'
 NEWICK_INTERFACE = 'newick'
-OGC_INTERFACE = 'ogc'
 PACKAGE_INTERFACE = 'package'
 PROGRESS_INTERFACE = 'progress'
 SHAPEFILE_INTERFACE = 'shapefile'
 
+
 # .............................................................................
-# .                               Job constants                               .
-# .............................................................................
-class InputDataType:
-    LM_LOWRES_CLIMATE = 1
-    LM_HIRES_CLIMATE = 2
-    EDAC = 3
-    
-    USER_PRESENCE_ABSENCE = 11
-    USER_ANCILLARY = 12
-   
 class MatrixType:
-    """ 
-    @summary: Constants to define the type of matrix (or set of matrix outputs)
+    """Constants to define the type of matrix (or set of matrix outputs)
     """
     # Inputs
     PAM = 1
@@ -373,52 +374,40 @@ class MatrixType:
     SCHLUTER_RANDOM = 154
     SPECIES_COV_RANDOM = 155
     SITES_COV_RANDOM = 156
-    MCPA_OUTPUTS = 201 # Could be used for permutations
-   
+    MCPA_OUTPUTS = 201  # Could be used for permutations
+
 
 class JobStatus:
-    """ 
-    @summary: Constants to define the status of a job.
-    @note: 0 - Not ready
-    @note: 1 - Ready but not started
-    @note: Greater than 1 but less than 300 - Running
-    @note: 300 - Completed
-    @note: 1000 or greater - Error
+    """Constants to define the status of a job.
+
+    Note:
+        0 - Not ready
+        1 - Ready but not started
+        Greater than 1 but less than 300 - Running
+        300 - Completed
+        1000 or greater - Error
     """
-    GENERAL = 0  ## Not ready
-    INITIALIZE = 1 ## Ready to run
-    PULL_REQUESTED = 90 ## Pull requested from job server
-    PULL_COMPLETE = 100 ## Pulled from job server to compute
-    ACQUIRING_INPUTS = 105 ## Acquiring inputs for computation
-    COMPUTE_INITIALIZED = 110 ## Initialized for compute
-    RUNNING = 120 ## LmCompute is working on it
-    COMPUTED = 130 ## Finished computation
-    PUSH_REQUESTED = 140 ## Waiting to push results back to server
-    PUSHED = 150 ## Results pushed to server
-    PUSH_COMPLETE = 200
-    
-    #NOTIFY_READY = 210
-    
-    COMPLETE = 300 ## Results computed and available
-    
-    # ==========================================================================   
-    # =                             General Errors                             =
-    # ==========================================================================
+    GENERAL = 0  # Not ready
+    INITIALIZE = 1  # Ready to run
+    PULL_REQUESTED = 90  # Pull requested from job server
+    COMPUTED = 130  # Finished computation
+
+    # NOTIFY_READY = 210
+
+    COMPLETE = 300  # Results computed and available
+
+    # =========================================================================
+    # =                            General Errors                             =
+    # =========================================================================
     # Not found in database, could be prior to insertion
     NOT_FOUND = 1404
-    
-    GENERAL_ERROR = 1000 ## Any status greater than this is an error
-    UNKNOWN_ERROR = 1001 ## Unknown error occurred
-    DEPENDENCY_ERROR = 1002
-    UNKNOWN_CLUSTER_ERROR = 1003
-    PUSH_FAILED = 1100 ## Failed to push results to server
-    
-    # Remote kill status.  This happens when something signals a stop
-    REMOTE_KILL = 1150
-    
-    # ==========================================================================
-    # =                              Common Errors                             =
-    # ==========================================================================
+
+    GENERAL_ERROR = 1000  # Any status greater than this is an error
+    UNKNOWN_ERROR = 1001  # Unknown error occurred
+
+    # =========================================================================
+    # =                              Common Errors                            =
+    # =========================================================================
     # Database
     # ............................................
     DB_CREATE_ERROR = 1201
@@ -426,154 +415,79 @@ class JobStatus:
     DB_INSERT_ERROR = 1203
     DB_READ_ERROR = 1204
     DB_UPDATE_ERROR = 1205
-    
+
     # I/O
     # ............................................
     IO_READ_ERROR = 1301
     IO_WRITE_ERROR = 1302
     IO_WAIT_ERROR = 1303
-    
-    # ==========================================================================   
-    # =                            Lifemapper Errors                           =
-    # ==========================================================================
-    #LM_GENERAL_ERROR = 2000 - conflicts with MODEL_ERROR and is not used.
-    
-    # Python errors
-    # ............................................
-    LM_PYTHON_ERROR = 2100
-    LM_PYTHON_MODULE_IMPORT_ERROR = 2101
-    LM_PYTHON_ATTRIBUTE_ERROR = 2102
-    LM_PYTHON_EXPAT_ERROR = 2103
-    
-    # Lifemapper job errors
-    # ............................................
-    LM_JOB_ERROR = 2200
-    LM_JOB_NOT_FOUND = 2201
-    LM_JOB_NOT_READY = 2202
-    LM_JOB_APPLICATION_NOT_FOUND = 2204
-       
+
+    # =========================================================================
+    # =                            Lifemapper Errors                          =
+    # =========================================================================
+    # LM_GENERAL_ERROR = 2000 - conflicts with MODEL_ERROR and is not used.
+
     # Lifemapper data errors
     # ............................................
-    LM_DATA_ERROR = 2300
     LM_POINT_DATA_ERROR = 2301
     LM_RAW_POINT_DATA_ERROR = 2302
-    
-    # Lifemapper Pipeline errors
-    LM_PIPELINE_ERROR = 2400
-    LM_PIPELINE_WRITEFILE_ERROR = 2401
-    LM_PIPELINE_WRITEDB_ERROR = 2402
-    LM_PIPELINE_UPDATEOCC_ERROR = 2403
-    
-    LM_PIPELINE_DISPATCH_ERROR = 2415
-    
+
     LM_LONG_RUNNING_JOB_ERROR = 2499
-    
-    # ==========================================================================   
-    # =                           SDM Errors                          =
-    # ==========================================================================
-    # General model error, previously 1002
-    MODEL_ERROR = 2000
-    
+
+    # =========================================================================
+    # =                             SDM Errors                                =
+    # =========================================================================
+
     # Mask error
     MASK_ERROR = 2500
     # openModeller errors
     # ............................................
     OM_GENERAL_ERROR = 3000
-       
-    # Error in request file
-    # ............................................
-    OM_REQ_ERROR = 3100
-       
-    # Algorithm error
-    # ............................................
-    OM_REQ_ALGO_ERROR = 3110
-    OM_REQ_ALGO_MISSING_ERROR = 3111
-    OM_REQ_ALGO_INVALID_ERROR = 3112
-       
-    # Algorithm Parameter error
-    # ............................................
-    # ............................................
-    OM_REQ_ALGOPARAM_ERROR = 3120
-    OM_REQ_ALGOPARAM_MISSING_ERROR = 3121
-    OM_REQ_ALGOPARAM_INVALID_ERROR = 3122
-    OM_REQ_ALGOPARAM_OUT_OF_RANGE_ERROR = 3123
-     
-    # Layer error
-    # ............................................
-    OM_REQ_LAYER_ERROR = 3130
-    OM_REQ_LAYER_MISSING_ERROR = 3131
-    OM_REQ_LAYER_INVALID_ERROR = 3132
-    OM_REQ_LAYER_BAD_FORMAT_ERROR = 3134
-    OM_REQ_LAYER_BAD_URL_ERROR = 3135
-     
-    # Points error
-    # ............................................
-    OM_REQ_POINTS_ERROR = 3140
-    OM_REQ_POINTS_MISSING_ERROR = 3141
-    OM_REQ_POINTS_OUT_OF_RANGE_ERROR = 3143
-    
-    # Projection error
-    # ............................................
-    OM_REQ_PROJECTION_ERROR = 3150
-    
-    # Coordinate system error
-    # ............................................
-    OM_REQ_COORDSYS_ERROR = 3160
-    OM_REQ_COORDSYS_MISSING_ERROR = 3161
-    OM_REQ_COORDSYS_INVALID_ERROR = 3162
-    
-    # Error in openModeller execution
-    # ............................................
-    OM_EXEC_ERROR = 3200
-    
+
     # Error generating model
     # ............................................
     OM_EXEC_MODEL_ERROR = 3210
-    
+
     # Error generating projection
     # ............................................
     OM_EXEC_PROJECTION_ERROR = 3220
-     
+
     # ............................................
     # Maxent errors
     # ............................................
     ME_GENERAL_ERROR = 3500
-    
+
     # Maxent layer errors
     # ............................................
     ME_MISMATCHED_LAYER_DIMENSIONS = 3601
-    ME_CORRUPTED_LAYER = 3602 # Could be issue with header or data
+    ME_CORRUPTED_LAYER = 3602  # Could be issue with header or data
     ME_LAYER_MISSING = 3603
     ME_FILE_LOCK_ERROR = 3604
-    
+
     # Maxent points issues
     # ............................................
     ME_POINTS_ERROR = 3740
-    
-    # Maxent configuration issues
-    # ............................................
-    ME_CONFIG_ERROR = 3750 # Base error status for problems with ME configuration
-    
+
     # Not enough points to trigger any feature classes
-    ME_NO_FEATURES_CLASSES_AVAILABLE = 3751 
-    
+    ME_NO_FEATURES_CLASSES_AVAILABLE = 3751
+
     # Other Maxent problems
     # ............................................
     ME_HEAP_SPACE_ERROR = 3801
     ME_EXEC_MODEL_ERROR = 3802
     ME_EXEC_PROJECTION_ERROR = 3803
-    
+
     # .......................................
     #  Occurrence set job errors
     # ...............................
     OCC_NO_POINTS_ERROR = 3901
-    
-    # ==========================================================================   
-    # =                               HTTP Errors                              =
-    # ==========================================================================
+
+    # =========================================================================
+    # =                              HTTP Errors                              =
+    # =========================================================================
     # Last 3 digits are the http error code, only 400 and 500 levels listed
     HTTP_GENERAL_ERROR = 4000
-       
+
     # Client error
     # ............................................
     HTTP_CLIENT_BAD_REQUEST = 4400
@@ -593,7 +507,7 @@ class JobStatus:
     HTTP_CLIENT_UNSUPPORTED_MEDIA_TYPE = 4415
     HTTP_CLIENT_REQUEST_RANGE_NOT_SATISFIABLE = 4416
     HTTP_CLIENT_EXPECTATION_FAILED = 4417
-    
+
     # Server error
     # ............................................
     HTTP_SERVER_INTERNAL_SERVER_ERROR = 4500
@@ -602,43 +516,10 @@ class JobStatus:
     HTTP_SERVER_SERVICE_UNAVAILABLE = 4503
     HTTP_SERVER_GATEWAY_TIMEOUT = 4504
     HTTP_SERVER_HTTP_VERSION_NOT_SUPPORTED = 4505
-    
-    # ==========================================================================   
-    # =                             Database Errors                            =
-    # ==========================================================================
-    #   """
-    #   Last digit meaning:
-    #      0: General error
-    #      1: Failed to read
-    #      2: Failed to write
-    #      3: Failed to delete
-    #   """
-    DB_GENERAL_ERROR = 5000
-    
-    # Job
-    # ............................................
-    DB_JOB_ERROR = 5100
-    DB_JOB_READ_ERROR = 5101
-    DB_JOB_WRITE_ERROR = 5102
-    DB_JOB_DELETE_ERROR = 5103
-    
-    # Layer
-    # ............................................
-    DB_LAYER_ERROR = 5200
-    DB_LAYER_READ_ERROR = 5201
-    DB_LAYER_WRITE_ERROR = 5202
-    DB_LAYER_DELETE_ERROR = 5203
-    
-    # Layer node
-    # ............................................
-    DB_LAYERNODE_ERROR = 5300
-    DB_LAYERNODE_READ_ERROR = 5301
-    DB_LAYERNODE_WRITE_ERROR = 5302
-    DB_LAYERNODE_DELETE_ERROR = 5303
-    
-    # ==========================================================================   
-    # =                                IO Errors                               =
-    # ==========================================================================
+
+    # =========================================================================
+    # =                               IO Errors                               =
+    # =========================================================================
     #   """
     #   Last digit meaning:
     #      0: General error
@@ -647,119 +528,19 @@ class JobStatus:
     #      3: Failed to delete
     #   """
     IO_GENERAL_ERROR = 6000
-    IO_NOT_FOUND = 6001
-    
-    # Model
-    # ............................................
-    IO_MODEL_ERROR = 6100
-    
-    # Model request
-    # ............................................
-    IO_MODEL_REQUEST_ERROR = 6110
-    IO_MODEL_REQUEST_READ_ERROR = 6111
-    IO_MODEL_REQUEST_WRITE_ERROR = 6112
-    IO_MODEL_REQUEST_DELETE_ERROR = 6113
-    
-    # Model script
-    # ............................................
-    IO_MODEL_SCRIPT_ERROR = 6120
-    IO_MODEL_SCRIPT_READ_ERROR = 6121
-    IO_MODEL_SCRIPT_WRITE_ERROR = 6122
-    IO_MODEL_SCRIPT_DELETE_ERROR = 6123
-    
-    # Model output
-    # ............................................
-    IO_MODEL_OUTPUT_ERROR = 6130
-    IO_MODEL_OUTPUT_READ_ERROR = 6131
-    IO_MODEL_OUTPUT_WRITE_ERROR = 6132
-    IO_MODEL_OUTPUT_DELETE_ERROR = 6133
-    
-    # Projection
-    # ............................................
-    IO_PROJECTION_ERROR = 6200
-    
-    # Projection request
-    # ............................................
-    IO_PROJECTION_REQUEST_ERROR = 6210
-    IO_PROJECTION_REQUEST_READ_ERROR = 6211
-    IO_PROJECTION_REQUEST_WRITE_ERROR = 6212
-    IO_PROJECTION_REQUEST_DELETE_ERROR = 6213
-    
-    # Projection script
-    # ............................................
-    IO_PROJECTION_SCRIPT_ERROR = 6220
-    IO_PROJECTION_SCRIPT_READ_ERROR = 6221
-    IO_PROJECTION_SCRIPT_WRITE_ERROR = 6222
-    IO_PROJECTION_SCRIPT_DELETE_ERROR = 6223
-    
-    # Projection output
-    # ............................................
-    IO_PROJECTION_OUTPUT_ERROR = 6230
-    IO_PROJECTION_OUTPUT_READ_ERROR = 6231
-    IO_PROJECTION_OUTPUT_WRITE_ERROR = 6232
-    IO_PROJECTION_OUTPUT_DELETE_ERROR = 6233
-    
-    # Layer
-    # ............................................
-    IO_LAYER_ERROR = 6300
-    IO_LAYER_READ_ERROR = 6301
-    IO_LAYER_WRITE_ERROR = 6302
-    IO_LAYER_DELETE_ERROR = 6303
-    
+
     # Matrix
     # ............................................
-    IO_MATRIX_ERROR = 6400
     IO_MATRIX_READ_ERROR = 6401
-    IO_MATRIX_WRITE_ERROR = 6402
-    IO_MATRIX_DELETE_ERROR = 6403
-    
-    # Pickled RAD Objects
-    # ............................................
-    IO_INDICES_ERROR = 6500
-    IO_INDICES_READ_ERROR = 6501
-    IO_INDICES_WRITE_ERROR = 6502
-    IO_INDICES_DELETE_ERROR = 6503
-    
+
     # Occurrence Set jobs
     # ............................................
-    IO_OCCURRENCE_SET_ERROR = 6600
-    IO_OCCURRENCE_SET_READ_ERROR = 6601
     IO_OCCURRENCE_SET_WRITE_ERROR = 6602
-    IO_OCCURRENCE_SET_DELETE_ERROR = 6603
-    
-    # ==========================================================================   
-    # =                               SGE Errors                               =
-    # ==========================================================================
-    SGE_GENERAL_ERROR = 7000
-    SGE_BASH_ERROR = 7100
-    
-    # ==========================================================================   
-    # =                           RAD Errors                                   =
-    # ==========================================================================
-    RAD_GENERAL_ERROR = 8000
-    
-    RAD_INTERSECT_ERROR = 8100
-    RAD_INTERSECT_ZERO_LAYERS_ERROR = 8110
-    
-    RAD_COMPRESS_ERROR = 8200
-    
-    RAD_CALCULATE_ERROR = 8300
-    RAD_CALCULATE_FAILED_TO_CREATE_SHAPEFILE = 8312
-    
-    RAD_SWAP_ERROR = 8400
-    RAD_SWAP_TOO_FEW_COLUMNS_OR_ROWS_ERROR = 8410
-    
-    RAD_SPLOTCH_ERROR = 8500
-    RAD_SPLOTCH_PYSAL_NEIGHBOR_ERROR = 8510
-    
-    RAD_SHAPEGRID_ERROR = 8600
-    RAD_SHAPEGRID_INVALID_PARAMETERS = 8601
-    RAD_SHAPEGRID_NO_CELLS = 8610
-    
-    # ==========================================================================   
-    #                               Compute Status                             =
-    # ==========================================================================
-    # 301000-301999  - Process (3) openModeller Model SDM (01)   
+
+    # =========================================================================
+    #                               Compute Status                            =
+    # =========================================================================
+    # 301000-301999  - Process (3) openModeller Model SDM (01)
     # ............................................
     # Error in request file
     OM_MOD_REQ_ERROR = 301100
@@ -772,54 +553,44 @@ class JobStatus:
     # Points error
     OM_MOD_REQ_POINTS_MISSING_ERROR = 301141
     OM_MOD_REQ_POINTS_OUT_OF_RANGE_ERROR = 301143
-    
-    # 301000-301999  - Process (3) openModeller SDM Projection (02)   
+
+    # 301000-301999  - Process (3) openModeller SDM Projection (02)
     # ............................................
-    OM_PROJECTION_ERROR = 302150
-    
     BLANK_PROJECTION_ERROR = 303100
-    
+
     ENCODING_ERROR = 304100
-    
+
     # ............................................
     @staticmethod
     def waiting(stat):
-        if stat == JobStatus.GENERAL or stat == JobStatus.INITIALIZE:
-            return True
-        else:
-            return False
-    
-    @staticmethod
-    def inProcess(stat):
-        if stat > JobStatus.INITIALIZE and stat < JobStatus.COMPLETE:
-            return True
-        else:
-            return False
-    
+        """Return boolean indicating if status is a waiting status
+        """
+        return stat in (JobStatus.GENERAL, JobStatus.INITIALIZE)
+
     @staticmethod
     def incomplete(stat):
-        if stat < JobStatus.COMPLETE:
-            return True
-        else:
-            return False
-    
+        """Return boolean indicating if the status is a non-terminal status
+        """
+        return stat < JobStatus.COMPLETE
+
     @staticmethod
     def finished(stat):
-        if stat >= JobStatus.COMPLETE:
-            return True
-        else:
-            return False
-    
+        """Return a boolean indicating if the status is a "finished" status
+        """
+        return stat >= JobStatus.COMPLETE
+
     @staticmethod
     def failed(stat):
-        if stat == JobStatus.NOT_FOUND or stat >= JobStatus.GENERAL_ERROR:
-            return True
-        else:
-            return False
+        """Return boolean indication if the status is a failed status
+        """
+        return stat == JobStatus.NOT_FOUND or stat >= JobStatus.GENERAL_ERROR
+
 
 # ............................................................................
 # Aka reqSoftware in LmJob table
 class ProcessType:
+    """Process type enumeration
+    """
     # .........................
     # SDM
     # .........................
@@ -829,7 +600,6 @@ class ProcessType:
     # SDM project
     ATT_PROJECT = 120
     OM_PROJECT = 220
-    PROJECT_REQUEST = 105
     # Occurrences
     GBIF_TAXA_OCCURRENCE = 405
 #     BISON_TAXA_OCCURRENCE = 410
@@ -850,7 +620,6 @@ class ProcessType:
     RAD_CALCULATE = 340
     ENCODE_HYPOTHESES = 350
     ENCODE_PHYLOGENY = 360
-    SQUID_INC = 365
     BUILD_ANC_PAM = 370
     # Randomize
     RAD_SWAP = 331
@@ -859,165 +628,83 @@ class ProcessType:
     # MCPA
     MCPA_CORRECT_PVALUES = 530
     MCPA_OBSERVED = 540
-    MCPA_RANDOM = 550  
-    MCPA_ASSEMBLE = 560 # Assembles all MCPA outputs into a single matrix
+    MCPA_RANDOM = 550
+    MCPA_ASSEMBLE = 560  # Assembles all MCPA outputs into a single matrix
     # .......... Notify ..........
     SMTP = 610
     CONCATENATE_MATRICES = 620
-    UPDATE_OBJECT = 630
-    MF_TRIAGE = 640
-    TOUCH = 650
-    SOLR_POST = 660
-    SNIPPET_POST = 670
-    
+
     # BOOM
     BOOM_INIT = 710
     #    BOOM_DAEMON = 720
     BOOMER = 720
-    
+
     # .........................
     # TODO: deleteMe?
     # .........................
     RAD_INTERSECT = 310
-    
+
     @staticmethod
-    def isSingle(ptype):
-        if ptype in [ProcessType.SMTP, 
-                     ProcessType.ATT_MODEL, ProcessType.ATT_PROJECT, 
-                     ProcessType.OM_MODEL, ProcessType.OM_PROJECT, 
-                     ProcessType.GBIF_TAXA_OCCURRENCE, 
-#                      ProcessType.BISON_TAXA_OCCURRENCE, 
-#                      ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                     ProcessType.USER_TAXA_OCCURRENCE, 
-                     ProcessType.INTERSECT_RASTER, 
-                     ProcessType.INTERSECT_VECTOR, 
-                     ProcessType.INTERSECT_RASTER_GRIM]:
-            return True
-        return False
-      
+    def is_occurrence(ptype):
+        """Return boolean indicating if the process type is for occurrences
+        """
+        return ptype in (
+            ProcessType.GBIF_TAXA_OCCURRENCE,
+            # ProcessType.BISON_TAXA_OCCURRENCE,
+            # ProcessType.IDIGBIO_TAXA_OCCURRENCE,
+            ProcessType.USER_TAXA_OCCURRENCE)
+
     @staticmethod
-    def isOccurrence(ptype):
-        if ptype in [ProcessType.GBIF_TAXA_OCCURRENCE, 
-#                      ProcessType.BISON_TAXA_OCCURRENCE, 
-#                      ProcessType.IDIGBIO_TAXA_OCCURRENCE,
-                     ProcessType.USER_TAXA_OCCURRENCE]:
-            return True
-        return False
-    
+    def is_project(ptype):
+        """Return boolean indicating if the process type is for projections
+        """
+        return ptype in (ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT)
+
     @staticmethod
-    def isModel(ptype):
-        if ptype in [ProcessType.ATT_MODEL, ProcessType.OM_MODEL]:
-            return True
-        return False
-    
+    def is_intersect(ptype):
+        """Return boolean indicating if the process type is for intersects
+        """
+        return ptype in (
+            ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR,
+            ProcessType.INTERSECT_RASTER_GRIM)
+
     @staticmethod
-    def isProject(ptype):
-        if ptype in [ProcessType.ATT_PROJECT, ProcessType.OM_PROJECT]:
-            return True
-        return False
-    
+    def is_rad(ptype):
+        """Return boolean indicating if process type is for RAD process
+        """
+        return ptype in (
+            ProcessType.SMTP, ProcessType.RAD_BUILDGRID,
+            ProcessType.RAD_INTERSECT, ProcessType.RAD_SWAP,
+            ProcessType.RAD_SPLOTCH, ProcessType.RAD_CALCULATE,
+            ProcessType.RAD_GRADY, ProcessType.MCPA_CORRECT_PVALUES,
+            ProcessType.MCPA_OBSERVED, ProcessType.MCPA_RANDOM,
+            ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+            ProcessType.MCPA_ASSEMBLE, ProcessType.OCC_BUCKETEER,
+            ProcessType.OCC_SORTER, ProcessType.OCC_SPLITTER,
+            ProcessType.BUILD_ANC_PAM)
+
     @staticmethod
-    def isIntersect(ptype):
-        if ptype in [ProcessType.INTERSECT_RASTER, ProcessType.INTERSECT_VECTOR, 
-                     ProcessType.INTERSECT_RASTER_GRIM]:
-            return True
-        return False
-    
-    @staticmethod
-    def isRAD(ptype):
-        if ptype in [ProcessType.SMTP, ProcessType.RAD_BUILDGRID, 
-                     ProcessType.RAD_INTERSECT, 
-                     ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                     ProcessType.RAD_CALCULATE, ProcessType.RAD_GRADY,
-                     ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
-                     ProcessType.MCPA_RANDOM, ProcessType.ENCODE_HYPOTHESES,
-                     ProcessType.ENCODE_PHYLOGENY, ProcessType.MCPA_ASSEMBLE,
-                     ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
-                     ProcessType.OCC_SPLITTER, ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False
-    
-    @staticmethod
-    def isRADPrep(ptype):
-        if ptype in [ProcessType.RAD_BUILDGRID, ProcessType.RAD_CALCULATE, 
-                ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
-                ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False
-    
-    @staticmethod
-    def isBoom(ptype):
-        if ptype in [ProcessType.BOOM_INIT, ProcessType.BOOMER]:
-            return True
-        return False
-    
-    @staticmethod
-    def isMatrix(ptype):
-        if ptype in [ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE, 
-                     ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY, 
-                     ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                     ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
-                     ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                     ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM]:
-            return True
-        return False  
-    
-    @staticmethod
-    def isAggregate(ptype):
-        return ptype in [ProcessType.OCC_BUCKETEER, ProcessType.OCC_SORTER, 
-                         ProcessType.OCC_SPLITTER]
-    
-    @staticmethod
-    def randomTypes():
-        return [ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH, 
-                ProcessType.RAD_GRADY]
-    
-    @staticmethod
-    def isRandom(ptype):
-        if ptype in ProcessType.randomTypes():
-            return True
-        return False
-    
-    @staticmethod
-    def encodeTypes():
-        return [ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY]
-    
-    @staticmethod
-    def isEncode(ptype):
-        if ptype in ProcessType.encodeTypes():
-            return True
-        return False
-    
-    @staticmethod
-    def mcpaTypes():
-        return [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]
-    
-    @staticmethod
-    def isMCPA(ptype):
-        if ptype in [ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED, 
-                     ProcessType.MCPA_RANDOM, ProcessType.MCPA_ASSEMBLE]:
-            return True
-        return False
-   
-# .............................................................................
-# .                               RAD constants                               .
-# .............................................................................
-class RandomizeMethods:
-    NOT_RANDOM = 0
-    SWAP = 1
-    SPLOTCH = 2
-    GRADY = 3
+    def is_matrix(ptype):
+        """Return boolean indicating if the process type generates a matrix
+        """
+        return ptype in (
+            ProcessType.CONCATENATE_MATRICES, ProcessType.RAD_CALCULATE,
+            ProcessType.ENCODE_HYPOTHESES, ProcessType.ENCODE_PHYLOGENY,
+            ProcessType.RAD_SWAP, ProcessType.RAD_SPLOTCH,
+            ProcessType.RAD_GRADY, ProcessType.MCPA_ASSEMBLE,
+            ProcessType.MCPA_CORRECT_PVALUES, ProcessType.MCPA_OBSERVED,
+            ProcessType.MCPA_RANDOM, ProcessType.BUILD_ANC_PAM)
+
 
 # .............................................................................
 # .                              Time constants                               .
 # .............................................................................
-# Time constants in Modified Julian Day (MJD) units 
+# Time constants in Modified Julian Day (MJD) units
 ONE_MONTH = 1.0 * 30
 ONE_DAY = 1.0
-ONE_HOUR = 1.0/24.0
-ONE_MIN = 1.0/1440.0
-ONE_SEC = 1.0/86400.0
+ONE_HOUR = 1.0 / 24.0
+ONE_MIN = 1.0 / 1440.0
+ONE_SEC = 1.0 / 86400.0
 
 # Time formats
 ISO_8601_TIME_FORMAT_FULL = "%Y-%m-%dT%H:%M:%SZ"
@@ -1025,7 +712,6 @@ ISO_8601_TIME_FORMAT_TRUNCATED = "%Y-%m-%d"
 YMD_HH_MM_SS = "%Y-%m-%d %H:%M%S"
 
 ONE_HOUR_SECONDS = 60 * 60
-ONE_DAY_SECONDS = 60 * 60 * 24.0
 
 # .............................................................................
 # .                               User constants                              .
@@ -1038,29 +724,15 @@ DEFAULT_POST_USER = 'anon'
 DEFAULT_GLOBAL_EXTENT = (-180.0, -60.0, 180.0, 90.0)
 DEFAULT_EPSG = 4326
 DEFAULT_MAPUNITS = 'dd'
-DEFAULT_CELLSIDES = 4
-DEFAULT_CELLSIZE = 1.0
 DEFAULT_NODATA = -9999
 
-# .............................................................................
-# .                             Instance constants                            .
-# .............................................................................
-LM_CLIENT_VERSION_URL = "http://svc.lifemapper.org/clients/versions.xml"
-LM_INSTANCES_URL = "http://svc.lifemapper.org/clients/instances.xml"
-
-class Instances:
-    """
-    @summary: These are Lifemapper instances that we know how to work with 
-                 externally
-    """
-    IDIGBIO = "IDIGBIO"
-    BISON = "BISON"
-    GBIF = "GBIF"
-    CHARLIE = "Charlie"
-    LIFEMAPPER = "Lifemapper"
 
 DWC_QUALIFIER = 'dwc:'
-class DWCNames:
+
+
+class DwcNames:
+    """Darwin core names enumeration
+    """
     OCCURRENCE_ID = {'FULL': 'occurrenceID', 'SHORT': 'occurid'}
     INSTITUTION_CODE = {'FULL': 'institutionCode', 'SHORT': 'inst_code'}
     INSTITUTION_ID = {'FULL': 'institutionID', 'SHORT': 'inst_id'}
@@ -1078,60 +750,57 @@ class DWCNames:
     RECORDED_BY = {'FULL': 'recordedBy', 'SHORT': 'rec_by'}
     COUNTRY_CODE = {'FULL': 'countryCode', 'SHORT': 'ctrycode'}
     STATE_PROVINCE = {'FULL': 'stateProvince', 'SHORT': 'stprov'}
-    
+
     @staticmethod
-    def _definedNames():
-        return [DWCNames.OCCURRENCE_ID, DWCNames.INSTITUTION_CODE, 
-                DWCNames.INSTITUTION_ID, DWCNames.COLLECTION_CODE, 
-                DWCNames.COLLECTION_ID, DWCNames.CONTINENT, DWCNames.CATALOG_NUMBER,
-                DWCNames.BASIS_OF_RECORD, DWCNames.DECIMAL_LATITUDE, 
-                DWCNames.DECIMAL_LONGITUDE, DWCNames.SCIENTIFIC_NAME, DWCNames.DAY,
-                DWCNames.MONTH, DWCNames.YEAR, DWCNames.RECORDED_BY, 
-                DWCNames.COUNTRY_CODE, DWCNames.STATE_PROVINCE]
-       
-    @staticmethod
-    def getShortName(fullname):
-        if fullname.startswith(DWC_QUALIFIER):
-            fullname = fullname[len(DWC_QUALIFIER):]
-        for dn in DWCNames._definedNames():
-            if dn['FULL'] == fullname:
-                return dn['SHORT']
-        return None
+    def _defined_names():
+        return [
+            DwcNames.OCCURRENCE_ID, DwcNames.INSTITUTION_CODE,
+            DwcNames.INSTITUTION_ID, DwcNames.COLLECTION_CODE,
+            DwcNames.COLLECTION_ID, DwcNames.CONTINENT,
+            DwcNames.CATALOG_NUMBER, DwcNames.BASIS_OF_RECORD,
+            DwcNames.DECIMAL_LATITUDE, DwcNames.DECIMAL_LONGITUDE,
+            DwcNames.SCIENTIFIC_NAME, DwcNames.DAY, DwcNames.MONTH,
+            DwcNames.YEAR, DwcNames.RECORDED_BY, DwcNames.COUNTRY_CODE,
+            DwcNames.STATE_PROVINCE]
+
 
 # ......................................................
 PROVIDER_FIELD_COMMON = 'provider'
 
+
 # ......................................................
 class GBIF:
+    """GBIF constants enumeration
+    """
     DATA_DUMP_DELIMITER = '\t'
     TAXON_KEY = 'specieskey'
-    TAXON_NAME = DWCNames.SCIENTIFIC_NAME['SHORT']
+    TAXON_NAME = DwcNames.SCIENTIFIC_NAME['SHORT']
     PROVIDER = 'puborgkey'
     GBIFID = 'gbifid'
     WAIT_TIME = 3 * ONE_MIN
     LIMIT = 300
     REST_URL = 'http://api.gbif.org/v1'
     QUALIFIER = 'gbif:'
-    
+
     SPECIES_SERVICE = 'species'
     PARSER_SERVICE = 'parser/name'
     OCCURRENCE_SERVICE = 'occurrence'
     DATASET_SERVICE = 'dataset'
     ORGANIZATION_SERVICE = 'organization'
-    
+
     TAXONKEY_FIELD = 'specieskey'
-    TAXONNAME_FIELD = DWCNames.SCIENTIFIC_NAME['SHORT']
+    TAXONNAME_FIELD = DwcNames.SCIENTIFIC_NAME['SHORT']
     PROVIDER_FIELD = 'puborgkey'
     ID_FIELD = 'gbifid'
-    
+
     REQUEST_SIMPLE_QUERY_KEY = 'q'
     REQUEST_NAME_QUERY_KEY = 'name'
     REQUEST_TAXON_KEY = 'TAXON_KEY'
     REQUEST_RANK_KEY = 'rank'
-    REQUEST_DATASET_KEY = 'dataset_key'                
-    
+    REQUEST_DATASET_KEY = 'dataset_key'
+
     DATASET_BACKBONE_VALUE = 'GBIF Backbone Taxonomy'
-    
+
     SEARCH_COMMAND = 'search'
     COUNT_COMMAND = 'count'
     MATCH_COMMAND = 'match'
@@ -1147,70 +816,78 @@ class GBIF:
     RESPONSE_SPECIES_KEY = 'species'
     RESPONSE_MATCH_KEY = 'matchType'
     RESPONSE_NOMATCH_VALUE = 'NONE'
-    
-    # For writing files from GBIF DarwinCore download, 
+
+    # For writing files from GBIF DarwinCore download,
     # DWC translations in lmCompute/code/sdm/gbif/constants
     # We are adding the 2 fields: LM_WKT_FIELD and LINK_FIELD
     LINK_FIELD = 'gbifurl'
     # Ends in / to allow appending unique id
     LINK_PREFIX = 'http://www.gbif.org/occurrence/'
 
-class GBIF_QUERY:
-    TAXON_FIELDS = {0: ('taxonkey', OFTString), 
+
+class GbifQuery:
+    """GBIF query constants
+    """
+    TAXON_FIELDS = {0: ('taxonkey', OFTString),
                     1: ('kingdom', OFTString),
                     2: ('phylum', OFTString),
-                    3: ('class', OFTString), 
+                    3: ('class', OFTString),
                     4: ('order', OFTString),
                     5: ('family', OFTString),
                     6: ('genus', OFTString),
-                    7: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                    7: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
                     8: ('genuskey', OFTInteger),
                     9: (GBIF.TAXONKEY_FIELD, OFTInteger),
-                    10:('count', OFTInteger)}
-    EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger), 
-                     1: (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger), 
+                    10: ('count', OFTInteger)}
+    EXPORT_FIELDS = {0: (GBIF.ID_FIELD, OFTInteger),
+                     1: (DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
                      2: ('taxonkey', OFTInteger),
                      3: ('datasetkey', OFTString),
                      4: (GBIF.PROVIDER_FIELD, OFTString),
-                     5: (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
+                     5: (DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
                      6: ('kingdomkey', OFTInteger),
                      7: ('phylumkey', OFTInteger),
                      8: ('classkey', OFTInteger),
                      9: ('orderkey', OFTInteger),
-                     10: ('familykey', OFTInteger), 
+                     10: ('familykey', OFTInteger),
                      11: ('genuskey', OFTInteger),
                      12: (GBIF.TAXONKEY_FIELD, OFTInteger),
-                     13: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                     14: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                     15: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                     16: (DWCNames.DAY['SHORT'], OFTInteger),
-                     17: (DWCNames.MONTH['SHORT'], OFTInteger),
-                     18: (DWCNames.YEAR['SHORT'], OFTInteger),
-                     19: (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                     20: (DWCNames.INSTITUTION_CODE['SHORT'], OFTString),
-                     21: (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-                     22: (DWCNames.CATALOG_NUMBER['SHORT'], OFTString)}
+                     13: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                     14: (DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                     15: (DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                     16: (DwcNames.DAY['SHORT'], OFTInteger),
+                     17: (DwcNames.MONTH['SHORT'], OFTInteger),
+                     18: (DwcNames.YEAR['SHORT'], OFTInteger),
+                     19: (DwcNames.RECORDED_BY['SHORT'], OFTString),
+                     20: (DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
+                     21: (DwcNames.COLLECTION_CODE['SHORT'], OFTString),
+                     22: (DwcNames.CATALOG_NUMBER['SHORT'], OFTString)}
     PARAMS = {GBIF.SPECIES_SERVICE: {'status': 'ACCEPTED',
                                      GBIF.REQUEST_RANK_KEY: None,
                                      GBIF.REQUEST_DATASET_KEY: None,
                                      GBIF.REQUEST_NAME_QUERY_KEY: None},
-              GBIF.OCCURRENCE_SERVICE: {"GEOREFERENCED": True,
-                                        "SPATIAL_ISSUES": False,
-    #                                     "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
-                                        GBIF.REQUEST_TAXON_KEY: None},
-              GBIF.DOWNLOAD_COMMAND: {"creator": "aimee",
-                                      "notification_address": 
-                                        ["lifemapper@mailinator.com"]}}
+              GBIF.OCCURRENCE_SERVICE: {
+                  "GEOREFERENCED": True,
+                  "SPATIAL_ISSUES": False,
+                  # "BASIS_OF_RECORD": ["PRESERVED_SPECIMEN"],
+                  GBIF.REQUEST_TAXON_KEY: None},
+              GBIF.DOWNLOAD_COMMAND: {
+                  "creator": "aimee",
+                  "notification_address": ["lifemapper@mailinator.com"]}}
+
 
 # .............................................................................
-# .                               BISON/ITIS constants                              .
+# .                               BISON/ITIS constants                        .
 # .............................................................................
 # ......................................................
 # For parsing BISON Solr API response, updated Feb 2015
 class BISON:
+    """Bison constant enumeration
+    """
     OCCURRENCE_URL = 'https://bison.usgs.gov/solr/occurrences/select'
     # Ends in : to allow appending unique id
-    LINK_PREFIX = 'https://bison.usgs.gov/solr/occurrences/select/?q=occurrenceID:'
+    LINK_PREFIX = ('https://bison.usgs.gov/solr/occurrences/select/' +
+                   '?q=occurrenceID:')
     LINK_FIELD = 'bisonurl'
     # For TSN query filtering on Binomial
     NAME_KEY = 'ITISscientificName'
@@ -1223,8 +900,12 @@ class BISON:
     MAX_POINT_COUNT = 5000000
     BBOX = (24, -125, 50, -66)
     BINOMIAL_REGEX = '/[A-Za-z]*[ ]{1,1}[A-Za-z]*/'
-   
-class BISON_QUERY:
+
+
+# .............................................................................
+class BisonQuery:
+    """BISON query constants enumeration
+    """
     # Expected Response Dictionary Keys
     TSN_LIST_KEYS = ['facet_counts', 'facet_fields', BISON.TSN_KEY]
     RECORD_KEYS = ['response', 'docs']
@@ -1232,7 +913,7 @@ class BISON_QUERY:
     TSN_FILTERS = {'facet': True,
                    'facet.limit': -1,
                    'facet.mincount': BISON.MIN_POINT_COUNT,
-                   'facet.field': BISON.TSN_KEY, 
+                   'facet.field': BISON.TSN_KEY,
                    'rows': 0}
     OCC_FILTERS = {'rows': BISON.MAX_POINT_COUNT}
     # Common Q Filters
@@ -1240,60 +921,64 @@ class BISON_QUERY:
                 'decimalLongitude': (BISON.BBOX[1], BISON.BBOX[3]),
                 'basisOfRecord': [(False, 'living'), (False, 'fossil')]}
     # Common Other Filters
-    FILTERS = {'wt': 'json', 
+    FILTERS = {'wt': 'json',
                'json.nl': 'arrarr'}
-    RESPONSE_FIELDS = {'ITIScommonName': ('comname', OFTString),
-                       BISON.NAME_KEY: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                       'ITIStsn': ('itistsn', OFTInteger),
-                       BISON.TSN_KEY: None,
-                       'ambiguous': None,
-                       DWCNames.BASIS_OF_RECORD['FULL']: 
-                          (DWCNames.BASIS_OF_RECORD['SHORT'], OFTString),
-                       'calculatedCounty': ('county', OFTString),
-                       'calculatedState': ('state', OFTString),
-                       DWCNames.CATALOG_NUMBER['FULL']: 
-                          (DWCNames.CATALOG_NUMBER['SHORT'], OFTString),
-                       'collectionID': ('coll_id', OFTString),
-                       'computedCountyFips': None,
-                       'computedStateFips': None,
-                       DWCNames.COUNTRY_CODE['FULL']: 
-                         (DWCNames.COUNTRY_CODE['SHORT'], OFTString),
-                       DWCNames.DECIMAL_LATITUDE['FULL']: 
-                         (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                       DWCNames.DECIMAL_LONGITUDE['FULL']:
-                         (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                       'eventDate':('date', OFTString),
-                       # Space delimited, same as latlon
-                       'geo': None,
-                       BISON.HIERARCHY_KEY: ('tsn_hier', OFTString),
-                       'institutionID': ('inst_id', OFTString),
-                       BISON.KINGDOM_KEY: ('kingdom', OFTString),
-                       # Comma delimited, same as geo
-                       'latlon': ('latlon', OFTString),
-                       DWCNames.OCCURRENCE_ID['FULL']: 
-                          (DWCNames.OCCURRENCE_ID['SHORT'], OFTInteger),
-                       'ownerInstitutionCollectionCode': 
-                        (PROVIDER_FIELD_COMMON, OFTString),
-                       'pointPath': None,
-                       'providedCounty': None,
-                       'providedScientificName': None,
-                       'providerID': None,
-                       DWCNames.RECORDED_BY['FULL']: 
-                         (DWCNames.RECORDED_BY['SHORT'], OFTString),
-                       'resourceID': None,
-                       # Use ITIS Scientific Name
-                       'scientificName': None,
-                       'stateProvince': ('stprov', OFTString),
-                       DWCNames.YEAR['SHORT']: 
-                          (DWCNames.YEAR['SHORT'], OFTInteger),
-                       # Very long integer
-                      '_version_': None }
-   
+    RESPONSE_FIELDS = {
+        'ITIScommonName': ('comname', OFTString),
+        BISON.NAME_KEY: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+        'ITIStsn': ('itistsn', OFTInteger),
+        BISON.TSN_KEY: None,
+        'ambiguous': None,
+        DwcNames.BASIS_OF_RECORD['FULL']: (
+            DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
+        'calculatedCounty': ('county', OFTString),
+        'calculatedState': ('state', OFTString),
+        DwcNames.CATALOG_NUMBER['FULL']: (
+            DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
+        'collectionID': ('coll_id', OFTString),
+        'computedCountyFips': None,
+        'computedStateFips': None,
+        DwcNames.COUNTRY_CODE['FULL']: (
+            DwcNames.COUNTRY_CODE['SHORT'], OFTString),
+        DwcNames.DECIMAL_LATITUDE['FULL']: (
+            DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+        DwcNames.DECIMAL_LONGITUDE['FULL']: (
+            DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+        'eventDate': ('date', OFTString),
+        # Space delimited, same as latlon
+        'geo': None,
+        BISON.HIERARCHY_KEY: ('tsn_hier', OFTString),
+        'institutionID': ('inst_id', OFTString),
+        BISON.KINGDOM_KEY: ('kingdom', OFTString),
+        # Comma delimited, same as geo
+        'latlon': ('latlon', OFTString),
+        DwcNames.OCCURRENCE_ID['FULL']: (
+            DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+        'ownerInstitutionCollectionCode': (PROVIDER_FIELD_COMMON, OFTString),
+        'pointPath': None,
+        'providedCounty': None,
+        'providedScientificName': None,
+        'providerID': None,
+        DwcNames.RECORDED_BY['FULL']: (
+            DwcNames.RECORDED_BY['SHORT'], OFTString),
+        'resourceID': None,
+        # Use ITIS Scientific Name
+        'scientificName': None,
+        'stateProvince': ('stprov', OFTString),
+        DwcNames.YEAR['SHORT']: (DwcNames.YEAR['SHORT'], OFTInteger),
+        # Very long integer
+        '_version_': None
+    }
+
+
 # .............................................................................
-class ITIS:
+class Itis:
+    """ITIS constants enumeration
+    """
     DATA_NAMESPACE = 'http://data.itis_service.itis.usgs.gov/xsd'
     # Basic Web Services
-    TAXONOMY_HIERARCHY_URL = 'http://www.itis.gov/ITISWebService/services/ITISService/getFullHierarchyFromTSN'
+    TAXONOMY_HIERARCHY_URL = ('http://www.itis.gov/ITISWebService/services/' +
+                              'ITISService/getFullHierarchyFromTSN')
     # JSON Web Services
     TAXONOMY_KEY = 'tsn'
     HIERARCHY_TAG = 'hierarchyList'
@@ -1306,14 +991,17 @@ class ITIS:
     FAMILY_KEY = 'Family'
     GENUS_KEY = 'Genus'
     SPECIES_KEY = 'Species'
-   
+
+
 # .............................................................................
 # .                           iDigBio constants                               .
 # .............................................................................
-class IDIGBIO:
+class Idigbio:
+    """iDigBio constants enumeration
+    """
     LINK_PREFIX = 'https://www.idigbio.org/portal/records/'
     SEARCH_PREFIX = 'https://search.idigbio.org/v2'
-    SEARCH_POSTFIX ='search'
+    SEARCH_POSTFIX = 'search'
     OCCURRENCE_POSTFIX = 'records'
     PUBLISHERS_POSTFIX = 'publishers'
     RECORDSETS_POSTFIX = 'recordsets'
@@ -1326,8 +1014,12 @@ class IDIGBIO:
     RECORD_CONTENT_KEY = 'data'
     RECORD_INDEX_KEY = 'indexTerms'
     QUALIFIER = 'idigbio:'
-   
-class IDIG_DUMP:
+
+
+# .............................................................................
+class IdigbioDump:
+    """iDigBio dump constants enumeration
+    """
     EXPORT_FIELDS = {0: ('coreid', None),
                      1: ('idigbio:associatedsequences', None),
                      2: ('idigbio:barcodeValue', None),
@@ -1409,164 +1101,175 @@ class IDIG_DUMP:
                      78: ('dwc:verbatimLocality', None),
                      79: ('idigbio:version', None),
                      80: ('dwc:waterBody', None)}
-    METADATA = {0: {'name': 'coreid', 'type': OFTString},
-                1: None,
-                2: None,
-                3: {'name': DWCNames.BASIS_OF_RECORD['SHORT'], 'type': OFTString},
-                4: None,
-                5: {'name': 'canonical', 'type': OFTString, 'role': 'taxaname'},
-                6: {'name': DWCNames.CATALOG_NUMBER['SHORT'], 'type': OFTString},
-                7: None,
-                8: {'name': DWCNames.COLLECTION_CODE['SHORT'], 'type': OFTString},
-                9: {'name': DWCNames.COLLECTION_ID['SHORT'], 'type': OFTString},
-                10: None,
-                11: {'name': DWCNames.RECORDED_BY['SHORT'], 'type': OFTString},
-                12: None,
-                13: None,
-                14: None,
-                15: None,
-                16: None,
-                17: {'name': DWCNames.COUNTRY_CODE['SHORT'], 'type': OFTString},
-                18: None,
-                19: None,
-                20: None,
-                21: None,
-                22: None,
-                23: None,
-                24: None,
-                25: None,
-                26: None,
-                27: None,
-                28: None,
-                29: None,
-                30: None,
-                31: None,
-                32: None,
-                33: None,
-                34: None,
-                35: {'name': 'geoPoint', 'type': OFTString, 'role': 'geopoint'},
-                36: None,
-                37: None,
-                38: None,
-                39: None,
-                40: None,
-                41: None,
-                42: None,
-                43: {'name': DWCNames.INSTITUTION_CODE['SHORT'], 'type': OFTString},
-                44: {'name': DWCNames.INSTITUTION_ID['SHORT'], 'type': OFTString},
-                45: None,
-                46: None,
-                47: None,
-                48: None,
-                49: None,
-                50: None,
-                51: None,
-                52: None,
-                53: None,
-                54: None,
-                55: None,
-                56: None,
-                57: None,
-                58: None,
-                59: None,
-                60: None,
-                61: None,
-                62: {'name': DWCNames.OCCURRENCE_ID['SHORT'], 'type': OFTString},
-                63: None,
-                64: None,
-                65: None,
-                66: None,
-                67: {'name': 'recordset', 'type': OFTString},
-                68: {'name': DWCNames.SCIENTIFIC_NAME['SHORT'], 'type': OFTString},
-                69: None,
-                70: None,
-                71: {'name': DWCNames.STATE_PROVINCE['SHORT'], 'type': OFTString},
-                72: {'name': 'taxonID', 'type': OFTInteger, 'role': 'GroupBy'},
-                73: None,
-                74: {'name': 'rank', 'type': OFTString},
-                75: None,
-                76: {'name': 'uuid', 'type': OFTString},
-                77: None,
-                78: None,
-                79: {'name': 'version', 'type': OFTString},
-                80: None,
+    METADATA = {
+        0: {'name': 'coreid', 'type': OFTString},
+        1: None,
+        2: None,
+        3: {'name': DwcNames.BASIS_OF_RECORD['SHORT'], 'type': OFTString},
+        4: None,
+        5: {'name': 'canonical', 'type': OFTString, 'role': 'taxaname'},
+        6: {'name': DwcNames.CATALOG_NUMBER['SHORT'], 'type': OFTString},
+        7: None,
+        8: {'name': DwcNames.COLLECTION_CODE['SHORT'], 'type': OFTString},
+        9: {'name': DwcNames.COLLECTION_ID['SHORT'], 'type': OFTString},
+        10: None,
+        11: {'name': DwcNames.RECORDED_BY['SHORT'], 'type': OFTString},
+        12: None,
+        13: None,
+        14: None,
+        15: None,
+        16: None,
+        17: {'name': DwcNames.COUNTRY_CODE['SHORT'], 'type': OFTString},
+        18: None,
+        19: None,
+        20: None,
+        21: None,
+        22: None,
+        23: None,
+        24: None,
+        25: None,
+        26: None,
+        27: None,
+        28: None,
+        29: None,
+        30: None,
+        31: None,
+        32: None,
+        33: None,
+        34: None,
+        35: {'name': 'geoPoint', 'type': OFTString, 'role': 'geopoint'},
+        36: None,
+        37: None,
+        38: None,
+        39: None,
+        40: None,
+        41: None,
+        42: None,
+        43: {'name': DwcNames.INSTITUTION_CODE['SHORT'], 'type': OFTString},
+        44: {'name': DwcNames.INSTITUTION_ID['SHORT'], 'type': OFTString},
+        45: None,
+        46: None,
+        47: None,
+        48: None,
+        49: None,
+        50: None,
+        51: None,
+        52: None,
+        53: None,
+        54: None,
+        55: None,
+        56: None,
+        57: None,
+        58: None,
+        59: None,
+        60: None,
+        61: None,
+        62: {'name': DwcNames.OCCURRENCE_ID['SHORT'], 'type': OFTString},
+        63: None,
+        64: None,
+        65: None,
+        66: None,
+        67: {'name': 'recordset', 'type': OFTString},
+        68: {'name': DwcNames.SCIENTIFIC_NAME['SHORT'], 'type': OFTString},
+        69: None,
+        70: None,
+        71: {'name': DwcNames.STATE_PROVINCE['SHORT'], 'type': OFTString},
+        72: {'name': 'taxonID', 'type': OFTInteger, 'role': 'GroupBy'},
+        73: None,
+        74: {'name': 'rank', 'type': OFTString},
+        75: None,
+        76: {'name': 'uuid', 'type': OFTString},
+        77: None,
+        78: None,
+        79: {'name': 'version', 'type': OFTString},
+        80: None,
     }
-   
-class IDIGBIO_QUERY:
-    EXPORT_FIELDS = {0: (IDIGBIO.ID_FIELD, OFTString), 
-                     1: (DWCNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
-                     2: (DWCNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
-                     3: (DWCNames.SCIENTIFIC_NAME['SHORT'], OFTString),
-                     4: (PROVIDER_FIELD_COMMON, OFTString) }
+
+
+# .............................................................................
+class IdigbioQuery:
+    """iDigBio query constants enumeration
+    """
+    EXPORT_FIELDS = {0: (Idigbio.ID_FIELD, OFTString),
+                     1: (DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+                     2: (DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+                     3: (DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+                     4: (PROVIDER_FIELD_COMMON, OFTString)}
     # Geopoint.lat and Geopoint.lon are modified on return to short names
     # Response record fields: https://search.idigbio.org/v2/meta/fields/records
     RETURN_FIELDS = {
-       IDIGBIO.QUALIFIER + IDIGBIO.ID_FIELD: (IDIGBIO.ID_FIELD, OFTString),
-       IDIGBIO.GBIFID_FIELD: ('taxonid', OFTString),
-       DWC_QUALIFIER + DWCNames.SCIENTIFIC_NAME['FULL']: (DWCNames.SCIENTIFIC_NAME['SHORT'], 
-                                                          OFTString),   
-       DWC_QUALIFIER + DWCNames.BASIS_OF_RECORD['FULL']:  (DWCNames.BASIS_OF_RECORD['SHORT'], 
-                                                           OFTString),
-       DWC_QUALIFIER + DWCNames.CATALOG_NUMBER['FULL']: (DWCNames.CATALOG_NUMBER['SHORT'], 
-                                                         OFTString),
-       DWC_QUALIFIER + DWCNames.COLLECTION_ID['FULL']: 
-                               (DWCNames.COLLECTION_ID['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.COLLECTION_CODE['FULL']: 
-                               (DWCNames.COLLECTION_CODE['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.RECORDED_BY['FULL']: 
-                               (DWCNames.RECORDED_BY['SHORT'], OFTString),
-       'commonname': ('comname', OFTString),                  
-       DWC_QUALIFIER + DWCNames.CONTINENT['FULL']: (DWCNames.CONTINENT['SHORT'], 
-                                                    OFTString),
-       DWC_QUALIFIER + DWCNames.COUNTRY_CODE['FULL']: (DWCNames.COUNTRY_CODE['SHORT'], 
-                                                       OFTString),
-       DWC_QUALIFIER + DWCNames.DAY['FULL']: (DWCNames.DAY['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.MONTH['FULL']: (DWCNames.MONTH['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.YEAR['FULL']: (DWCNames.YEAR['SHORT'], OFTString),
-       DWC_QUALIFIER + DWCNames.INSTITUTION_CODE['FULL']: (DWCNames.INSTITUTION_CODE['SHORT'], 
-                                                           OFTString),
-       DWC_QUALIFIER + DWCNames.INSTITUTION_ID['FULL']: (DWCNames.INSTITUTION_ID['SHORT'], 
-                                                         OFTString),
-       DWC_QUALIFIER + DWCNames.OCCURRENCE_ID['FULL']: (DWCNames.OCCURRENCE_ID['SHORT'], 
-                                                        OFTInteger),
-       DWC_QUALIFIER + DWCNames.STATE_PROVINCE['FULL']: (DWCNames.STATE_PROVINCE['SHORT'], 
-                                                         OFTString),
-       DWC_QUALIFIER + DWCNames.DECIMAL_LATITUDE['FULL']: (DWCNames.DECIMAL_LATITUDE['SHORT'], 
-                                                           OFTReal),
-       DWC_QUALIFIER + DWCNames.DECIMAL_LONGITUDE['FULL']: (DWCNames.DECIMAL_LONGITUDE['SHORT'], 
-                                                            OFTReal),
-       }
-    QFILTERS = {'basisofrecord': 'preservedspecimen' }
+        Idigbio.QUALIFIER + Idigbio.ID_FIELD: (Idigbio.ID_FIELD, OFTString),
+        Idigbio.GBIFID_FIELD: ('taxonid', OFTString),
+        DWC_QUALIFIER + DwcNames.SCIENTIFIC_NAME['FULL']: (
+            DwcNames.SCIENTIFIC_NAME['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.BASIS_OF_RECORD['FULL']: (
+            DwcNames.BASIS_OF_RECORD['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.CATALOG_NUMBER['FULL']: (
+            DwcNames.CATALOG_NUMBER['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COLLECTION_ID['FULL']: (
+            DwcNames.COLLECTION_ID['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COLLECTION_CODE['FULL']: (
+            DwcNames.COLLECTION_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.RECORDED_BY['FULL']: (
+            DwcNames.RECORDED_BY['SHORT'], OFTString),
+        'commonname': ('comname', OFTString),
+        DWC_QUALIFIER + DwcNames.CONTINENT['FULL']: (
+            DwcNames.CONTINENT['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.COUNTRY_CODE['FULL']: (
+            DwcNames.COUNTRY_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.DAY['FULL']: (
+            DwcNames.DAY['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.MONTH['FULL']: (
+            DwcNames.MONTH['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.YEAR['FULL']: (
+            DwcNames.YEAR['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.INSTITUTION_CODE['FULL']: (
+            DwcNames.INSTITUTION_CODE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.INSTITUTION_ID['FULL']: (
+            DwcNames.INSTITUTION_ID['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.OCCURRENCE_ID['FULL']: (
+            DwcNames.OCCURRENCE_ID['SHORT'], OFTInteger),
+        DWC_QUALIFIER + DwcNames.STATE_PROVINCE['FULL']: (
+            DwcNames.STATE_PROVINCE['SHORT'], OFTString),
+        DWC_QUALIFIER + DwcNames.DECIMAL_LATITUDE['FULL']: (
+            DwcNames.DECIMAL_LATITUDE['SHORT'], OFTReal),
+        DWC_QUALIFIER + DwcNames.DECIMAL_LONGITUDE['FULL']: (
+            DwcNames.DECIMAL_LONGITUDE['SHORT'], OFTReal),
+        }
+    QFILTERS = {'basisofrecord': 'preservedspecimen'}
     #    queryFlds = IDIGBIO_RETURN_FIELDS.keys()
     #    queryFlds.append('geopoint')
-    
-    FILTERS = { # 'fields': queryFlds,
-                'limit': IDIGBIO.SEARCH_LIMIT,
-                'offset': 0,
-                'no_attribution': False}
+
+    FILTERS = {  # 'fields': queryFlds,
+        'limit': Idigbio.SEARCH_LIMIT,
+        'offset': 0,
+        'no_attribution': False}
+
 
 # .............................................................................
-# .                  Provider/Local data fieldname constants                              .
+# .                  Provider/Local data fieldname constants                  .
 # .............................................................................
-LM_ID_FIELD = 'lmid'
 LM_WKT_FIELD = 'geomwkt'
 
 # .............................................................................
 # .                              Other constants                              .
 # .............................................................................
-LegalMapUnits = ['feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
+LEGAL_MAP_UNITS = [
+    'feet', 'inches', 'kilometers', 'meters', 'miles', 'dd', 'ds']
 
-URL_ESCAPES = [ [" ", "%20"], [",", "%2C"] ]
+URL_ESCAPES = [[" ", "%20"], [",", "%2C"]]
+
 
 class HTTPStatus:
-    """
-    @summary: HTTP 1.1 Status Codes as defined by 
-                 http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+    """HTTP 1.1 Status Codes
+
+    See:
+        http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
     """
     # Informational 1xx
     CONTINUE = 100
     SWITCHING_PROTOCOLS = 101
-    
+
     # Successful 2xx
     OK = 200
     CREATED = 201
@@ -1575,7 +1278,7 @@ class HTTPStatus:
     NO_CONTENT = 204
     RESET_CONTENT = 205
     PARTIAL_CONTENT = 206
-    
+
     # Redirectional 3xx
     MULTIPLE_CHOICES = 300
     MOVED_PERMANENTLY = 301
@@ -1584,7 +1287,7 @@ class HTTPStatus:
     NOT_MODIFIED = 204
     USE_PROXY = 305
     TEMPORARY_REDIRECT = 307
-    
+
     # Client Error 4xx
     BAD_REQUEST = 400
     UNAUTHORIZED = 401
@@ -1603,7 +1306,7 @@ class HTTPStatus:
     UNSUPPORTED_MEDIA_TYPE = 415
     REQUEST_RANGE_NOT_SATISFIABLE = 416
     EXPECTATION_FAILED = 417
-    
+
     # Server Error 5xx
     INTERNAL_SERVER_ERROR = 500
     NOT_IMPLEMENTED = 501
@@ -1611,17 +1314,7 @@ class HTTPStatus:
     SERVICE_UNAVAILABLE = 503
     GATEWAY_TIMEOUT = 504
     HTTP_VERSION_NOT_SUPPORTED = 505
-   
-# .............................................................................
-# .                            Namespace constants                            .
-# .............................................................................
-# Lifemapper Namespace constants
-LM_NAMESPACE = "http://lifemapper.org"
-LM_NS_PREFIX = "lm"
-LM_RESPONSE_SCHEMA_LOCATION = "/schemas/serviceResponse.xsd"
-LM_PROC_NAMESPACE = "http://lifemapper.org/process"
-LM_PROC_NS_PREFIX = "lmProc"
-LM_PROC_SCHEMA_LOCATION = "/schemas/lmProcess.xsd"
+
 
 # .............................................................................
 # .                             Logging constants                             .
@@ -1637,79 +1330,83 @@ LOG_FORMAT = ' '.join(["%(asctime)s",
 LOG_DATE_FORMAT = '%d %b %Y %H:%M'
 
 # Maximum log file size before new log file is started
-LOGFILE_MAX_BYTES = 52000000 
+LOGFILE_MAX_BYTES = 52000000
 
 # The number of backups to keep.  as the log file approaches MAX_BYTES in size
 #    it will be renamed and a new log file will be created.  The renamed file
 #    will have the same name with a number appended (.1 - .BACKUP_COUNT).
-#    When the maximum number of backups has been met, the oldest will be 
+#    When the maximum number of backups has been met, the oldest will be
 #    discarded.
 LOGFILE_BACKUP_COUNT = 5
+
 
 # .............................................................................
 # .                               PAM Statisitcs                              .
 # .............................................................................
-class PamStatKeys(object):
-    """
-    @summary: Class containing PAM statistics keys
-    @todo: Link to literature
+class PamStatKeys:
+    """Class containing PAM statistics keys
+
+    Todo:
+        Link to literature
     """
     # Site statistics
     # ..................
     # Alpha is the species richness (number present) per site
     ALPHA = 'alpha'
-    # Alpha prop. is the proportion of the entire set of species present per site
+    # Alpha prop. is the proportion of the entire set of species present per
+    #    site
     ALPHA_PROP = 'alphaProp'
     # Phi is the range size per site
     PHI = 'phi'
     # PHI_AVG_PROP is the mean proportional range size per site
     PHI_AVG_PROP = 'phiProp'
-    
+
     # Tree (site) statistics
     # ..................
-    # MNTD is mean nearest taxon distance per site.  The average distance to the
-    #    nearest taxon for every species present at a site
+    # MNTD is mean nearest taxon distance per site.  The average distance to
+    #    the nearest taxon for every species present at a site
     MNTD = 'mntd'
     # MPD is the mean pairwise distance per site.  This is the average distance
     #    to all other species for each species at each site
     MPD = 'mpd'
-    # PEARSON is Pearson's Correlation Coefficient 
+    # PEARSON is Pearson's Correlation Coefficient
     PEARSON = 'pearson'
-    # PD is Phylogenetic Diversity as defined by sum of the branch lengths for 
+    # PD is Phylogenetic Diversity as defined by sum of the branch lengths for
     #    the minimum spanning path of the involved taxa
     PD = 'Phylogenetic Diversity'
     MNND = 'Mean Nearest Neighbor Distance'
     MPHYLODIST = 'Mean Phylogenetic Distance'
     SPD = 'Sum of Phylogenetic Distance'
-    
+
     # Species statistics
     # ..................
     # OMEGA is the range size for each species
     OMEGA = 'omega'
-    # OMEGA_PROP is the range size of each species as a proportion of the total 
+    # OMEGA_PROP is the range size of each species as a proportion of the total
     #    number of sites
     OMEGA_PROP = 'omegaProp'
     # PSI is the range richness of each species
     PSI = 'psi'
     # PSI_AVG_PROP is the mean proportional species diversity
     PSI_AVG_PROP = 'psiAvgProp'
-    
+
     # Beta Diversity statistics
     # ..................
     WHITTAKERS_BETA = 'whittakersBeta'
     LANDES_ADDATIVE_BETA = 'landesAddativeBeta'
     LEGENDRES_BETA = 'legendresBeta'
     C_SCORE = 'c_score'
-    
+
     # Covariance matrices
     # ..................
     # Covariance matrices for the composition of sites and the range of species
     SITES_COVARIANCE = 'sitesCovariance'
     SPECIES_COVARIANCE = 'speciesCovariance'
-    
+
     # Schluter's statistics
     # ..................
-    # These are Schluter's statistics for site and species variance ratios in a PAM
+    # These are Schluter's statistics for site and species variance ratios in
+    #    a PAM
     SPECIES_VARIANCE_RATIO = 'varSpeciesRatio'
     SITES_VARIANCE_RATIO = 'varSitesRatio'
 
@@ -1719,10 +1416,10 @@ class PamStatKeys(object):
 # .............................................................................
 DEFAULT_TREE_SCHEMA = 'nexus'
 
+
 # .............................
-class PhyloTreeKeys(object):
+class PhyloTreeKeys:
+    """Keys for phylogenetic trees
     """
-    @summary: Keys for phylogenetic trees
-    """
-    MTX_IDX = 'mx' # The matrix index for this node
-    SQUID = 'squid' # This is the LM SQUID (species identifier) for the tip
+    MTX_IDX = 'mx'  # The matrix index for this node
+    SQUID = 'squid'  # This is the LM SQUID (species identifier) for the tip

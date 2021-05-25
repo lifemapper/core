@@ -1,205 +1,197 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides REST services for Layers
-"""
-
+"""This module provides REST services for Layers"""
 import cherrypy
 
 from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.common.accessControl import checkUserPermission
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.common.access_control import check_user_permission
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
-@cherrypy.popargs('pathLayerId')
+@cherrypy.popargs('path_layer_id')
 class LayerService(LmService):
+    """Class for layers service.
     """
-    @summary: This class is for the layers service.  The dispatcher is
-                     responsible for calling the correct method
-    """
+
     # ................................
-    @lmFormatter
-    def GET(self, pathLayerId=None, afterTime=None, altPredCode=None,
-            beforeTime=None, dateCode=None, epsgCode=None, envCode=None,
-            envTypeId=None, gcmCode=None, layerType=None, limit=100, offset=0,
-            urlUser=None, scenarioId=None, squid=None, **params):
-        """
-        @summary: Performs a GET request.  If a layer id is provided,
-                         attempt to return that item.  If not, return a list of 
-                         layers that match the provided parameters
+    @lm_formatter
+    def GET(self, path_layer_id=None, after_time=None, alt_pred_code=None,
+            before_time=None, date_code=None, epsg_code=None, env_code=None,
+            env_type_id=None, gcm_code=None, layerType=None, limit=100,
+            offset=0, url_user=None, scenario_id=None, squid=None, **params):
+        """GET request.  Individual layer, count, or list.
         """
         # Layer type:
         #    0 - Anything
         #    1 - Environmental layer
         #    2 - ? (Not implemented yet)
         if layerType is None or layerType == 0:
-            if pathLayerId is None:
-                return self._listLayers(
-                    self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                    beforeTime=beforeTime, epsgCode=epsgCode, limit=limit,
+            if path_layer_id is None:
+                return self._list_layers(
+                    self.get_user_id(url_user=url_user), after_time=after_time,
+                    before_time=before_time, epsg_code=epsg_code, limit=limit,
                     offset=offset, squid=squid)
-            elif pathLayerId.lower() == 'count':
-                return self._countLayers(
-                    self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                    beforeTime=beforeTime, epsgCode=epsgCode, squid=squid)
-            else:
-                return self._getLayer(pathLayerId, envLayer=False)
-        else:
-            if pathLayerId is None:
-                return self._listEnvLayers(
-                    self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                    altPredCode=altPredCode, beforeTime=beforeTime,
-                    dateCode=dateCode, envCode=envCode, envTypeId=envTypeId,
-                    epsgCode=epsgCode, gcmCode=gcmCode, limit=limit,
-                    offset=offset, scenarioId=scenarioId)
-            elif pathLayerId.lower() == 'count':
-                return self._countEnvLayers(
-                    self.getUserId(urlUser=urlUser), afterTime=afterTime,
-                    altPredCode=altPredCode, beforeTime=beforeTime,
-                    dateCode=dateCode, envCode=envCode, envTypeId=envTypeId,
-                    epsgCode=epsgCode, gcmCode=gcmCode, scenarioId=scenarioId)
-            else:
-                return self._getLayer(pathLayerId, envLayer=True)
-        
+
+            if path_layer_id.lower() == 'count':
+                return self._count_layers(
+                    self.get_user_id(url_user=url_user), after_time=after_time,
+                    before_time=before_time, epsg_code=epsg_code, squid=squid)
+
+            return self._get_layer(path_layer_id, env_layer=False)
+
+        if path_layer_id is None:
+            return self._list_env_layers(
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                alt_pred_code=alt_pred_code, before_time=before_time,
+                date_code=date_code, env_code=env_code,
+                env_type_id=env_type_id, epsg_code=epsg_code,
+                gcm_code=gcm_code, limit=limit, offset=offset,
+                scenario_id=scenario_id)
+
+        if path_layer_id.lower() == 'count':
+            return self._count_env_layers(
+                self.get_user_id(url_user=url_user), after_time=after_time,
+                alt_pred_code=alt_pred_code, before_time=before_time,
+                date_code=date_code, env_code=env_code,
+                env_type_id=env_type_id, epsg_code=epsg_code,
+                gcm_code=gcm_code, scenario_code=scenario_id)
+
+        return self._get_layer(path_layer_id, env_layer=True)
+
     # ................................
-    def _countEnvLayers(self, userId, afterTime=None, altPredCode=None,
-                        beforeTime=None, dateCode=None, envCode=None,
-                        envTypeId=None, epsgCode=None, gcmCode=None,
-                        scenarioId=None):
-        """
-        @summary: Count environmental layer objects matching the specified 
-                         criteria
-        @param userId: The user to list environmental layers for.  Note that this
+    def _count_env_layers(self, user_id, after_time=None, alt_pred_code=None,
+                          before_time=None, date_code=None, env_code=None,
+                          env_type_id=None, epsg_code=None, gcm_code=None,
+                          scenario_code=None):
+        """Count environmental layer objects matching the specified criteria
+
+        Args:
+            user_id: The user to list environmental layers for.  Note that this
                                 may not be the same user logged into the system
-        @param afterTime: (optional) Return layers modified after this time 
-                                    (Modified Julian Day)
-        @param altPredCode: (optional) Return layers with this alternate 
-                                      prediction code
-        @param beforeTime: (optional) Return layers modified before this time 
-                                     (Modified Julian Day)
-        @param dateCode: (optional) Return layers with this date code
-        @param envCode: (optional) Return layers with this environment code
-        @param envTypeId: (optional) Return layers with this environmental type
-        @param epsgCode: (optional) Return layers with this EPSG code
-        @param gcmCode: (optional) Return layers with this GCM code
-        @param scenarioId: (optional) Return layers from this scenario
+            after_time: Return layers modified after this time (Modified Julian
+                Day)
+            alt_pred_code: Return layers with this alternate prediction code
+            before_time: Return layers modified before this time (Modified
+                Julian Day)
+            date_code: Return layers with this date code
+            env_code: Return layers with this environment code
+            env_type_id: Return layers with this environmental type
+            epsg_code: Return layers with this EPSG code
+            gcm_code: Return layers with this GCM code
+            scenario_id: Return layers from this scenario
         """
-        lyrCount = self.scribe.countEnvLayers(
-            userId=userId, envCode=envCode, gcmcode=gcmCode,
-            altpredCode=altPredCode, dateCode=dateCode, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode, envTypeId=envTypeId,
-            scenarioId=scenarioId)
-        # Format return
-        # Set headers
-        return {"count" : lyrCount}
+        layer_count = self.scribe.count_env_layers(
+            user_id=user_id, env_code=env_code, gcm_code=gcm_code,
+            alt_pred_code=alt_pred_code, date_code=date_code,
+            after_time=after_time, before_time=before_time, epsg=epsg_code,
+            env_type_id=env_type_id, scenario_code=scenario_code)
+
+        return {'count': layer_count}
 
     # ................................
-    def _countLayers(self, userId, afterTime=None, beforeTime=None,
-                     epsgCode=None, squid=None):
+    def _count_layers(self, user_id, after_time=None, before_time=None,
+                      epsg_code=None, squid=None):
+        """Return a count of layers matching the specified criteria
+
+        Args:
+            user_id: The user to list layers for.  Note that this may not be
+                the same user that is logged into the system
+            after_time: List layers modified after this time (Modified Julian
+                Day)
+            before_time: List layers modified before this time (Modified Julian
+                Day)
+            epsg_code: Return layers that have this EPSG code
+            limit: Return this number of layers, at most
+            offset: Offset the returned layers by this number
+            squid: Return layers with this species identifier
         """
-        @summary: Return a count of layers matching the specified criteria
-        @param userId: The user to list layers for.  Note that this may not be
-                                the same user that is logged into the system
-        @param afterTime: (optional) List layers modified after this time 
-                                    (Modified Julian Day)
-        @param beforeTime: (optional) List layers modified before this time
-                                     (Modified Julian Day)
-        @param epsgCode: (optional) Return layers that have this EPSG code
-        @param limit: (optional) Return this number of layers, at most
-        @param offset: (optional) Offset the returned layers by this number
-        @param squid: (optional) Return layers with this species identifier
-        """
-        lyrCount = self.scribe.countLayers(
-            userId=userId, squid=squid, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode)
-        # Format return
-        # Set headers
-        return {"count" : lyrCount}
+        layer_count = self.scribe.count_layers(
+            user_id=user_id, squid=squid, after_time=after_time,
+            before_time=before_time, epsg=epsg_code)
+
+        return {'count': layer_count}
 
     # ................................
-    def _getLayer(self, pathLayerId, envLayer=False):
-        """
-        @summary: Attempt to get a layer
+    def _get_layer(self, path_layer_id, env_layer=False):
+        """Attempt to get a layer
         """
         try:
-            _ = int(pathLayerId)
+            _ = int(path_layer_id)
         except ValueError:
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST,
-                '{} is not a valid layer ID'.format(pathLayerId))
+                '{} is not a valid layer ID'.format(path_layer_id))
 
-        if envLayer:
-            lyr = self.scribe.getEnvLayer(lyrId=pathLayerId)
+        if env_layer:
+            lyr = self.scribe.get_env_layer(lyr_id=path_layer_id)
         else:
-            lyr = self.scribe.getLayer(lyrId=pathLayerId)
+            lyr = self.scribe.get_layer(lyr_id=path_layer_id)
         if lyr is None:
             raise cherrypy.HTTPError(
                 HTTPStatus.NOT_FOUND,
-                'Environmental layer {} was not found'.format(pathLayerId))
-        if checkUserPermission(self.getUserId(), lyr, HTTPMethod.GET):
+                'Environmental layer {} was not found'.format(path_layer_id))
+        if check_user_permission(self.get_user_id(), lyr, HTTPMethod.GET):
             return lyr
-        else:
-            raise cherrypy.HTTPError(
-                HTTPStatus.FORBIDDEN,
-                'User {} does not have permission to access layer {}'.format(
-                    self.getUserId(), pathLayerId))
-    
+
+        raise cherrypy.HTTPError(
+            HTTPStatus.FORBIDDEN,
+            'User {} does not have permission to access layer {}'.format(
+                self.get_user_id(), path_layer_id))
+
     # ................................
-    def _listEnvLayers(self, userId, afterTime=None, altPredCode=None,
-                       beforeTime=None, dateCode=None, envCode=None,
-                       envTypeId=None, epsgCode=None, gcmCode=None, limit=100,
-                       offset=0, scenarioId=None):
+    def _list_env_layers(self, user_id, after_time=None, alt_pred_code=None,
+                         before_time=None, date_code=None, env_code=None,
+                         env_type_id=None, epsg_code=None, gcm_code=None,
+                         limit=100, offset=0, scenario_id=None):
+        """List environmental layer objects matching the specified criteria
+
+        Args:
+            user_id: The user to list environmental layers for.  Note that this
+                may not be the same user logged into the system
+            after_time: (optional) Return layers modified after this time
+                (Modified Julian Day)
+            alt_pred_code: (optional) Return layers with this alternate
+                prediction code
+            before_time: (optional) Return layers modified before this time
+                (Modified Julian Day)
+            date_code: (optional) Return layers with this date code
+            env_code: (optional) Return layers with this environment code
+            env_type_id: (optional) Return layers with this environmental type
+            epsg_code: (optional) Return layers with this EPSG code
+            gcm_code: (optional) Return layers with this GCM code
+            limit: (optional) Return this number of layers, at most
+            offset: (optional) Offset the returned layers by this number
+            scenario_id: (optional) Return layers from this scenario
         """
-        @summary: List environmental layer objects matching the specified 
-                         criteria
-        @param userId: The user to list environmental layers for.  Note that this
-                                may not be the same user logged into the system
-        @param afterTime: (optional) Return layers modified after this time 
-                                    (Modified Julian Day)
-        @param altPredCode: (optional) Return layers with this alternate 
-                                      prediction code
-        @param beforeTime: (optional) Return layers modified before this time 
-                                     (Modified Julian Day)
-        @param dateCode: (optional) Return layers with this date code
-        @param envCode: (optional) Return layers with this environment code
-        @param envTypeId: (optional) Return layers with this environmental type
-        @param epsgCode: (optional) Return layers with this EPSG code
-        @param gcmCode: (optional) Return layers with this GCM code
-        @param limit: (optional) Return this number of layers, at most
-        @param offset: (optional) Offset the returned layers by this number
-        @param scenarioId: (optional) Return layers from this scenario
-        """
-        lyrAtoms = self.scribe.listEnvLayers(
-            offset, limit, userId=userId, envCode=envCode, gcmcode=gcmCode,
-            altpredCode=altPredCode, dateCode=dateCode, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode, envTypeId=envTypeId,
-            scenarioId=scenarioId)
-        # Format return
-        # Set headers
-        return lyrAtoms
-    
+        lyr_atoms = self.scribe.list_env_layers(
+            offset, limit, user_id=user_id, env_code=env_code,
+            gcm_code=gcm_code, alt_pred_code=alt_pred_code,
+            date_code=date_code, after_time=after_time,
+            before_time=before_time, epsg=epsg_code, env_type_id=env_type_id)
+
+        return lyr_atoms
+
     # ................................
-    def _listLayers(self, userId, afterTime=None, beforeTime=None,
-                    epsgCode=None, limit=100, offset=0, squid=None):
-        """
-        @summary: Return a list of layers matching the specified criteria
-        @param userId: The user to list layers for.  Note that this may not be
+    def _list_layers(self, user_id, after_time=None, before_time=None,
+                     epsg_code=None, limit=100, offset=0, squid=None):
+        """Return a list of layers matching the specified criteria
+
+        Args:
+            user_id: The user to list layers for.  Note that this may not be
                                 the same user that is logged into the system
-        @param afterTime: (optional) List layers modified after this time 
-                                    (Modified Julian Day)
-        @param beforeTime: (optional) List layers modified before this time
-                                     (Modified Julian Day)
-        @param epsgCode: (optional) Return layers that have this EPSG code
-        @param limit: (optional) Return this number of layers, at most
-        @param offset: (optional) Offset the returned layers by this number
-        @param squid: (optional) Return layers with this species identifier
+            after_time: List layers modified after this time (Modified Julian
+                Day)
+            before_time: List layers modified before this time (Modified Julian
+                Day)
+            epsg_code: Return layers that have this EPSG code
+            limit: Return this number of layers, at most
+            offset: Offset the returned layers by this number
+            squid: Return layers with this species identifier
         """
-        lyrAtoms = self.scribe.listLayers(
-            offset, limit, userId=userId, squid=squid, afterTime=afterTime,
-            beforeTime=beforeTime, epsg=epsgCode)
-        # Format return
-        # Set headers
-        return lyrAtoms
-    
+        layer_atoms = self.scribe.list_layers(
+            offset, limit, user_id=user_id, squid=squid, after_time=after_time,
+            before_time=before_time, epsg=epsg_code)
+
+        return layer_atoms

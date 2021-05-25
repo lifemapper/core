@@ -6,9 +6,11 @@ Todo:
     * Expand to more than shapefiles
 """
 import os
+
 from osgeo import ogr
 
 from LmCommon.common.lmconstants import LMFormat
+
 
 # .............................................................................
 def validate_vector_file(vector_filename):
@@ -22,17 +24,16 @@ def validate_vector_file(vector_filename):
     if os.path.exists(vector_filename):
         try:
             drv = ogr.GetDriverByName(LMFormat.SHAPE.driver)
-            ds = drv.Open(vector_filename)
-            if ds is None:
+            dataset = drv.Open(vector_filename)
+            if dataset is None:
                 msg = 'Could not open {}'.format(vector_filename)
             else:
-                lyr = ds.GetLayer()
-                feature_count = lyr.GetFeatureCount()
+                lyr = dataset.GetLayer()
+                _ = lyr.GetFeatureCount()
                 valid = True
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
     else:
         msg = 'File does not exist'
 
     return valid, msg
-   

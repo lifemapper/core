@@ -1,43 +1,30 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""This module provides services for querying snippets
-"""
+"""This module provides services for querying snippets"""
 import cherrypy
 
-from LmServer.common.solr import querySnippetIndex
-
+from LmServer.common.solr import query_snippet_index
 from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cpTools.lmFormat import lmFormatter
+from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
 
 # .............................................................................
 @cherrypy.expose
 class SnippetService(LmService):
     """This class is responsible for the Lifemapper snippet services.
     """
+
     # ................................
-    @lmFormatter
+    @lm_formatter
     def GET(self, ident1=None, provider=None, collection=None,
-            catalogNumber=None, operation=None, afterTime=None,
-            beforeTime=None, ident2=None, url=None, who=None, agent=None,
+            catalog_number=None, operation=None, after_time=None,
+            before_time=None, ident2=None, url=None, who=None, agent=None,
             why=None, **params):
+        """Query the Lifemapper snippet index and return matches.
+
+        Todo:
+            Do I need to send user information?
         """
-        @summary: A snippet get request will query the Lifemapper snippet index
-                         and return matching entries.
-        """
-        return self._makeSolrQuery(
+        return query_snippet_index(
             ident1=ident1, provider=provider, collection=collection,
-            catalogNumber=catalogNumber, operation=operation,
-            afterTime=afterTime, beforeTime=beforeTime, ident2=ident2, url=url,
-            who=who, agent=agent, why=why)
-    
-    # ................................
-    def _makeSolrQuery(self, ident1=None, provider=None, collection=None,
-                       catalogNumber=None, operation=None, afterTime=None,
-                       beforeTime=None, ident2=None, url=None, who=None,
-                       agent=None, why=None):
-        
-        return querySnippetIndex(
-            ident1=ident1, provider=provider, collection=collection,
-            catalogNumber=catalogNumber, operation=operation,
-            afterTime=afterTime, beforeTime=beforeTime, ident2=ident2, url=url,
-            who=who, agent=agent, why=why)
+            catalog_number=catalog_number, operation=operation,
+            after_time=after_time, before_time=before_time, ident2=ident2,
+            url=url, who=who, agent=agent, why=why)

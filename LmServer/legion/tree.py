@@ -1,157 +1,145 @@
+"""Module containing tree service object class
 """
-@license: gpl2
-@copyright: Copyright (C) 2019, University of Kansas Center for Research
-
-          Lifemapper Project, lifemapper [at] ku [dot] edu, 
-          Biodiversity Institute,
-          1345 Jayhawk Boulevard, Lawrence, Kansas, 66045, USA
-   
-          This program is free software; you can redistribute it and/or modify 
-          it under the terms of the GNU General Public License as published by 
-          the Free Software Foundation; either version 2 of the License, or (at 
-          your option) any later version.
-  
-          This program is distributed in the hope that it will be useful, but 
-          WITHOUT ANY WARRANTY; without even the implied warranty of 
-          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-          General Public License for more details.
-  
-          You should have received a copy of the GNU General Public License 
-          along with this program; if not, write to the Free Software 
-          Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
-          02110-1301, USA.
-"""
-import mx.DateTime
 import os
+
+from lmpy import TreeWrapper
 
 from LmBackend.common.lmobj import LMObject
 from LmCommon.common.lmconstants import JSON_INTERFACE, DEFAULT_TREE_SCHEMA
-from LmCommon.trees.lmTree import LmTree
-from LmServer.base.serviceobject2 import ServiceObject
+from LmServer.base.service_object import ServiceObject
 from LmServer.common.lmconstants import LMServiceType, LMFileType
-   
+
+
 # .........................................................................
-class Tree(LmTree, ServiceObject):
-    """       
-    Class to hold Tree data  
-    """
-    # .............................................................................
-    # Constructor
-    # .............................................................................
-    def __init__(self, name, metadata={}, dlocation=None, data=None, 
-                 schema=DEFAULT_TREE_SCHEMA,
-                 metadataUrl=None, userId=None, gridsetId=None, treeId=None, 
-                 modTime=None):
+class Tree(ServiceObject):
+    """Class to hold Tree data."""
+
+    # ................................
+    def __init__(self, name, metadata=None, dlocation=None, data=None,
+                 schema=DEFAULT_TREE_SCHEMA, metadata_url=None, user_id=None,
+                 gridset_id=None, tree_id=None, mod_time=None):
+        """Constructor for the tree class.
+
+        Args:
+            name: The user-provided name of this tree
+            dlocation: file of data for TreeWrapper base object
+            tree_id: db_id  for ServiceObject
         """
-        @summary Constructor for the Tree class.  
-        @copydoc LmCommon.trees.lmTree.LmTree::fromFile()
-        @copydoc LmServer.base.serviceobject2.ServiceObject::__init__()
-        @param name: The user-provided name of this tree
-        @param dlocation: file of data for LmTree base object
-        @param treeId: dbId  for ServiceObject
-        """
-        ServiceObject.__init__(self, userId, treeId, LMServiceType.TREES, 
-                               metadataUrl=metadataUrl, parentId=gridsetId, 
-                               modTime=modTime)
+        if metadata is None:
+            metadata = {}
+        ServiceObject.__init__(
+            self, user_id, tree_id, LMServiceType.TREES,
+            metadata_url=metadata_url, parent_id=gridset_id, mod_time=mod_time)
         self.name = name
+        # _shrub is the phylogenetic tree data object
+        #    (TreeWrapper wrapped Dendropy.Tree)
+        self._shrub = None
         self._dlocation = dlocation
-        self.treeMetadata = {}
-        self.loadTreeMetadata(metadata)
-           
+        self.tree_metadata = {}
+        self.load_tree_metadata(metadata)
+
         # Read tree if available
         if dlocation is None:
-            dlocation = self.getDLocation()
-           
+            dlocation = self.get_dlocation()
+
         if data is not None:
-            LmTree.__init__(self, data=data, schema=schema)
+            self._shrub = TreeWrapper.get(data=data, schema=schema)
         elif dlocation is not None:
             if os.path.exists(dlocation):
-                LmTree.__init__(self, filename=dlocation, schema=schema)
-            
-      
-    # ..............................
-    def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
-        """
-        @summary: Reads tree data, either from the dlocation or getDLocation
-        """
-        if dlocation is None:
-            dlocation = self.getDLocation()
-        
-        LmTree.__init__(self, filename=dlocation, schema=schema)
-   
-    # ..............................
-    def setTree(self, tree):
-        """
-        @summary: Sets the tree value to an instance of dendropy tree.  This 
-                     should be used if you have a dendropy tree created by some
-                     method other than reading a file directly
-        @param tree: An instance of dendropy 
-        """
-        LmTree.__init__(self, tree=tree)
-      
-    # ..............................
-    def writeTree(self):
-        """
-        @summary: Writes the tree JSON to disk
-        """
-        dloc = self.getDLocation()
-        LmTree.writeTree(self, dloc)
+                self._shrub = TreeWrapper.from_filename(dlocation)
 
-    # ...............................................
-    def getRelativeDLocation(self):
-        """
-        @summary: Return the relative filepath from object attributes
-        @note: If the object does not have an ID, this returns None
-        @note: This is to be pre-pended with a relative directory name for data  
-               used by a single workflow/Makeflow 
+    # ................................
+    def get_tree_object(self):
+        """Get the TreeWrapper instance containing tree data."""
+        return self._shrub
+
+    # ................................
+    def read(self, dlocation=None, schema=DEFAULT_TREE_SCHEMA):
+        """Read tree data, either from the dlocation or get_dlocation."""
+        if dlocation is None:
+            dlocation = self.get_dlocation()
+        self._shrub = TreeWrapper.get(path=dlocation, schema=schema)
+
+    # ................................
+    def set_tree(self, tree):
+        """Set the value of the tree."""
+        self._shrub = tree
+
+    # ................................
+    def write_tree(self):
+        """Write the tree to disk."""
+        dloc = self.get_dlocation()
+        self._shrub.write(path=dloc, schema=DEFAULT_TREE_SCHEMA)
+
+    # ................................
+    def get_relative_dlocation(self):
+        """Return the relative filepath from object attributes.
+
+        Note:
+            - If the object does not have an ID, this returns None
+            - This is to be pre-pended with a relative directory name for data
+                used by a single workflow/Makeflow
         """
         basename = None
-        self.setDLocation()
+        self.set_dlocation()
         if self._dlocation is not None:
-            pth, basename = os.path.split(self._dlocation)
+            _, basename = os.path.split(self._dlocation)
         return basename
 
-    def createLocalDLocation(self):
-        """
-        @summary: Create an absolute filepath from object attributes
-        @note: If the object does not have an ID, this returns None
-        """
-        dloc = self._earlJr.createFilename(LMFileType.TREE,  objCode=self.getId(), 
-                                           usr=self.getUserId())
-        return dloc
+    # ................................
+    def create_local_dlocation(self):
+        """Create an absolute filepath from object attributes
 
-    def getDLocation(self):
-        self.setDLocation()
-        return self._dlocation
-   
-    def setDLocation(self, dlocation=None):
+        Note:
+            If the object does not have an ID, this returns None
         """
-        @summary: Set the _dlocation attribute if it is None.  Use dlocation
-                  if provided, otherwise calculate it.
-        @note: Does NOT override existing dlocation, use clearDLocation for that
+        return self._earl_jr.create_filename(
+            LMFileType.TREE, obj_code=self.get_id(), usr=self.get_user_id())
+
+    # ................................
+    def get_dlocation(self):
+        """Return the data location for this tree."""
+        self.set_dlocation()
+        return self._dlocation
+
+    # ................................
+    def set_dlocation(self, dlocation=None):
+        """Set the dlocation attribute if it is None.
+
+        Set the _dlocation attribute if it is None.  Use dlocation if provided,
+        otherwise calculate it.
+
+        Note:
+            Does NOT override existing dlocation, use clear_dlocation for that
         """
         if self._dlocation is None:
-            if dlocation is None: 
-                dlocation = self.createLocalDLocation()
+            if dlocation is None:
+                dlocation = self.create_local_dlocation()
             self._dlocation = dlocation
 
-    def clearDLocation(self): 
+    # ................................
+    def clear_dlocation(self):
+        """Clear the dlocation attribute."""
         self._dlocation = None
 
-    # ...............................................
-    def dumpTreeMetadata(self):
-        return LMObject._dumpMetadata(self, self.treeMetadata)
- 
-    def loadTreeMetadata(self, newMetadata):
-        self.treeMetadata = LMObject._loadMetadata(self, newMetadata)
+    # ................................
+    def dump_tree_metadata(self):
+        """Dump tree metadata as a string."""
+        return LMObject._dump_metadata(self.tree_metadata)
 
-    def addTreeMetadata(self, newMetadataDict):
-        self.treeMetadata = LMObject._addMetadata(self, newMetadataDict, 
-                                  existingMetadataDict=self.treeMetadata)
+    # ................................
+    def load_tree_metadata(self, new_metadata):
+        """Load tree metadata."""
+        self.tree_metadata = LMObject._load_metadata(new_metadata)
 
-    # ...............................................
-    def getDataUrl(self, interface=JSON_INTERFACE):
-        durl = self._earlJr.constructLMDataUrl(self.serviceType, self.getId(), 
-                                               interface)
-        return durl
+    # ................................
+    def add_tree_metadata(self, new_metadata_dict):
+        """Add additional tree metadata."""
+        self.tree_metadata = LMObject._add_metadata(
+            new_metadata_dict, existing_metadata_dict=self.tree_metadata)
 
+    # ................................
+    def get_data_url(self, interface=JSON_INTERFACE):
+        """Return a data service url for this tree."""
+        return self._earl_jr.construct_lm_data_url(
+            self.service_type, self.get_id(), interface)

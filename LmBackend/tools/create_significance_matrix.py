@@ -10,9 +10,11 @@ considered significant after undergoing p-value correction.
 """
 import argparse
 
-from LmCommon.common.matrix import Matrix
-from LmCommon.common.readyfile import readyFilename
+from lmpy import Matrix
+
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.statistics import permutation_testing as ptest
+
 
 # .............................................................................
 def matrix_object_generator(matrix_filenames):
@@ -22,11 +24,14 @@ def matrix_object_generator(matrix_filenames):
         matrix_filenames (:obj: `list`): A list of file names to load into
             Matrix objects
     """
-    for fn in matrix_filenames:
-        yield Matrix.load(fn)
+    for file_name in matrix_filenames:
+        yield Matrix.load(file_name)
+
 
 # .............................................................................
-if __name__ == '__main__':
+def main():
+    """Main run method for the script.
+    """
     parser = argparse.ArgumentParser(
         description='Create frequency matrix for a set of permutation tests')
     parser.add_argument('observed_matrix', type=str,
@@ -52,21 +57,21 @@ if __name__ == '__main__':
         cmp_func = ptest.compare_absolute_values
     else:
         cmp_func = ptest.compare_signed_values
-    
+
     obs = Matrix.load(args.observed_matrix)
-    
+
     if args.test_mtx is not None:
         test_mtx = Matrix.load(args.test_mtx)
     else:
         test_mtx = obs
-    
+
     p_values = ptest.get_p_values(
         test_mtx, matrix_object_generator(args.random_matrix),
         compare_func=cmp_func)
 
     sig_values = ptest.correct_p_values(
         p_values, false_discovery_rate=args.fdr)
-    
+
     # If the last dimension has only one value, use it as the concat axis
     if obs.data.shape[-1] == 1:
         concat_axis = obs.data.ndim - 1
@@ -74,7 +79,11 @@ if __name__ == '__main__':
         concat_axis = obs.data.ndim
     out_matrix = Matrix.concatenate(
         [obs, p_values, sig_values], axis=concat_axis)
-    
-    readyFilename(args.out_matrix_filename)
-    with open(args.out_matrix_filename, 'w') as out_f:
-        out_matrix.save(out_f)
+
+    ready_filename(args.out_matrix_filename)
+    out_matrix.write(args.out_matrix_filename)
+
+
+# .............................................................................
+if __name__ == '__main__':
+    main()
