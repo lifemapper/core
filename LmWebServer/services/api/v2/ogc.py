@@ -3,7 +3,7 @@ import cherrypy
 import mapscript
 import os
 
-from LmCommon.common.lmconstants import HTTPStatus
+from LmCommon.common.lmconstants import HTTPStatus, ARCHIVE_PATH
 from LmServer.common.color_palette import ColorPalette
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
@@ -17,8 +17,8 @@ PALETTES = (
 
 # .............................................................................
 def delete_obsolete_mapfile(filename):
-    """ Delete obsolete mapfiles without web-mercator EPSG for W*S services """
-    if os.path.exists(filename):
+    """ Delete obsolete archive mapfiles without web-mercator EPSG for W*S services """
+    if os.path.exists(filename) and filename.startwith(ARCHIVE_PATH):
         import subprocess
         cmd = '/usr/bin/grep  epsg:{}  {}'.format(WEB_MERCATOR_EPSG, filename)
         info, err = subprocess.Popen(
@@ -75,8 +75,8 @@ class MapService(LmService):
         earl_jr = EarlJr(scribe=self.scribe)
         map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
 
-        # TODO: Remove this after production mapfiles are updated
-        delete_obsolete_mapfile(map_file_name)
+        # Use only when getting a new template or GBIF dump
+        # delete_obsolete_mapfile(map_file_name)
             
         if not os.path.exists(map_file_name):
             map_svc = self.scribe.get_map_service_from_map_filename(

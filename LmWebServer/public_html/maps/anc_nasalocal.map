@@ -25,7 +25,7 @@ MAP
     METADATA
       "wms_title" 			"Blue Marble Map"
       "ogc_onlineresource" 	"http://localhost/cgi-bin/ogc.cgi/bluemarble?"
-      "wms_srs" 			"epsg:4326 AUTO:42003"
+      "wms_srs" 			"epsg:4326 epsg:3857 AUTO:42003"
       ows_enable_request  "*"
     END
   END
