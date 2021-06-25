@@ -1,13 +1,14 @@
 """This module provides OGC services"""
 import cherrypy
+import datetime
 import mapscript
 import os
 
-from LmCommon.common.lmconstants import HTTPStatus, ARCHIVE_PATH
+from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.common.color_palette import ColorPalette
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
-    LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
+    ARCHIVE_PATH, LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
     POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX, WEB_MERCATOR_EPSG)
 from LmWebServer.services.api.v2.base import LmService
 
@@ -15,28 +16,55 @@ PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
     'aqua', 'bluered', 'bluegreen', 'greenred')
 
+OBSOLETE_CUTOFF_YMD = (2021, 6, 24)
 # .............................................................................
-def delete_obsolete_mapfile(filename):
+def delete_mapfile_missing_text(filename, pattern):
     """ Delete obsolete archive mapfiles without web-mercator EPSG for W*S services """
-    if os.path.exists(filename) and filename.startwith(ARCHIVE_PATH):
-        import subprocess
-        cmd = '/usr/bin/grep  epsg:{}  {}'.format(WEB_MERCATOR_EPSG, filename)
-        info, err = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, 
-            stderr=subprocess.PIPE).communicate()
-        if len(info) == 0:
+    import re
+    basename = os.path.basename(filename)
+    # Only touch archive SDM maps
+    if (os.path.exists(filename) 
+        and filename.startswith(ARCHIVE_PATH)
+        and basename.startswith(MapPrefix.SDM)):
+            delete_me = True
+            f = open(filename, 'r')
+            for line in f:
+                if re.search(pattern, line):
+                    print('File {} contains pattern {}'.format(filename, pattern))
+                    delete_me = False
+            if delete_me:
+                try:
+                    os.remove(filename)
+                    print('Deleting {} without {} for re-write'.format(filename, pattern))
+                except Exception as err:
+                    print('Failed to remove {}, {}'.format(filename, err))
+
+# .............................................................................
+def delete_mapfile_by_date(filename, cutofftime):
+    """ Delete obsolete archive mapfiles created before cutofftime, allowing re-write
+    without actual occurrenceset extent (so other areas may be displayed, even if they
+    contain no data. 
+    """
+    basename = os.path.basename(filename)
+    # Only touch archive SDM maps
+    if (os.path.exists(filename) 
+        and filename.startswith(ARCHIVE_PATH)
+        and basename.startswith(MapPrefix.SDM)):
+        modtime_ts = os.stat(filename).st_mtime
+        modtime = datetime.datetime.fromtimestamp(modtime_ts)
+        if modtime < cutofftime:
             try:
                 os.remove(filename)
+                print('Deleting {} older than {} for re-write'.format(filename, cutofftime))
             except Exception as err:
                 print('Failed to remove {}, {}'.format(filename, err))
-
+        else:
+            print('File {} is newer than {}'.format(filename, cutofftime))
 
 # .............................................................................
 @cherrypy.expose
 class MapService(LmService):
-    """The base mapping service for OGC services.
-    """
-
+    """The base mapping service for OGC services."""
     # ................................
     def GET(self, map_name, bbox=None, bgcolor=None, color=None, coverage=None,
             crs=None, exceptions=None, height=None, layer=None, layers=None,
@@ -76,7 +104,9 @@ class MapService(LmService):
         map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
 
         # Use only when getting a new template or GBIF dump
-        # delete_obsolete_mapfile(map_file_name)
+        cutofftime = datetime.datetime(
+            OBSOLETE_CUTOFF_YMD[0], OBSOLETE_CUTOFF_YMD[1], OBSOLETE_CUTOFF_YMD[2])
+        delete_mapfile_by_date(map_file_name, cutofftime)
             
         if not os.path.exists(map_file_name):
             map_svc = self.scribe.get_map_service_from_map_filename(
@@ -359,3 +389,24 @@ class MapService(LmService):
         if (b < r and b < g):
             return 'greenred'
         return None
+
+# .............................................................................
+if __name__ == '__main__':
+    map_name = 'data_198078'
+    ptlyr = 'occ_198078'
+    crs = 'epsg:3857'
+    bbox = '0,0,20037508.342789244,20037508.34278071'
+    color = 'red'
+    req = 'getmap'
+    
+    svc = MapService()
+    svc.GET(map_name, bbox=bbox, bgcolor=None, color=color, coverage=None,
+            crs=None, exceptions=None, height=None, layer=ptlyr, layers=None,
+            point=None, request=None, format_=None, service=None,
+            sld=None, sld_body=None, srs=None, styles=None, time=None,
+            transparent=None, version=None, width=None)
+            
+            
+"""
+http://client.lifemapper.org/api/v2/ogc/data_198078?service=wms&request=getmap&layers=occ_198078&styles=&format=image%2Fpng&transparent=true&version=1.0&height=256&srs=EPSG%3A3857&width=256&layerLabel=Occurrence%20Points&bbox=0,0,20037508.342789244,20037508.34278071
+"""
