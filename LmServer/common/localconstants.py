@@ -1,5 +1,4 @@
-"""Local configuration values for LmServer
-"""
+"""Local configuration values for LmServer"""
 import os
 
 from LmCommon.common.config import Config
