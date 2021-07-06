@@ -691,19 +691,10 @@ class MapLayerSet(_LayerSet, ServiceObject):
     # ................................
     @staticmethod
     def _create_projection_info(epsg_code):
-        if epsg_code == '4326':
-            parts = [
-                '      PROJECTION',
-                '         \"proj=longlat\"',
-                '         \"ellps=WGS84\"',
-                '         \"datum=WGS84\"',
-                '         \"no_defs\"',
-                '      END']
-        else:
-            parts = [
-                '      PROJECTION',
-                '         \"init=epsg:{}\"'.format(epsg_code),
-                '      END']
+        parts = [
+            '    PROJECTION',
+            '       \"init=epsg:{}\"'.format(epsg_code),
+            '    END']
         prj = '\n'.join(parts)
         return prj
 
