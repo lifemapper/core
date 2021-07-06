@@ -16,7 +16,7 @@ PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
     'aqua', 'bluered', 'bluegreen', 'greenred')
 
-OBSOLETE_CUTOFF_YMD = (2021, 6, 24)
+OBSOLETE_CUTOFF_YMD = (2021, 7, 6, 15, 6, 35, 278861)
 # .............................................................................
 def delete_mapfile_missing_text(filename, pattern):
     """ Delete obsolete archive mapfiles without web-mercator EPSG for W*S services """
