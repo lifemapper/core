@@ -4,15 +4,21 @@ import os
 from random import randint, random
 
 import lmtest.base.test_base as test_base
+
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.lmconstants import JobStatus
+
 from LmDbServer.boom.init_workflow import BOOMFiller
-from LmServer.common.lmconstants import ARCHIVE_PATH, TEMP_PATH
+
+from LmServer.common.lmconstants import (ARCHIVE_PATH, TEMP_PATH, MATT_DAEMON_PID_FILE)
+from LmServer.common.localconstants import APP_PATH
 from LmServer.common.log import ScriptLogger
 from LmServer.db.borg_scribe import BorgScribe
+from LmServer.common.log import LmServerLogger
+from LmServer.tools.matt_daemon import MattDaemon
+
 from LmTest.validate.raster_validator import validate_raster_file
 from LmTest.validate.vector_validator import validate_vector_file
-
 
 # .....................................................................................
 class BoomJobSubmissionTest(test_base.LmTest):
@@ -116,6 +122,21 @@ class BoomJobSubmissionTest(test_base.LmTest):
         for i in range(1, len(parts), 2):
             parts[i] = self._replace_lookup[parts[i]]
         return ''.join(parts)
+    #
+    # # .............................
+    # def _start_matt(self):
+    #     try:
+    #         pid = None
+    #         with open(MATT_DAEMON_PID_FILE) as in_pid:
+    #             pid = int(in_pid.read().strip())
+    #     except IOError:
+    #         mf_daemon = MattDaemon(
+    #             MATT_DAEMON_PID_FILE, log=LmServerLogger("matt_daemon", add_console=True, add_file=True))
+    #         mf_daemon.start()
+    #     else:
+    #         msg = 'pidfile exists. Daemon running with PID {}?'.format(pid)
+    #         self.log.error(msg)
+    #         return
 
     # .............................
     def run_test(self):
@@ -130,12 +151,12 @@ class BoomJobSubmissionTest(test_base.LmTest):
             self._generate_config_file()
             # init workflow
             filler = BOOMFiller(
-                self.config_filename,
-                logname='Auto_test_{}'.format(self._replace_lookup['ARCHIVE_NAME']),
+                self.config_filename, logname=self._replace_lookup['ARCHIVE_NAME']
             )
             # Gridset
             gridset = filler.init_boom()
             gridset_id = gridset.get_id()
+            # self._start_matt()
             self.add_new_test(BoomWaitTest(gridset_id, self.wait_timeout))
         except Exception as err:
             raise test_base.LmTestFailure(
@@ -283,3 +304,4 @@ class BoomValidateTest(test_base.LmTest):
                             msg,
                         )
                     )
+

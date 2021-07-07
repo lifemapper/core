@@ -493,7 +493,7 @@ def main():
 
     mf_daemon = MattDaemon(
         MATT_DAEMON_PID_FILE,
-        log=LmServerLogger("mattDaemon", add_console=True, add_file=True))
+        log=LmServerLogger("matt_daemon", add_console=True, add_file=True))
 
     # Set debugging
     mf_daemon.set_debug(

@@ -45,7 +45,7 @@ USER_LOG_PATH = os.path.join(LOG_PATH, 'users')
 ERROR_LOG_PATH = os.path.join(LOG_PATH, 'errors')
 
 CHERRYPY_CONFIG_FILE = os.path.join(APP_PATH, 'config', 'cherrypy.conf')
-MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'mattDaemon.pid')
+MATT_DAEMON_PID_FILE = os.path.join(PID_PATH, 'matt_daemon.pid')
 
 # CC Tools constants
 CCTOOLS_BIN_PATH = os.path.join(APP_PATH, 'cctools', 'bin')
