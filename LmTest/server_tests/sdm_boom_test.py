@@ -4,6 +4,7 @@ import os
 from random import randint, random
 
 import lmtest.base.test_base as test_base
+from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.lmconstants import JobStatus
 from LmDbServer.boom.init_workflow import BOOMFiller
 from LmServer.common.lmconstants import ARCHIVE_PATH, TEMP_PATH
@@ -67,6 +68,7 @@ class BoomJobSubmissionTest(test_base.LmTest):
             self.user_dir, '{}.json'.format(self._replace_lookup['OCCURRENCE_FILENAME'])
         )
         print(2)
+        ready_filename(csv_filename, overwrite=True)
         with open(csv_filename, mode='wt') as out_file:
             out_file.write('Species,Longitude,Latitude\n')
             for i in range(num_species):
@@ -84,13 +86,14 @@ class BoomJobSubmissionTest(test_base.LmTest):
             '1': {'name': 'Longitude', 'role': 'longitude', 'type': 'real'},
             '2': {'name': 'Latitude', 'role': 'latitude', 'type': 'real'},
         }
-
+        ready_filename(json_filename, overwrite=True)
         with open(json_filename, mode='wt') as json_file:
             json.dump(point_meta, json_file)
 
     # .............................
     def _generate_config_file(self):
         """Generate a SDM BOOM job configuration file."""
+        ready_filename(self.config_filename, overwrite=True)
         with open(self.config_filename, mode='wt') as config_file:
             for key in self.boom_config.keys():
                 # Write the section header
