@@ -1,4 +1,5 @@
 """Tests for SDM BOOM jobs initiated by backend."""
+from copy import deepcopy
 import json
 import os
 from random import randint, random
@@ -17,6 +18,7 @@ from LmServer.db.borg_scribe import BorgScribe
 from LmTest.validate.raster_validator import validate_raster_file
 from LmTest.validate.vector_validator import validate_vector_file
 
+
 # .....................................................................................
 class BoomJobSubmissionTest(test_base.LmTest):
     """Test of job submission for SDM BOOM."""
@@ -28,9 +30,16 @@ class BoomJobSubmissionTest(test_base.LmTest):
         config,
         wait_timeout,
         delay_time=0,
-        delay_interval=3600,
+        delay_interval=86400,  # One day
     ):
         """Construct the simulated submission test."""
+        self._next_run_params = {
+            'user_id': user_id,
+            'config': deepcopy(config),
+            'wait_timeout': wait_timeout,
+            'delay_time': delay_interval,
+            'delay_interval': delay_interval
+        }
         test_base.LmTest.__init__(self, delay_time=delay_time)
         self.wait_timeout = wait_timeout
         self.boom_config = config
@@ -63,14 +72,12 @@ class BoomJobSubmissionTest(test_base.LmTest):
             min_points (int): Minimum number of points per species.
             max_points (int): Maximum number of points per species.
         """
-        print(1)
         csv_filename = os.path.join(
             self.user_dir, '{}.csv'.format(self._replace_lookup['OCCURRENCE_FILENAME'])
         )
         json_filename = os.path.join(
             self.user_dir, '{}.json'.format(self._replace_lookup['OCCURRENCE_FILENAME'])
         )
-        print(2)
         ready_filename(csv_filename, overwrite=True)
         with open(csv_filename, mode='wt') as out_file:
             out_file.write('Species,Longitude,Latitude\n')
@@ -83,7 +90,6 @@ class BoomJobSubmissionTest(test_base.LmTest):
                             180.0 * random() - 90.0,
                         )
                     )
-        print(3)
         point_meta = {
             '0': {'name': 'Species', 'role': 'taxaName', 'type': 'string'},
             '1': {'name': 'Longitude', 'role': 'longitude', 'type': 'real'},
@@ -138,8 +144,9 @@ class BoomJobSubmissionTest(test_base.LmTest):
             # Gridset
             gridset = filler.init_boom()
             gridset_id = gridset.get_id()
-            # self._start_matt()
+            # Add new tests
             self.add_new_test(BoomWaitTest(gridset_id, self.wait_timeout))
+            self.add_new_test(BoomJobSubmissionTest(**self._next_run_params))
         except Exception as err:
             raise test_base.LmTestFailure(
                 'Failed to submit test job: {}'.format(err)
