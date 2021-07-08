@@ -21,7 +21,6 @@ class MattDaemonRunningTest(test_base.LmTest):
         debug_log,
         debug_makeflows,
         debug_outputs,
-        wait_timeout,
         delay_time=0,
         delay_interval=3600
     ):
@@ -30,7 +29,6 @@ class MattDaemonRunningTest(test_base.LmTest):
         self.debug_log = debug_log
         self.debug_makeflows = debug_makeflows
         self.debug_outputs = debug_outputs
-        self.wait_timeout = wait_timeout
         self.user = system_user
         self.test_name = 'Matt Daemon test'
 

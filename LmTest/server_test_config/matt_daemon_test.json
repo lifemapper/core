@@ -2,10 +2,8 @@
     "module": "LmTest.server_tests.matt_daemon_test",
     "test_class": "MattDaemonRunningTest",
     "parameters": {
-        "log_dir": "/state/partition1/lmscratch/log",
         "debug_log": 0,
         "debug_makeflows": 1,
         "debug_outputs": 0,
-        "wait_timeout": 360
     }
 }
