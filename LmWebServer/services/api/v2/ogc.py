@@ -16,7 +16,7 @@ PALETTES = (
     'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
     'aqua', 'bluered', 'bluegreen', 'greenred')
 
-OBSOLETE_CUTOFF_YMD = (2021, 7, 6, 15, 6, 35, 278861)
+OBSOLETE_CUTOFF_YMD = (2021, 7, 16, 11, 29, 15)
 # .............................................................................
 def delete_mapfile_missing_text(filename, pattern):
     """ Delete obsolete archive mapfiles without web-mercator EPSG for W*S services """
@@ -105,7 +105,8 @@ class MapService(LmService):
 
         # Use only when getting a new template or GBIF dump
         cutofftime = datetime.datetime(
-            OBSOLETE_CUTOFF_YMD[0], OBSOLETE_CUTOFF_YMD[1], OBSOLETE_CUTOFF_YMD[2])
+            OBSOLETE_CUTOFF_YMD[0], OBSOLETE_CUTOFF_YMD[1], OBSOLETE_CUTOFF_YMD[2], 
+            OBSOLETE_CUTOFF_YMD[3], OBSOLETE_CUTOFF_YMD[4], OBSOLETE_CUTOFF_YMD[5])
         delete_mapfile_by_date(map_file_name, cutofftime)
             
         if not os.path.exists(map_file_name):

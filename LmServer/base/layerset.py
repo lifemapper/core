@@ -594,11 +594,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 ]
             lyr = '\n'.join(parts)
 
-            # Default to defined map extent for vector layers
-            if not isinstance(lyr, Vector):
-                ext = sdl_lyr.get_ssv_extent_string()
-                if ext is not None:
-                    lyr = '\n'.join([lyr, '      EXTENT  {}'.format(ext)])
+            # # Default to defined map extent for all layers
+            # if not isinstance(lyr, Vector):
+            #     ext = sdl_lyr.get_ssv_extent_string()
+            #     if ext is not None:
+            #         lyr = '\n'.join([lyr, '      EXTENT  {}'.format(ext)])
 
             lyr = '\n'.join([lyr, proj])
             lyr = '\n'.join([lyr, meta])
