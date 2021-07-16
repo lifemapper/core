@@ -186,6 +186,10 @@ class _SpeciesWeaponOfChoice(LMObject):
 
     # ................................
     def _read_provider_keys(self, provider_key_file, provider_key_col_name):
+        """
+        Return a dictionary of provider uuids and names, and the column index in the occurrence data
+        containing the provider uuid to be replaced.
+        """
         providers = {}
         prov_key_col = None
         for col_idx, desc in self.occ_parser.column_meta.items():
@@ -213,6 +217,40 @@ class _SpeciesWeaponOfChoice(LMObject):
                         except Exception:
                             pass
         return providers, prov_key_col
+
+    # ................................
+    def _read_replacements(self, replace_fname, replace_fldname):
+        """
+        Return a dictionary of keys and values, and the column index in the occurrence data
+        containing the field for which to replace a key with a value.
+        """
+        replacements = {}
+        replace_col = None
+        for col_idx, desc in self.occ_parser.column_meta.items():
+            if desc['name'] == replace_fldname:
+                replace_col = col_idx
+                break
+        if replace_col is None:
+            self.log.error(
+                'Unable to find {} in fieldnames'.format(
+                    replace_fldname))
+
+        if replace_fname is not None and replace_fldname is not None:
+            if not os.path.exists(replace_fname):
+                self.log.error(
+                    'Missing lookup file {}'.format(replace_fname))
+            else:
+                with open(replace_fname, 'r', encoding=ENCODING) as dump_file:
+                    csv.field_size_limit(sys.maxsize)
+                    csv_reader = csv.reader(dump_file, delimiter='\t')
+                    for line in csv_reader:
+                        try:
+                            key, val = line
+                            if key != 'key':
+                                replacements[key] = val
+                        except Exception:
+                            pass
+        return replacements, replace_col
 
     # ................................
     def _will_compute(self, status, status_mod_time, dlocation, raw_dlocation):
@@ -417,23 +455,28 @@ class UserWoC(_SpeciesWeaponOfChoice):
     # ................................
     def __init__(self, scribe, user, archive_name, epsg, exp_date,
                  user_occ_csv, user_occ_meta, user_occ_delimiter,
-                 logger=None, process_type=ProcessType.USER_TAXA_OCCURRENCE,
-                 provider_fname=None, use_gbif_taxonomy=False,
+                 logger=None, 
+                 replace_fname=None, replace_fldname=None,
+                 use_gbif_taxonomy=False,
                  taxon_source_name=None):
         super(UserWoC, self).__init__(
             scribe, user, archive_name, epsg, exp_date, user_occ_csv,
             meta_fname=user_occ_meta, taxon_source_name=taxon_source_name,
             logger=logger)
-        # Save known GBIF provider/IDs for lookup if available
-        self._dataset_key_col = None
-        # self._providers = []
-        # self._prov_col = None
-        # if provider_fname is not None and os.path.exists(provider_fname):
-        #     try:
-        #         self._providers, self._prov_col = self._read_provider_keys(
-        #             provider_fname, GBIF.PROVIDER_FIELD)
-        #     except Exception:
-        #         pass
+        # Save key/value replacements for generic lookup
+        self._replacements = {}
+        self._replace_col = None
+        if (
+            replace_fname is not None 
+            and replace_fldname is not None 
+            and os.path.exists(replace_fname)
+            ):
+            try:
+                self._replacements, self._replace_col = self._read_replacements(
+                    replace_fname, replace_fldname)
+            except Exception:
+                pass
+
         # User-specific attributes
         self.process_type = ProcessType.USER_TAXA_OCCURRENCE
         self.use_gbif_taxonomy = use_gbif_taxonomy
@@ -532,64 +575,35 @@ class UserWoC(_SpeciesWeaponOfChoice):
         elif start_line < 0:
             self._curr_rec = None
     
-    # # ................................
-    # def _replace_lookup_keys(self, data_chunk):
-    #     chunk = []
-    #     for line in data_chunk:
-    #         try:
-    #             prov_key = line[self._prov_col]
-    #         except KeyError:
-    #             self.log.debug(
-    #                 'Failed to find providerKey on record {} ({})'.format(
-    #                     self._line_num, line))
-    #         else:
-    #             prov_name = prov_key
-    #             try:
-    #                 prov_name = self._providers[prov_key]
-    #             except KeyError:
-    #                 try:
-    #                     prov_name = GbifAPI.get_publishing_org(prov_key)
-    #                     self._providers[prov_key] = prov_name
-    #                 except Exception:
-    #                     self.log.debug(
-    #                         'Failed to find provider key {}'.format(prov_key))
-    #
-    #             line[self._prov_col] = prov_name
-    #             chunk.append(line)
-    #     return chunk
-
     # ................................
-    def _add_gbif_dataset_info(self, data_chunk):
-        """
-        Add replace dataset key with dataset name in the dataset_key column of the lines
-        in the datachunk.
-        
-        Todo: 
-            Add the organization name too
-        """
+    def _replace_lookup_keys(self, data_chunk):
         chunk = []
         for line in data_chunk:
             try:
-                dataset_key = line[self._dataset_key_col]
+                replace_key = line[self._replace_col]
             except KeyError:
                 self.log.debug(
-                    'Failed to find providerKey on record {} ({})'.format(
+                    'Failed to find replacement key on record {} ({})'.format(
                         self._line_num, line))
             else:
-                dataset_name = dataset_key
+                replace_val = replace_key
                 try:
-                    dataset_name, org_name = self._datasets[dataset_key]
+                    replace_val = self._replacements[replace_key]
                 except KeyError:
-                    try:
-                        dataset_name, org_name = GbifAPI.get_dataset_meta(dataset_key)
-                        self._datasets[dataset_key] = dataset_name, org_name
-                    except Exception:
-                        self.log.debug(
-                            'Failed to find dataset key {}'.format(dataset_key))
-
-                line[self._dataset_col] = dataset_name
+                    pass
+                    # TODO: Use API to query for, then save, value
+                    # try:
+                    #     replace_val = GbifAPI.get_name_from_key(replace_key)
+                    # except:
+                    #     self.log.debug(
+                    #         'Failed to find key {}'.format(replace_key))
+                else:
+                    self._replacements[replace_key] = replace_val
+    
+                line[self._replace_col] = replace_val
                 chunk.append(line)
         return chunk
+    
 
     # ................................
     def get_one(self):
@@ -614,10 +628,9 @@ class UserWoC(_SpeciesWeaponOfChoice):
         (data_chunk, taxon_key, taxon_name
          ) = self.occ_parser.pull_current_chunk()
         if data_chunk:
-            # If data is from GBIF, replace Provider key with name
-            if self._dataset_col is not None:
-                data_chunk = self._add_gbif_dataset_info(data_chunk)
-
+            # TODO: enable generic replacement lookup
+            # if self._replacements and self._replace_col:
+            #     data_chunk = self._replace_lookup_keys(data_chunk)
             # Get or insert ScientificName (squid)
             if self.use_gbif_taxonomy:
                 # returns None if GBIF API does NOT return this or another key

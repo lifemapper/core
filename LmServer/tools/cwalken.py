@@ -245,19 +245,13 @@ class ChristopherWalken(LMObject):
             (occ_csv_fname, occ_meta_fname, self.more_data_to_process
              ) = self._find_data(occ_name, occ_dir, boom_path)
 
-            # Handle GBIF data, taxon and provider lookup data
+            # Handle GBIF data, saving taxononomy data with GBIF acceptedTaxonKey
             use_gbif_taxon_ids = False
-            gbif_prov_file = None
             if data_source == SpeciesDatasource.GBIF:
                 use_gbif_taxon_ids = True
-                gbif_prov = self._get_boom_or_default(
-                    BoomKeys.GBIF_PROVIDER_FILENAME)
-                gbif_prov_file = os.path.join(SPECIES_DATA_PATH, gbif_prov)
             weapon_of_choice = UserWoC(
                 self._scribe, user_id, archive_name, epsg, exp_date,
                 occ_csv_fname, occ_meta_fname, occ_delimiter, logger=self.log,
-                process_type=ProcessType.USER_TAXA_OCCURRENCE,
-                provider_fname=gbif_prov_file,
                 use_gbif_taxonomy=use_gbif_taxon_ids,
                 taxon_source_name=taxon_source_name)
 
