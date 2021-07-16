@@ -425,14 +425,15 @@ class UserWoC(_SpeciesWeaponOfChoice):
             meta_fname=user_occ_meta, taxon_source_name=taxon_source_name,
             logger=logger)
         # Save known GBIF provider/IDs for lookup if available
-        self._providers = []
-        self._prov_col = None
-        if provider_fname is not None and os.path.exists(provider_fname):
-            try:
-                self._providers, self._prov_col = self._read_provider_keys(
-                    provider_fname, GBIF.PROVIDER_FIELD)
-            except Exception:
-                pass
+        self._dataset_key_col = None
+        # self._providers = []
+        # self._prov_col = None
+        # if provider_fname is not None and os.path.exists(provider_fname):
+        #     try:
+        #         self._providers, self._prov_col = self._read_provider_keys(
+        #             provider_fname, GBIF.PROVIDER_FIELD)
+        #     except Exception:
+        #         pass
         # User-specific attributes
         self.process_type = ProcessType.USER_TAXA_OCCURRENCE
         self.use_gbif_taxonomy = use_gbif_taxonomy
@@ -530,30 +531,63 @@ class UserWoC(_SpeciesWeaponOfChoice):
             self.occ_parser.skip_to_record(start_line)
         elif start_line < 0:
             self._curr_rec = None
+    
+    # # ................................
+    # def _replace_lookup_keys(self, data_chunk):
+    #     chunk = []
+    #     for line in data_chunk:
+    #         try:
+    #             prov_key = line[self._prov_col]
+    #         except KeyError:
+    #             self.log.debug(
+    #                 'Failed to find providerKey on record {} ({})'.format(
+    #                     self._line_num, line))
+    #         else:
+    #             prov_name = prov_key
+    #             try:
+    #                 prov_name = self._providers[prov_key]
+    #             except KeyError:
+    #                 try:
+    #                     prov_name = GbifAPI.get_publishing_org(prov_key)
+    #                     self._providers[prov_key] = prov_name
+    #                 except Exception:
+    #                     self.log.debug(
+    #                         'Failed to find provider key {}'.format(prov_key))
+    #
+    #             line[self._prov_col] = prov_name
+    #             chunk.append(line)
+    #     return chunk
 
     # ................................
-    def _replace_lookup_keys(self, data_chunk):
+    def _add_gbif_dataset_info(self, data_chunk):
+        """
+        Add replace dataset key with dataset name in the dataset_key column of the lines
+        in the datachunk.
+        
+        Todo: 
+            Add the organization name too
+        """
         chunk = []
         for line in data_chunk:
             try:
-                prov_key = line[self._prov_col]
+                dataset_key = line[self._dataset_key_col]
             except KeyError:
                 self.log.debug(
                     'Failed to find providerKey on record {} ({})'.format(
                         self._line_num, line))
             else:
-                prov_name = prov_key
+                dataset_name = dataset_key
                 try:
-                    prov_name = self._providers[prov_key]
+                    dataset_name, org_name = self._datasets[dataset_key]
                 except KeyError:
                     try:
-                        prov_name = GbifAPI.get_publishing_org(prov_key)
-                        self._providers[prov_key] = prov_name
+                        dataset_name, org_name = GbifAPI.get_dataset_meta(dataset_key)
+                        self._datasets[dataset_key] = dataset_name, org_name
                     except Exception:
                         self.log.debug(
-                            'Failed to find provider key {}'.format(prov_key))
+                            'Failed to find dataset key {}'.format(dataset_key))
 
-                line[self._prov_col] = prov_name
+                line[self._dataset_col] = dataset_name
                 chunk.append(line)
         return chunk
 
@@ -581,8 +615,8 @@ class UserWoC(_SpeciesWeaponOfChoice):
          ) = self.occ_parser.pull_current_chunk()
         if data_chunk:
             # If data is from GBIF, replace Provider key with name
-            if self._prov_col is not None:
-                data_chunk = self._replace_lookup_keys(data_chunk)
+            if self._dataset_col is not None:
+                data_chunk = self._add_gbif_dataset_info(data_chunk)
 
             # Get or insert ScientificName (squid)
             if self.use_gbif_taxonomy:

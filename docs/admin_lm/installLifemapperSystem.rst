@@ -129,6 +129,13 @@ Install bugfixes
 
    # /opt/lifemapper/rocks/bin/fixNodePermissions
       
+Start matt_daemon
+-----------------------
+
+#. Start makeflow with matt_daemon
+
+   # /opt/lifemapper/rocks/bin/matt_daemon
+      
 Look for Errors
 ---------------
    

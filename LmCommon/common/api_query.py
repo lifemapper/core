@@ -828,6 +828,25 @@ class GbifAPI(APIQuery):
         return pub_org_name
 
     # ...............................................
+    @staticmethod
+    def get_dataset_meta(dataset_key):
+        """Return title of dataset and provider from dataset key
+
+        Args:
+            dataset_key: GBIF identifier for this dataset
+        """
+        api = GbifAPI(service=GBIF.DATASET_SERVICE, key=dataset_key)
+        try:
+            api.query()
+            org_key = api._get_output_val(api.output, 'publishingOrganizationKey')
+            dataset_name = api._get_output_val(api.output, 'title')
+        except Exception as e:
+            print(str(e))
+            raise
+        org_name = GbifAPI.get_publishing_org(org_key)
+        return dataset_name, org_name
+
+    # ...............................................
     def query(self):
         """ Queries the API and sets 'output' attribute to a ElementTree object
         """

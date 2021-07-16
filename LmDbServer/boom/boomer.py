@@ -378,7 +378,7 @@ import time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import JobStatus, LM_USER
+from LmCommon.common.lmconstants import JobStatus, LM_USER, ENCODING
 import LmCommon.common.time as lt
 from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.utilities import is_lm_user
@@ -390,33 +390,16 @@ from LmServer.common.log import ScriptLogger
 from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.process_chain import MFChain
 from LmServer.tools.cwalken import ChristopherWalken
-import csv
-import datetime
-import json
-import os
-import shutil
-import sys
 
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (
-    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
-from LmCommon.common.occ_parse import OccDataParser
-from LmCommon.common.ready_file import ready_filename
-from LmCommon.common.time import gmt, LmTime
-from LmServer.base.taxon import ScientificName
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.legion.occ_layer import OccurrenceLayer
+# Only relevant for "archive" public data, all user workflows will put all
+#    spuds into a single makeflow, along with multi-species commands to follow
+#    SDMs
+SPUD_LIMIT = 5000
 
+ONE_HOUR = 1.0 / 24.0
 TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
 
 from LmDbServer.boom.boomer import *
-
-SPUD_LIMIT = 5000import datetime
-import glob
-import os
 
 from LmBackend.command.server import (
     MultiIndexPAVCommand, MultiStockpileCommand)
@@ -447,9 +430,31 @@ from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.sdm_proj import SDMProjection
 from LmServer.tools.occ_woc import (UserWoC, ExistingWoC)
 
+import csv
+import datetime
+import json
+import os
+import shutil
+import sys
 
-config_fname = '/share/lm/data/archive/kubi/public_boom-2019.04.12.ini'
-success_fname = 'mf_8/public_boom-2019.04.12.ini.success'
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.api_query import GbifAPI
+from LmCommon.common.lmconstants import (
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
+from LmCommon.common.occ_parse import OccDataParser
+from LmCommon.common.ready_file import ready_filename
+from LmCommon.common.time import gmt, LmTime
+from LmServer.base.taxon import ScientificName
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.occ_layer import OccurrenceLayer
+
+TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
+
+
+
+config_fname = '/share/lm/data/archive/kubi/public_boom-2021.06.22.ini'
 
 
 secs = time.time()
@@ -458,131 +463,26 @@ timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
 scriptname = 'testboomer'
 logname = '{}.{}'.format(scriptname, timestamp)
 logger = ScriptLogger(logname, level=logging.INFO)
+
+boombasename, _ = os.path.splitext(config_fname)
+success_fname = boombasename + '.success'
 boomer = Boomer(config_fname, success_fname, log=logger)
-self = boomer
-self.initialize_me()
 
-workdir = self.potato_bushel.get_relative_directory()
-chris = self.christopher
-self = chris
-
-
-# (squid, spud_rules, idx_success_filename
-#  ) = self.start_walken(workdir)
-# ##########################################################################
-# in cwalken.start_walken
-squid = None
-spud_rules = []
-index_pavs_document_filename = None
-gs_id = 0
-curr_time = gmt().mjd
-alg = self.algs[0]
-prjs = []
-mtx_cols = []
-prj_scen = self.prj_scens[0]
-pamcode = '{}_{}'.format(prj_scen.code, alg.code)
-
-occ = self.weapon_of_choice.get_one()
-print(occ.query_count)
-
-squid = occ.squid
-
-occ_work_dir = 'occ_{}'.format(occ.get_id())
-sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
-pamcode = '{}_{}'.format(prj_scen.code, alg.code)
-
-prj = self._find_or_insert_sdm_project(
-    occ, alg, prj_scen, gmt().mjd)
-
-# if prj is not None:
-
-prjs.append(prj)
-mtx = self.global_pams[pamcode]
-mtx_col = self._find_or_insert_intersect(
-    prj, mtx, curr_time)
-if mtx_col is not None:
-    mtx_cols.append(mtx_col)
-
-do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
-self._fill_sweep_config(
-                        sweep_config, None, occ, [], [])
-
-
-algorithm_info = [algorithm.code]
-# This is the object that will be returned
-algorithm_object = {
-    RegistryKey.ALGORITHM_CODE: algorithm.code,
-    RegistryKey.PARAMETER: []
-}
-
-for param in algorithm.parameters.keys():
-    algorithm_object[RegistryKey.PARAMETER].append(
-        {
-            RegistryKey.NAME: param,
-            RegistryKey.VALUE: algorithm.parameters[param]
-        })
-    algorithm_info.append((param, str(algorithm.parameters[param])))
-
-sai = str(set(algorithm_info))
-identifier = md5(str(sai)).hexdigest()[:16]
-
-num_comps = sum([
-    len(sweep_config.occurrence_sets),
-    len(sweep_config.models),
-    len(sweep_config.projections),
-    len(sweep_config.pavs)
-    ])
-if num_comps > 0:
-    # Write the sweep config file
-    species_config_filename = os.path.join(
-        os.path.dirname(occ.get_dlocation()),
-        'species_config_{}{}'.format(
-            occ.get_id(), LMFormat.JSON.ext))
-    sweep_config.save_config(species_config_filename)
-
-    # Add sweep rule
-    param_sweep_cmd = SpeciesParameterSweepCommand(
-        species_config_filename, sweep_config.get_input_files(),
-        sweep_config.get_output_files(work_dir), work_dir)
-    spud_rules.append(param_sweep_cmd.get_makeflow_rule())
-
-    # Add stockpile rule
-    stockpile_success_filename = os.path.join(
-        work_dir, occ_work_dir, 'occ_{}stockpile.success'.format(
-            occ.get_id()))
-    stockpile_cmd = MultiStockpileCommand(
-        os.path.join(work_dir, sweep_config.stockpile_filename),
-        stockpile_success_filename,
-        pav_filename=os.path.join(
-            work_dir, sweep_config.pavs_filename))
-    spud_rules.append(
-        stockpile_cmd.get_makeflow_rule(local=True))
-
-    # Add multi-index rule if we added PAVs
-    if len(sweep_config.pavs) > 0:
-        index_pavs_document_filename = os.path.join(
-            work_dir, occ_work_dir, 'solr_pavs_post{}'.format(
-                LMFormat.XML.ext))
-        index_cmd = MultiIndexPAVCommand(
-            os.path.join(work_dir, sweep_config.pavs_filename),
-            index_pavs_document_filename)
-        spud_rules.append(index_cmd.get_makeflow_rule(local=True))
-
+boomer.initialize_me()
+boomer.process_all_species()
 
 # ##########################################################################
 
-infname = ('/state/partition1/workspace/issues/data/'
-            'cshl/prenolepis_imparis2.csv')
-outfname = ('/state/partition1/workspace/issues/data/'
-            'cshl/prenolepis_imparis3.csv')
+# ##########################################################################
 
-outf = open(outfname, 'w', encoding=ENCODING)
-for line in open(infname, 'r', encoding=ENCODING):
-    parts = line.split('\t')
-    newline = ','.join(parts)
-    outf.write(newline)
+# ##########################################################################
 
-outf.close()
+    
+# ##########################################################################
+
+# ##########################################################################
+
+# ##########################################################################
 
 # ##########################################################################
 """
