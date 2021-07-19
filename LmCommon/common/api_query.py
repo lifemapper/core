@@ -521,8 +521,7 @@ class GbifAPI(APIQuery):
     @staticmethod
     def _get_output_val(out_dict, name):
         try:
-            tmp = out_dict[name]
-            val = str(tmp).encode(ENCODING)
+            val = out_dict[name]
         except Exception:
             return None
         return val
@@ -530,55 +529,60 @@ class GbifAPI(APIQuery):
     # ...............................................
     @staticmethod
     def get_taxonomy(taxon_key):
-        """Return GBIF backbone taxonomy for this GBIF Taxon ID
-        """
+        """Return GBIF backbone taxonomy for this GBIF Taxon ID"""
         accepted_key = accepted_str = nub_key = None
+        log_lines = []
         tax_api = GbifAPI(service=GBIF.SPECIES_SERVICE, key=taxon_key)
 
         try:
             tax_api.query()
-            sciname_str = tax_api._get_output_val(
-                tax_api.output, 'scientificName')
-            kingdom_str = tax_api._get_output_val(tax_api.output, 'kingdom')
-            phylum_str = tax_api._get_output_val(tax_api.output, 'phylum')
-            class_str = tax_api._get_output_val(tax_api.output, 'class')
-            order_str = tax_api._get_output_val(tax_api.output, 'order')
-            family_str = tax_api._get_output_val(tax_api.output, 'family')
-            genus_str = tax_api._get_output_val(tax_api.output, 'genus')
-            species_str = tax_api._get_output_val(tax_api.output, 'species')
-            rank_str = tax_api._get_output_val(tax_api.output, 'rank')
-            genus_key = tax_api._get_output_val(tax_api.output, 'genusKey')
-            species_key = tax_api._get_output_val(tax_api.output, 'speciesKey')
-            tax_status = tax_api._get_output_val(
-                tax_api.output, 'taxonomicStatus')
-            canonical_str = tax_api._get_output_val(
-                tax_api.output, 'canonicalName')
-            log_lines = []
+            out = tax_api.output
+            sciname_str = tax_api._get_output_val(out, 'scientificName')
+            kingdom_str = tax_api._get_output_val(out, 'kingdom')
+            phylum_str = tax_api._get_output_val(out, 'phylum')
+            class_str = tax_api._get_output_val(out, 'class')
+            order_str = tax_api._get_output_val(out, 'order')
+            family_str = tax_api._get_output_val(out, 'family')
+            genus_str = tax_api._get_output_val(out, 'genus')
+            species_str = tax_api._get_output_val(out, 'species')
+            rank_str = tax_api._get_output_val(out, 'rank')
+            genus_key = tax_api._get_output_val(out, 'genusKey')
+            species_key = tax_api._get_output_val(out, 'speciesKey')
+            tax_status = tax_api._get_output_val(out, 'taxonomicStatus')
+            canonical_str = tax_api._get_output_val(out, 'canonicalName')
+            nub_key = tax_api._get_output_val(out, 'nubKey')
+            
+            # Return accepted key and name if available
             if tax_status != 'ACCEPTED':
                 try:
                     # Not present if results are taxonomicStatus=ACCEPTED
                     accepted_key = tax_api._get_output_val(
-                        tax_api.output, 'acceptedKey')
+                        out, 'acceptedKey')
                     accepted_str = tax_api._get_output_val(
-                        tax_api.output, 'accepted')
-                    nub_key = tax_api._get_output_val(tax_api.output, 'nubKey')
+                        out, 'accepted')
 
-                    log_lines.append(tax_api.url)
-                    log_lines.append(
-                        '   taxonomicStatus = {}'.format(tax_status))
-                    log_lines.append(
-                        '   acceptedKey = {}'.format(accepted_key))
-                    log_lines.append(
-                        '   acceptedStr = {}'.format(accepted_str))
-                    log_lines.append('   nubKey = {}'.format(nub_key))
-                    log_lines.append('   genusKey = {}'.format(genus_key))
-                    log_lines.append('   speciesKey = {}'.format(species_key))
-                    log_lines.append(
-                        '   canonicalName = {}'.format(canonical_str))
-                    log_lines.append('   rank = {}'.format(rank_str))
                 except Exception:
                     log_lines.append(
                         'Failed to format data from {}'.format(taxon_key))
+            else:
+                if rank_str == 'SPECIES':
+                    accepted_key = species_key
+                    accepted_str = sciname_str
+                elif rank_str == 'GENUS':
+                    accepted_key = genus_key
+                    accepted_str = genus_str
+                else:
+                    log_lines.append(
+                        'Rank {} is not species or genus '.format(rank_str))
+                    
+            # Log results
+            log_lines.append(tax_api.url)
+            log_lines.append(
+                '   taxonomicStatus = {}'.format(tax_status))
+            log_lines.append(
+                '   acceptedKey = {}'.format(accepted_key))
+            log_lines.append(
+                '   acceptedStr = {}'.format(accepted_str))
         except Exception as e:
             print(str(e))
             raise

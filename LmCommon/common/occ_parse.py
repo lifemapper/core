@@ -44,7 +44,7 @@ class OccDataParser(LMObject):
 
     # ......................................
     def __init__(self, logger, csv_data_or_fname, metadata, delimiter='\t',
-                 pull_chunks=False):
+                 pull_chunks=False, has_header=True):
         """Reader for arbitrary user CSV data
 
         Args:
@@ -60,7 +60,10 @@ class OccDataParser(LMObject):
 
 
         Note:
-            - header record and metadata with column **names** first, OR
+            - header record in CSV file and JSON metadata with keys as column **names** 
+              (matching CSV header) and optional shapefile-friendly column names (<= 12 char) 
+              in each field's metadata dictionary 
+              OR
             - no header and and metadata with column **positions** first
         """
         self._raw_metadata = metadata

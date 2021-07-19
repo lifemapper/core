@@ -342,16 +342,15 @@ class _SpeciesWeaponOfChoice(LMObject):
             else:
                 # if no species key, this is not a species
                 if rank_str in ('SPECIES', 'GENUS'):
-                    if tax_status != 'ACCEPTED':
-                        if accepted_key is not None:
-                            # Update to accepted values
-                            taxon_key = accepted_key
-                            sciname_str = accepted_str
-                        else:
-                            self.log.warning(
-                                'No accepted key for taxon_key {}'.format(
-                                    taxon_key))
-                            return None
+                    if accepted_key is not None:
+                        # Update to accepted values
+                        taxon_key = accepted_key
+                        sciname_str = accepted_str
+                    else:
+                        self.log.warning(
+                            'No accepted key for taxon_key {}'.format(
+                                taxon_key))
+                        return None
 
                     curr_time = gmt().mjd
                     # Do not tie GBIF taxonomy to one userid
@@ -1066,3 +1065,47 @@ class ExistingWoC(_SpeciesWeaponOfChoice):
                     'Unauthorized user {} for ID {}'.format(
                         occ.get_user_id(), occ.get_id()))
         return user_occ
+
+"""
+import csv
+import datetime
+import json
+import os
+import shutil
+import sys
+
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.api_query import GbifAPI
+from LmCommon.common.lmconstants import (
+    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
+from LmCommon.common.occ_parse import OccDataParser
+from LmCommon.common.ready_file import ready_filename
+from LmCommon.common.time import gmt, LmTime
+from LmServer.base.taxon import ScientificName
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.localconstants import PUBLIC_USER
+from LmServer.common.log import ScriptLogger
+from LmServer.legion.occ_layer import OccurrenceLayer
+
+TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
+
+occ = None
+(data_chunk, taxon_key, taxon_name
+ ) = self.occ_parser.pull_current_chunk()
+
+sci_name = self._get_insert_sci_name_for_gbif_species_key(
+    taxon_key, len(data_chunk))
+
+occ = self._find_or_insert_occurrence_set(
+    sci_name, len(data_chunk), data=data_chunk,
+    metadata=self.occ_parser.column_meta)
+if occ is not None:
+    self.log.info(
+        'WoC processed occ set {}, {}; next start {}'.format(
+            occ.get_id(),
+            'name: {}, num records: {}'.format(
+                sci_name.scientific_name, len(data_chunk)),
+            self.next_start))
+
+
+"""
