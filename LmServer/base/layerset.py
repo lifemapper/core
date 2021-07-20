@@ -763,9 +763,11 @@ class MapLayerSet(_LayerSet, ServiceObject):
                 sdl_lyr.populate_stats()
             parts.append(
                 '      PROCESSING \"NODATA={}\"'.format(sdl_lyr.nodata_val))
-            # SDM projections are always scaled b/w 0 and 100
+            
             if isinstance(sdl_lyr, SDMProjection):
-                vmin = SCALE_PROJECTION_MINIMUM + 1
+                # SDM projections are scaled 0 to 100; colored 25 to 100
+                vmin = SCALE_PROJECTION_MINIMUM + 10
+                # vmin = SCALE_PROJECTION_MINIMUM + 1
                 vmax = SCALE_PROJECTION_MAXIMUM
             else:
                 vmin = sdl_lyr.min_val
