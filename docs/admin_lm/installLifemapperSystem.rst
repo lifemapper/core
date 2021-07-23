@@ -54,16 +54,6 @@ Update existing code and script RPMs (without new roll)
    # rocks set host boot compute action=install
    # rocks run host compute reboot
 
-#. Update nodes with non-roll rpms::
-   
-   # rocks run host compute "(hostname; rpm -iv /share/lm/*rpm)"
-
-
-Update existing rolls
-~~~~~~~~~~~~~~~~~~~~~~~
-#. Remove old rolls (without cleaning or removing individual rpms)::
-
-   # rocks remove roll lifemapper-server lifemapper-compute
    
 
 Install both rolls on Frontend
