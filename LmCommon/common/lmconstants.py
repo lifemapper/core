@@ -190,7 +190,7 @@ class LMFormat:
         all_extensions=['.shp', '.shx', '.dbf', '.prj', '.sbn', '.sbx', '.fbn',
                         '.fbx', '.ain', '.aih', '.ixs', '.mxs', '.atx',
                         '.shp.xml', '.cpg', '.qix'],
-        driver='ESRI Shapefile', default=True, options={'MAX_STRLEN': 255})
+        driver='ESRI Shapefile', default=True, options={'MAX_STRLEN': 254})
     TAR_GZ = FileFormat('.tar.gz', 'application/x-gzip')
     TMP = FileFormat('.tmp', 'application/octet-stream')
     TXT = FileFormat('.txt', 'text/plain')
