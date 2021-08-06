@@ -28,7 +28,7 @@ All bash and Python scripts assume you are in directory /opt/lifemapper
 
 * Woof public archive:: 
 
-   rocks/bin/initWorkflow /opt/lifemapper/boom.public.params
+   rocks/bin/initWorkflow /opt/lifemapper/config/boom.public.params
    
 * Optional cleanup before woofing, includes database, filesystem, and Solr, 
   for makeflows, single-species and multi-species.  Except for 'clear user' this
