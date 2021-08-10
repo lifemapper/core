@@ -1,22 +1,34 @@
 {
     "pam_intersect": {
-        "max_presence": "@BP_MAX_PRESENCE", # 100
-        "min_percent": "@BP_MIN_PERCENT", # 1
-        "min_presence": "@BP_MIN_PRESENCE", # 25
-        "value_name" : "@BP_ATT_VAL" # pixel
+    	# 100
+        "max_presence": "100",
+    	# 1
+        "min_percent": "1",
+    	# 25
+        "min_presence": "25",
+    	# pixel (for any raster)
+        "value_name" : "pixel"
     },
     "sdm": {
         "mask": {
-            "buffer": "@BP_MASK_BUFFER", # 0.5
-            "method": "@BP_MASK_METHOD", # hull_region_intersect
-            "region": "@BP_REGION_LAYER" # ecoreg_10min_global
+        	# 0.5
+            "buffer": "0.5",
+            # hull_region_intersect
+            "method": "hull_region_intersect",
+            # ecoreg_10min_global from 10min-past-present-future scenario package
+            "region": "ecoreg_10min_global"
         }
     },
     "shapegrid": {
-        "bbox": "@BP_BBOX", # -180.0,-90.0,180.0,90.0
-        "cell_sides": "@BP_CELL_SIDES", # 4
-        "epsg": "@BP_EPSG", # 4326
-        "map_units": "@BP_MAP_UNITS", # dd
-        "resolution": "@BP_RESOLUTION" # 0.05
+    	# -180.0,-90.0,180.0,90.0
+        "bbox": "-180.0,-90.0,180.0,90.0",
+        # 4
+        "cell_sides": "4",
+        #  4326
+        "epsg": "4326",
+        # dd
+        "map_units": "dd",
+        # 0.05
+        "resolution": "0.05"
     }
 }
