@@ -473,7 +473,7 @@ class LMMap(LMSpatialObject):
             parts.append('      OFFSITE  0  0  0')
 
             if sdl_lyr.nodata_val is None:
-                sdl_lyr.populate_stats()
+                _ = sdl_lyr.populate_stats(dlocation, None, None, None, None, None, None, None, None)
             parts.append(
                 '      PROCESSING \"NODATA={}\"'.format(sdl_lyr.nodata_val))
             # SDM projections are always scaled b/w 0 and 100

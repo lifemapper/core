@@ -740,7 +740,13 @@ class Raster(_Layer):
     # .............................
     def populate_stats(self, dlocation, verify, gdal_type, data_format, bbox,
                        resolution, min_val, max_val, nodata_val, band_num=1):
-        """Updates or fills layer parameters by reading the data."""
+        """Updates or fills layer parameters by reading the data.  
+        
+        Note: 
+            Any or all of gdal_type, data_format, bbox, resolution, 
+            min_val, max_val, nodata_val may be None.  If values are provided, they
+            are returned as-is; if values are None, they are calculated and returned.
+        """
         msgs = []
         # msgs.append('File does not exist: {}'.format(dlocation))
         dataset, band = self.open_with_gdal(
@@ -798,6 +804,12 @@ class Raster(_Layer):
             max_val = bmax
         if nodata_val is None:
             nodata_val = band.GetNoDataValue()
+        self._data_format = data_format
+        self._gdal_type = gdal_type
+        self.nodata_val = nodata_val
+        self.min_val = min_val
+        self.max_val = max_val
+        self.resolution = resolution
         # Print all warnings
         if msgs:
             print('Layer.populate_stats Warning: \n{}'.format('\n'.join(msgs)))
@@ -860,7 +872,7 @@ class Raster(_Layer):
                     self.set_dlocation(dlocation=out_file)
                 # Test input with GDAL
                 try:
-                    self.populate_stats()
+                    self.open_with_gdal()
                 except Exception as err:
                     success, msg = self.delete_file(out_file)
                     raise LMError(
