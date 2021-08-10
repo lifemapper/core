@@ -153,8 +153,6 @@ class BOOMFiller(LMObject):
             LMFileType.BOOM_CONFIG, obj_code=self.archive_name,
             usr=self.user_id)
 
-        # TODO: Decide: do we want to start from beginning of species CSV
-        #         for every woof???
         start_file = earl.create_start_walken_filename(
             self.user_id, self.archive_name)
         if os.path.exists(start_file):
@@ -169,14 +167,10 @@ class BOOMFiller(LMObject):
         (self.mdl_scencode, self.prj_scencodes,
          mask_lyr_name_scen) = self.find_mdl_proj_scenarios(
              mdl_scencode, prj_scencodes)
-        # TODO: Allow any existing raster with intersecting region
-        # TODO: Allow packaging of ancillary layers in data package,
-        #       specify role in params file
+
         if self.mask_alg:
             if self.mask_alg.code == 'hull_region_intersect':
                 mask_lyr_name = self.mask_alg.get_parameter_value('region')
-                # TODO: Delete this from Scenario packages and code
-                # Take SDM_MASK_META from old (v2.0) scenario metadata
                 if mask_lyr_name is None:
                     self.mask_alg.setParameter('region', mask_lyr_name_scen)
 
@@ -245,8 +239,6 @@ class BOOMFiller(LMObject):
                 ('ScenPackage {} metadata is incorrect, scenario '
                  'codes = {}').format(self.scen_package_name, valid_scencodes))
 
-        # TODO: Allow alternate masklayer for any Scenario, requires test
-        #    and/or transform
         base_scencode, mask_lyr_name = self._find_scenpkg_base_and_mask(
             self.scen_package_name)
         if base_scencode not in valid_scencodes:
@@ -369,9 +361,6 @@ class BOOMFiller(LMObject):
                     # Some algorithms(mask) may have a parameter indicating a
                     # layer if so, add name to parameters and object to inputs
                     if acode == 'hull_region_intersect' and pname == 'region':
-                        # TODO: re-enable this later.
-                        #    Now, always use layer in SDM_MASK_META in
-                        #    scenario meta
                         pass
                 alg.set_parameter(pname, val)
         if inputs:
@@ -419,7 +408,7 @@ class BOOMFiller(LMObject):
             raise LMError(
                 'Climate metadata does not exist in {} or {}'.format(
                     public_scenpkg_meta_file, user_scenpkg_meta_file))
-        # TODO: change to importlib on python 2.7 --> 3.3+
+        # TODO: change to importlib for python 3.3+???
         try:
             sp_meta = imp.load_source('currentmetadata', scenpkg_meta_file)
         except Exception as e:
@@ -563,7 +552,6 @@ class BOOMFiller(LMObject):
         cell_sides = self._get_boom_param(config, BoomKeys.GRID_NUM_SIDES)
         cell_size = self._get_boom_param(config, BoomKeys.GRID_CELL_SIZE)
         grid_name = '{}-Grid-{}'.format(archive_name, cell_size)
-        # TODO: enable filter string
         grid_filter = self._get_boom_param(
             config, BoomKeys.INTERSECT_FILTER_STRING)
         grid_int_val = self._get_boom_param(
@@ -723,7 +711,6 @@ class BOOMFiller(LMObject):
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.POINT_COUNT_MIN,
             str(self.min_points))
-        # TODO: Use this in boomer
         config.set(
             SERVER_BOOM_HEADING, BoomKeys.OCC_EXP_MJD, str(self.woof_time_mjd))
 
@@ -949,7 +936,6 @@ class BOOMFiller(LMObject):
 
         tmp_global_pam = LMMatrix(
             None, matrix_type=pam_type,
-            # TODO: replace 3 codes with scenarioId
             scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
             alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
             alg_code=alg.code, metadata=pam_meta, user_id=self.user_id,
@@ -975,7 +961,6 @@ class BOOMFiller(LMObject):
 
         tmp_grim = LMMatrix(
             None, matrix_type=MatrixType.GRIM,
-            # TODO: replace 3 codes with scenarioId
             scenario_id=scen.get_id(), gcm_code=scen.gcm_code,
             alt_pred_code=scen.alt_pred_code, date_code=scen.date_code,
             metadata=grim_meta, user_id=self.user_id, gridset=gridset,
@@ -1000,7 +985,6 @@ class BOOMFiller(LMObject):
         self.scribe.log.info('  Found or inserted shapegrid')
         self.shapegrid = shp
         # "BOOM" Archive
-        # TODO: change 'parameters' to ServiceObject.META_PARAMS
         meta = {
             ServiceObject.META_DESCRIPTION: ARCHIVE_KEYWORD,
             ServiceObject.META_KEYWORDS: [ARCHIVE_KEYWORD],
@@ -1014,8 +998,6 @@ class BOOMFiller(LMObject):
             updated_gridset.mod_time = self.woof_time_mjd
             self.scribe.update_object(updated_gridset)
 
-            # TODO: Decide: do we want to delete old makeflows for this
-            #    gridset?
             fnames = self.scribe.delete_mf_chains_return_filenames(
                 updated_gridset.get_id())
             for fname in fnames:
@@ -1028,13 +1010,9 @@ class BOOMFiller(LMObject):
             self.scribe.log.info(
                 '  Inserted new gridset {}'.format(updated_gridset.get_id()))
 
-        # TODO: Reset expiration date to Woof-date in MJD
-
         for code, scen in self.scen_pkg.scenarios.items():
             # "Global" PAM (one per scenario/algorithm)
             if code in self.prj_scencodes:
-                # TODO: Allow alg to be specified for each species, all in same
-                #    PAM
                 for alg in list(self.algorithms.values()):
                     _ = self._find_or_add_pam(updated_gridset, alg, scen)
 
@@ -1052,7 +1030,6 @@ class BOOMFiller(LMObject):
         intersect_params = {MatrixColumn.INTERSECT_PARAM_WEIGHTED_MEAN: True}
 
         if lyr is not None:
-            # TODO: Save process_type into the DB??
             if LMFormat.is_gdal(driver=lyr.data_format):
                 ptype = ProcessType.INTERSECT_RASTER_GRIM
             else:
@@ -1060,7 +1037,6 @@ class BOOMFiller(LMObject):
                     ('Vector intersect not yet implemented for GRIM '
                      'column {}').format(mtx_col.get_id()))
 
-            # TODO: Change ident to lyr.ident when that is populated
             tmp_col = MatrixColumn(
                 None, mtx.get_id(), self.user_id, layer=lyr,
                 shapegrid=self.shapegrid, intersect_params=intersect_params,
@@ -1397,9 +1373,6 @@ class BOOMFiller(LMObject):
     # ................................
     def _get_taxonomy_command(self, target_dir):
         """Get a command to insert taxonomic information into the database.
-
-        Todo:
-            Define format and enable ingest user taxonomy, commented out below
         """
         cat_tax_cmd = tax_success_fname = tax_success_local_fname = None
         tax_data_fname = None
@@ -1552,7 +1525,6 @@ class BOOMFiller(LMObject):
             _other_layer_names = self.add_other_layers()
 
             # Create makeflow for computations and start rule list
-            # TODO: Init makeflow
             script_name = os.path.splitext(os.path.basename(__file__))[0]
             meta = {
                 MFChain.META_CREATED_BY: script_name,
@@ -1587,9 +1559,6 @@ class BOOMFiller(LMObject):
 
             # init Makeflow
             if biogeo_mtx and len(biogeo_layer_names) > 0:
-                # TODO: Create a separate module to create BG Hypotheses
-                #       encoding Makeflow, independent of Boom completion
-                #       so this may be added later or called from this script
                 # Add BG hypotheses
                 bgh_success_fname = os.path.join(target_dir, 'bg.success')
                 bg_cmd = EncodeBioGeoHypothesesCommand(

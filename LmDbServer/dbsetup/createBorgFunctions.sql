@@ -3277,7 +3277,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 
 -- ----------------------------------------------------------------------------
--- TODO: TEST this
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetMatrixColumns(gsid int)
 RETURNS SETOF int AS
 $$
@@ -3307,7 +3306,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- This does not delete any SDM data created for gridset
--- TODO: TEST this
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridset(gsid int)
 RETURNS SETOF varchar AS
 $$
@@ -3420,8 +3418,6 @@ $$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 -- Should only call this on public or anon user
--- TODO: Will this delete subsetted PAM data 
---       or is that saved as different MatrixColumns without Layerid???
 CREATE OR REPLACE FUNCTION lm_v3.lm_clearSomeObsoleteMtxcolsForUser(usr varchar,
                                                            dt double precision, 
                                                            maxnum int)

@@ -273,8 +273,6 @@ class _SpeciesWeaponOfChoice(LMObject):
         curr_time = gmt().mjd
         occ = None
         # Find existing
-        # TODO: CJ, change this if we want canonical name displayed for GBIF
-        #    data instead of scientific_name
         tmp_occ = OccurrenceLayer(
             sci_name.scientific_name, self.user_id, self.epsg, data_count,
             squid=sci_name.squid, process_type=self.process_type,

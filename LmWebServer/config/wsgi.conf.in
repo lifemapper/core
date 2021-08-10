@@ -8,6 +8,5 @@ SetEnv LIFEMAPPER_LAB_CONFIG_FILE "@LMHOME@/config/config.lmlab.ini"
 SetEnv LIFEMAPPER_SERVER_CONFIG_FILE "@LMHOME@/config/config.lmserver.ini"
 SetEnv LIFEMAPPER_SITE_CONFIG_FILE "@LMHOME@/config/config.site.ini"
 
-# TODO: a script that encompasses all API endpoints (resolver, broker, syftorium, etc)
 # Mod_wsgi script for content
 WSGIScriptAliasMatch ^/(api) @LMHOME@/LmWebServer/services/common/wsgi.py/$1
