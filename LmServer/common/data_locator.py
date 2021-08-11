@@ -13,6 +13,7 @@ from LmServer.common.lmconstants import (
     USER_MAKEFLOW_DIR, USER_TEMP_DIR, WCS_LAYER_KEY, WEB_DIR, WMS_LAYER_KEY)
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
 from LmServer.common.log import ConsoleLogger
+from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -272,6 +273,24 @@ class EarlJr(LMObject):
         return filename
 
     # ................................
+    def _get_user_from_objid(self, occ_set_id=None, gridset_id=None):
+        """Note: this is the only function requiring the scribe"""
+        user_id = None
+        if occ_set_id is not None and gridset_id is not None:
+            if self._scribe is None:
+                self._scribe = BorgScribe(ConsoleLogger())
+                self._scribe.open_connections()
+            if occ_set_id is not None:
+                obj = self._scribe.get_occurrence_set(occ_id=occ_set_id)
+            else:
+                obj = self._scribe.get_gridset(gridset_id=gridset_id)
+            try:
+                user_id = obj.get_user_id()
+            except:
+                pass
+        return user_id
+        
+    # ................................
     def get_map_filename_from_map_name(self, map_name, user_id=None):
         """Get the map filename from the map name
 
@@ -288,7 +307,10 @@ class EarlJr(LMObject):
             (file_type, _, occ_set_id, gridset_id, usr, ancillary, _
              ) = self._parse_map_name(map_name)
             if usr is None:
-                usr = user_id
+                if user_id is None:
+                    usr = self._get_user_from_objid(occ_set_id=occ_set_id, gridset_id=gridset_id)
+                else:
+                    usr = user_id
 
             if not ancillary:
                 pth = self.create_data_path(
@@ -660,3 +682,47 @@ class EarlJr(LMObject):
                         MapPrefix.ANC)), do_trace=True)
         return (
             file_type, scen_code, occ_set_id, gridset_id, usr, ancillary, epsg)
+
+"""
+from LmBackend.common.lmobj import LMError, LMObject
+from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
+from LmServer.base.lmobj import LMSpatialObject
+from LmServer.common.lmconstants import (
+    API_URL, ARCHIVE_PATH, DEFAULT_SRS, DEFAULT_WCS_FORMAT, DEFAULT_WMS_FORMAT,
+    FileFix, GENERIC_LAYER_NAME_PREFIX, LMFileType, LOG_PATH, MAP_DIR, MAP_KEY,
+    MAP_TEMPLATE, MapPrefix, MODEL_DEPTH, NAME_SEPARATOR, OCC_NAME_PREFIX,
+    OGC_SERVICE_URL, PRJ_PREFIX, RAD_EXPERIMENT_DIR_PREFIX, USER_LAYER_DIR,
+    USER_MAKEFLOW_DIR, USER_TEMP_DIR, WCS_LAYER_KEY, WEB_DIR, WMS_LAYER_KEY)
+from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
+from LmServer.common.log import ConsoleLogger
+
+from LmServer.common.data_locator import EarlJr
+from LmServer.db.borg_scribe import BorgScribe
+
+
+logger = ConsoleLogger()
+scribe = BorgScribe(logger)
+earl_jr = EarlJr(scribe=scribe)
+
+
+map_name = 'data_334027'
+
+pth = os.path.join(APP_PATH, WEB_DIR, MAP_DIR)
+
+(file_type, _, occ_set_id, gridset_id, usr, ancillary, _
+ ) = _parse_map_name(map_name)
+if usr is None:
+    usr = user_id
+
+if not ancillary:
+    pth = create_data_path(
+        usr, file_type, occ_set_id=occ_set_id,
+        gridset_id=gridset_id)
+
+if not map_name.endswith(LMFormat.MAP.ext):
+    map_name = map_name + LMFormat.MAP.ext
+
+# map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
+
+
+"""
