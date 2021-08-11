@@ -8,8 +8,8 @@ from LmCommon.common.lmconstants import HTTPStatus
 from LmServer.common.color_palette import ColorPalette
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
-    ARCHIVE_PATH, LINE_SIZE, LINE_SYMBOL, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
-    POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX, WEB_MERCATOR_EPSG)
+    ARCHIVE_PATH, LINE_SIZE, LINE_SYMBOL, LMFileType, LMFormat, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
+    POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX)
 from LmWebServer.services.api.v2.base import LmService
 
 PALETTES = (
@@ -65,6 +65,29 @@ def delete_mapfile_by_date(filename, cutofftime):
 @cherrypy.expose
 class MapService(LmService):
     """The base mapping service for OGC services."""
+
+    # ................................
+    def _get_map_filename(self, map_name):
+        earl_jr = EarlJr()
+        (file_type, _, occ_set_id, gridset_id, usr, _) = earl_jr.parse_map_name(map_name)
+        # Ancillary maps do not need user_id
+        if usr is None and file_type in (LMFileType.SDM_MAP, LMFileType.RAD_MAP):
+            if file_type == LMFileType.SDM_MAP:
+                obj = self.scribe.get_occurrence_set(occ_id=occ_set_id)
+            elif file_type == LMFileType.RAD_MAP:
+                obj = self.scribe.get_gridset(gridset_id=gridset_id)
+            try:
+                usr = obj.get_user_id()
+            except:
+                pass
+        
+        pth = earl_jr.get_map_path_from_parts(
+            file_type, user_id=usr, occ_set_id=occ_set_id, gridset_id=gridset_id)
+
+        if not map_name.endswith(LMFormat.MAP.ext):
+            map_name = map_name + LMFormat.MAP.ext
+        return os.path.join(pth, map_name)
+    
     # ................................
     def GET(self, map_name, bbox=None, bgcolor=None, color=None, coverage=None,
             crs=None, exceptions=None, height=None, layer=None, layers=None,
@@ -100,8 +123,7 @@ class MapService(LmService):
             width: The width (in pixels) of the returned map
         """
         self.map_name = map_name
-        earl_jr = EarlJr(scribe=self.scribe)
-        map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
+        map_file_name = self._get_map_filename(map_name)
 
         # Use only when getting a new template or GBIF dump
         cutofftime = datetime.datetime(

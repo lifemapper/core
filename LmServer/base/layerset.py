@@ -407,8 +407,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if not os.path.exists(self._map_filename):
             try:
                 layers = self._create_layers()
-                map_template = self._earl_jr.get_map_filename_from_map_name(
-                    template, user_id=self._user_id)
+                map_template = self.earl_jr.get_map_template_filename()
                 map_str = self._get_base_map(map_template)
                 online_url = self._get_mapset_url()
                 map_str = self._add_map_base_attributes(map_str, online_url)

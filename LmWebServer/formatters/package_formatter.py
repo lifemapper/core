@@ -19,7 +19,7 @@ from LmCommon.common.lm_xml import tostring
 from LmCommon.common.lmconstants import (
     HTTPStatus, JobStatus, LMFormat, MatrixType, PamStatKeys, ENCODING)
 from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import MAP_TEMPLATE
+from LmServer.common.lmconstants import MAP_TEMPLATE, LMFileType
 from LmServer.common.log import WebLogger
 from LmServer.db.borg_scribe import BorgScribe
 from LmServer.legion.gridset import Gridset
@@ -39,9 +39,8 @@ def get_map_content_for_proj(prj, scribe):
     """Get a map image for a projection
     """
     ows_req = mapscript.OWSRequest()
-    earl_jr = EarlJr(scribe=scribe)
-    map_filename = earl_jr.get_map_filename_from_map_name(
-        prj.map_name, user_id=prj.get_user_id())
+    earl_jr = EarlJr()
+    map_filename = earl_jr.get_map_filename_from_map_name(prj.map_name, prj.get_user_id())
     if not os.path.exists(map_filename):
         map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:

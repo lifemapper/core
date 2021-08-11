@@ -12,8 +12,6 @@ from LmServer.common.lmconstants import (
     OGC_SERVICE_URL, PRJ_PREFIX, RAD_EXPERIMENT_DIR_PREFIX, USER_LAYER_DIR,
     USER_MAKEFLOW_DIR, USER_TEMP_DIR, WCS_LAYER_KEY, WEB_DIR, WMS_LAYER_KEY)
 from LmServer.common.localconstants import APP_PATH, PUBLIC_USER
-from LmServer.common.log import ConsoleLogger
-from LmServer.db.borg_scribe import BorgScribe
 
 
 # .............................................................................
@@ -271,31 +269,14 @@ class EarlJr(LMObject):
                 filename = os.path.join(
                     pth, base_name + FileFix.EXTENSION[f_type])
         return filename
-
-    # ................................
-    def _get_user_from_objid(self, occ_set_id=None, gridset_id=None):
-        """Note: this is the only function requiring the scribe"""
-        user_id = None
-        if occ_set_id is not None and gridset_id is not None:
-            if self._scribe is None:
-                self._scribe = BorgScribe(ConsoleLogger())
-                self._scribe.open_connections()
-            if occ_set_id is not None:
-                obj = self._scribe.get_occurrence_set(occ_id=occ_set_id)
-            else:
-                obj = self._scribe.get_gridset(gridset_id=gridset_id)
-            try:
-                user_id = obj.get_user_id()
-            except:
-                pass
-        return user_id
         
     # ................................
-    def get_map_filename_from_map_name(self, map_name, user_id=None):
+    def get_map_filename_from_map_name(self, map_name, user_id):
         """Get the map filename from the map name
 
         Args:
             map_name: name for the map, used in Mapserver mapfile
+            user_id: needed for SDM or RAD maps - it cannot be retrieved from the map name
 
         Returns:
             absolute pathname for the mapfile
@@ -307,10 +288,7 @@ class EarlJr(LMObject):
             (file_type, _, occ_set_id, gridset_id, usr, ancillary, _
              ) = self._parse_map_name(map_name)
             if usr is None:
-                if user_id is None:
-                    usr = self._get_user_from_objid(occ_set_id=occ_set_id, gridset_id=gridset_id)
-                else:
-                    usr = user_id
+                usr = user_id
 
             if not ancillary:
                 pth = self.create_data_path(
@@ -320,6 +298,13 @@ class EarlJr(LMObject):
         if not map_name.endswith(LMFormat.MAP.ext):
             map_name = map_name + LMFormat.MAP.ext
         return os.path.join(pth, map_name)
+
+    # ................................
+    @staticmethod
+    def get_map_template_filename():
+        pth = EarlJr._create_static_map_path()
+        map_template_filename = os.path.join(pth, MAP_TEMPLATE + LMFormat.MAP.ext)
+        return map_template_filename
 
     # ................................
     def construct_lm_data_url(self, service_type, object_id, interface,
@@ -627,6 +612,79 @@ class EarlJr(LMObject):
             map_name, ancillary, usr, epsg, occ_set_id, gridset_id, scen_code)
 
     # ................................
+    def parse_map_name(self, map_name):
+        scen_code = occ_set_id = usr = epsg = gridset_id = None
+        # Remove extension
+        if map_name.endswith(LMFormat.MAP.ext):
+            map_name = map_name[:-1 * len(LMFormat.MAP.ext)]
+
+        parts = map_name.split(NAME_SEPARATOR)
+
+        file_type = FileFix.get_map_type_from_name(prefix=parts[0])
+
+        # SCENARIO_MAP mapname = scen_<user>_<scencode>
+        if parts[0] == MapPrefix.SCEN:
+            usr = parts[1]
+            scen_code = parts[2]
+
+        elif parts[0] == MapPrefix.SDM:
+            occ_set_id_str = parts[1]
+            try:
+                occ_set_id = int(occ_set_id_str)
+            except ValueError:
+                raise LMError(
+                    'Improper archive data map name {}; {}'.format(
+                        map_name, 'Should be {} + occrrence set id'.format(
+                            MapPrefix.SDM)), do_trace=True)
+        # RAD_MAP mapname = rad_<gridsetId>
+        elif parts[0] == MapPrefix.RAD:
+            try:
+                gridset_id = int(parts[1])
+            except (TypeError, ValueError) as err:
+                raise LMError(
+                    'Improper map name {}; should be {} + gridset id'.format(
+                        map_name, MapPrefix.RAD), err, do_trace=True)
+
+        # User maps are usr_<usr>_<epsg>
+        elif parts[0] == MapPrefix.USER:
+            usr = parts[1]
+            try:
+                epsg = int(parts[2])
+            except (TypeError, ValueError):
+                pass
+
+        elif map_name.startswith(MapPrefix.ANC):
+            usr = PUBLIC_USER
+
+        else:
+            raise LMError(
+                'Improper map name {} - {}'.format(
+                    map_name, 'requires prefix {}, {}, {}, or {}'.format(
+                        MapPrefix.SCEN, MapPrefix.SDM, MapPrefix.USER,
+                        MapPrefix.ANC)), do_trace=True)
+        return (
+            file_type, scen_code, occ_set_id, gridset_id, usr, epsg)
+
+    # ................................
+    def get_map_path_from_parts(
+            self, file_type, user_id=None, occ_set_id=None, gridset_id=None):
+        """Get the map path from type,  and data elements
+
+        Args:
+            map_name: name for the map, used in Mapserver mapfile
+
+        Returns:
+            absolute pathname for the mapfile
+        """
+        if file_type == LMFileType.ANCILLARY_MAP:
+            pth = self._create_static_map_path()
+        else:
+            pth = self.create_data_path(
+                user_id, file_type, occ_set_id=occ_set_id,
+                gridset_id=gridset_id)
+        return pth
+
+    # ................................
     @staticmethod
     def _parse_map_name(map_name):
         scen_code = occ_set_id = usr = epsg = gridset_id = None
@@ -682,7 +740,6 @@ class EarlJr(LMObject):
                         MapPrefix.ANC)), do_trace=True)
         return (
             file_type, scen_code, occ_set_id, gridset_id, usr, ancillary, epsg)
-
 """
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.lmconstants import LMFormat, DEFAULT_GLOBAL_EXTENT
@@ -707,22 +764,7 @@ earl_jr = EarlJr(scribe=scribe)
 
 map_name = 'data_334027'
 
-pth = os.path.join(APP_PATH, WEB_DIR, MAP_DIR)
 
-(file_type, _, occ_set_id, gridset_id, usr, ancillary, _
- ) = _parse_map_name(map_name)
-if usr is None:
-    usr = user_id
-
-if not ancillary:
-    pth = create_data_path(
-        usr, file_type, occ_set_id=occ_set_id,
-        gridset_id=gridset_id)
-
-if not map_name.endswith(LMFormat.MAP.ext):
-    map_name = map_name + LMFormat.MAP.ext
-
-# map_file_name = earl_jr.get_map_filename_from_map_name(map_name)
 
 
 """

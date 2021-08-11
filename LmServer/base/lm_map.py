@@ -16,7 +16,7 @@ from LmServer.base.service_object import ServiceObject
 from LmServer.common.color_palette import ColorPalette
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
-    MAP_TEMPLATE, QUERY_TEMPLATE, LMFileType, IMAGE_PATH, BLUE_MARBLE_IMAGE,
+    MAP_TEMPLATE, QUERY_TEMPLATE, LMFileType, LMFormat, IMAGE_PATH, BLUE_MARBLE_IMAGE,
     POINT_SYMBOL, POINT_SIZE, LINE_SYMBOL, LINE_SIZE, POLYGON_SYMBOL,
     POLYGON_SIZE, QUERY_TOLERANCE, SYMBOL_FILENAME, DEFAULT_POINT_COLOR,
     DEFAULT_LINE_COLOR, DEFAULT_PROJECTION_PALETTE,
@@ -85,9 +85,7 @@ class LMMap(LMSpatialObject):
                     all_layers.append(mtx_lyrs)
             lyr_str = '\n'.join(all_layers)
             try:
-                earl_jr = EarlJr()
-                map_template = earl_jr.get_map_filename_from_map_name(
-                    template, user_id=self._user_id)
+                map_template = EarlJr.get_map_template_filename()
                 map_str = self._get_base_map(map_template)
                 map_str = self._add_map_base_attributes(map_str)
                 map_str = map_str.replace('##_LAYERS_##', lyr_str)
