@@ -12,6 +12,7 @@ from LmServer.base.layer import Raster, Vector
 from LmServer.base.lmobj import LMSpatialObject
 from LmServer.base.service_object import ServiceObject
 from LmServer.common.color_palette import ColorPalette
+from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
     BLUE_MARBLE_IMAGE, DEFAULT_ENVIRONMENTAL_PALETTE, DEFAULT_LINE_COLOR,
     DEFAULT_POINT_COLOR, DEFAULT_PROJECTION_PALETTE, IMAGE_PATH, LINE_SIZE,
@@ -389,7 +390,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         return url
 
     # ................................
-    def write_map(self, template=MAP_TEMPLATE):
+    def write_map(self):
         """Writes the map file for this layerset.
 
         Create a mapfile by replacing strings in a template mapfile with text
@@ -407,7 +408,7 @@ class MapLayerSet(_LayerSet, ServiceObject):
         if not os.path.exists(self._map_filename):
             try:
                 layers = self._create_layers()
-                map_template = self.earl_jr.get_map_template_filename()
+                map_template = EarlJr.get_map_template_filename()
                 map_str = self._get_base_map(map_template)
                 online_url = self._get_mapset_url()
                 map_str = self._add_map_base_attributes(map_str, online_url)
