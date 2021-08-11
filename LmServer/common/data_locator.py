@@ -763,7 +763,26 @@ earl_jr = EarlJr(scribe=scribe)
 
 
 map_name = 'data_334027'
+map_name = 'data_346'
 
+(file_type, _, occ_set_id, gridset_id, usr, _) = earl_jr.parse_map_name(map_name)
+
+if usr is None and file_type in (LMFileType.SDM_MAP, LMFileType.RAD_MAP):
+    if file_type == LMFileType.SDM_MAP:
+        obj = scribe.get_occurrence_set(occ_id=occ_set_id)
+    elif file_type == LMFileType.RAD_MAP:
+        obj = scribe.get_gridset(gridset_id=gridset_id)
+    try:
+        usr = obj.get_user_id()
+    except:
+        pass
+
+pth = earl_jr.get_map_path_from_parts(
+    file_type, user_id=usr, occ_set_id=occ_set_id, gridset_id=gridset_id)
+
+if not map_name.endswith(LMFormat.MAP.ext):
+    map_name = map_name + LMFormat.MAP.ext
+return os.path.join(pth, map_name)
 
 
 

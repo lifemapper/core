@@ -415,10 +415,11 @@ class MapService(LmService):
 
 # .............................................................................
 if __name__ == '__main__':
-    map_name = 'data_198078'
-    ptlyr = 'occ_198078'
-    crs = 'epsg:3857'
-    bbox = '0,0,20037508.342789244,20037508.34278071'
+    map_name = 'data_346'
+    ptlyr = 'occ_346'
+    prjlayer = 'prj_297'
+    crs = 'epsg:4326'
+    bbox = '-180,-90,180,90'
     color = 'red'
     req = 'getmap'
     
@@ -431,5 +432,56 @@ if __name__ == '__main__':
             
             
 """
-http://client.lifemapper.org/api/v2/ogc/data_198078?service=wms&request=getmap&layers=occ_198078&styles=&format=image%2Fpng&transparent=true&version=1.0&height=256&srs=EPSG%3A3857&width=256&layerLabel=Occurrence%20Points&bbox=0,0,20037508.342789244,20037508.34278071
+https://notyeti-194.lifemapper.org/api/v2/ogc?LAYERS=prj_297&MAP=data_346&SERVICE=WMS&VERSION=1.0.0&FORMAT=image%2Fpng&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326&BBOX=-180,-90,180,90&WIDTH=1200&HEIGHT=600
+
+import cherrypy
+import datetime
+import mapscript
+import os
+
+from LmCommon.common.lmconstants import HTTPStatus
+from LmServer.common.color_palette import ColorPalette
+from LmServer.common.data_locator import EarlJr
+from LmServer.common.lmconstants import (
+    ARCHIVE_PATH, LINE_SIZE, LINE_SYMBOL, LMFileType, LMFormat, MAP_TEMPLATE, MapPrefix, OCC_NAME_PREFIX,
+    POINT_SIZE, POINT_SYMBOL, POLYGON_SIZE, PRJ_PREFIX)
+from LmWebServer.services.api.v2.base import LmService
+
+from LmWebServer.services.api.v2.ogc import MapService
+
+PALETTES = (
+    'gray', 'red', 'green', 'blue', 'safe', 'pretty', 'yellow', 'fuschia',
+    'aqua', 'bluered', 'bluegreen', 'greenred')
+
+OBSOLETE_CUTOFF_YMD = (2021, 7, 16, 11, 29, 15)
+
+map_name = 'data_346'
+ptlyr = 'occ_346'
+prjlayer = 'prj_297'
+crs = 'epsg:4326'
+bbox = '-180,-90,180,90'
+color = 'red'
+req = 'getmap'
+
+svc = MapService()
+self = svc
+
+map_file_name = self._get_map_filename(map_name)
+    
+map_svc = self.scribe.get_map_service_from_map_filename(map_file_name)
+self = map_svc
+
+self.set_local_map_filename()
+
+layers = self._create_layers()
+map_template = EarlJr.get_map_template_filename()
+map_str = self._get_base_map(map_template)
+online_url = self._get_mapset_url()
+map_str = self._add_map_base_attributes(map_str, online_url)
+map_str = map_str.replace('##_LAYERS_##', layers)
+
+self._write_base_map(map_str)
+
+
+# map_svc.write_map() 
 """
