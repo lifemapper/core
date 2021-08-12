@@ -116,7 +116,6 @@ class ChristopherWalken(LMObject):
         self.compute_pam_stats = self._get_boom_or_default(BoomKeys.COMPUTE_PAM_STATS, is_bool=True)
         self.compute_mcpa = self._get_boom_or_default(BoomKeys.COMPUTE_MCPA, is_bool=True)
 
-
         self.column_meta = None
         try:
             self.column_meta = self.weapon_of_choice.occParser.column_meta
@@ -259,8 +258,7 @@ class ChristopherWalken(LMObject):
             weapon_of_choice = UserWoC(
                 self._scribe, self.user_id, self.archive_name, self.epsg, exp_date, 
                 occ_csv_fname, occ_meta_fname, occ_delimiter, logger=self.log,
-                use_gbif_taxonomy=use_gbif_taxon_ids, 
-                taxon_source_name=taxon_source_name)
+                use_gbif_taxonomy=use_gbif_taxon_ids, taxon_source_name=taxon_source_name)
 
         weapon_of_choice.initialize_me()
 

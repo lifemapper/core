@@ -12,8 +12,7 @@ import sys
 
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (
-    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
+from LmCommon.common.lmconstants import (JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt, LmTime
@@ -450,12 +449,10 @@ class UserWoC(_SpeciesWeaponOfChoice):
     """
 
     # ................................
-    def __init__(self, scribe, user, archive_name, epsg, exp_date,
-                 user_occ_csv, user_occ_meta, user_occ_delimiter,
-                 logger=None, 
-                 replace_fname=None, replace_fldname=None,
-                 use_gbif_taxonomy=False,
-                 taxon_source_name=None):
+    def __init__(
+            self, scribe, user, archive_name, epsg, exp_date, user_occ_csv, user_occ_meta, 
+            user_occ_delimiter, logger=None, replace_fname=None, replace_fldname=None,
+            use_gbif_taxonomy=False, taxon_source_name=None):
         super(UserWoC, self).__init__(
             scribe, user, archive_name, epsg, exp_date, user_occ_csv,
             meta_fname=user_occ_meta, taxon_source_name=taxon_source_name,
@@ -600,8 +597,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 line[self._replace_col] = replace_val
                 chunk.append(line)
         return chunk
-    
-
+        
     # ................................
     def get_one(self):
         """Get one occurrence layer

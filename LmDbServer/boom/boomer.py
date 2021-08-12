@@ -16,7 +16,7 @@ import time
 import signal
 
 from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import JobStatus, LM_USER, ENCODING
+from LmCommon.common.lmconstants import (JobStatus, LM_USER, ENCODING)
 import LmCommon.common.time as lt
 from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.utilities import is_lm_user
@@ -33,7 +33,6 @@ from LmServer.tools.cwalken import ChristopherWalken
 #    spuds into a single makeflow, along with multi-species commands to follow
 #    SDMs
 SPUD_LIMIT = 5000
-
 
 # .............................................................................
 class Boomer(LMObject):
@@ -110,7 +109,12 @@ class Boomer(LMObject):
 
     # .............................
     def initialize_me(self):
-        """Creates objects for workflow computation requests."""
+        """
+        Initializes attributes and objects for workflow computation requests.
+        
+        Note: 
+            Christopher Walken reads the config file, so pull needed config from there
+        """
         try:
             success = self._scribe.open_connections()
         except Exception as e:
@@ -138,7 +142,7 @@ class Boomer(LMObject):
         self.do_pam_stats = self.christopher.compute_pam_stats
         self.do_mcpa = self.christopher.compute_mcpa
         self.priority = self.christopher.priority
-
+        
         # Start where we left off
         self.christopher.move_to_start()
         self.log.debug(
@@ -371,210 +375,4 @@ if __name__ == '__main__':
     main()
 
 """
-import logging
-import os
-import sys
-import time
-import signal
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.lmconstants import JobStatus, LM_USER, ENCODING
-import LmCommon.common.time as lt
-from LmDbServer.boom.boom_collate import BoomCollate
-from LmServer.base.utilities import is_lm_user
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import (
-    DEFAULT_RANDOM_GROUP_SIZE, LMFileType, PUBLIC_ARCHIVE_NAME)
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borg_scribe import BorgScribe
-from LmServer.legion.process_chain import MFChain
-from LmServer.tools.cwalken import ChristopherWalken
-
-# Only relevant for "archive" public data, all user workflows will put all
-#    spuds into a single makeflow, along with multi-species commands to follow
-#    SDMs
-SPUD_LIMIT = 5000
-
-ONE_HOUR = 1.0 / 24.0
-TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-
-from LmDbServer.boom.boomer import *
-
-from LmBackend.command.server import (
-    MultiIndexPAVCommand, MultiStockpileCommand)
-from LmBackend.command.single import SpeciesParameterSweepCommand
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
-from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (
-    BoomKeys, GBIF, JobStatus, LMFormat, MatrixType, ProcessType,
-    SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING,
-    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
-    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
-from LmCommon.common.time import gmt, LmTime
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import (
-    BUFFER_KEY, CODE_KEY, DEFAULT_NUM_PERMUTATIONS, ECOREGION_MASK_METHOD,
-    LMFileType, MASK_KEY, MASK_LAYER_KEY, MASK_LAYER_NAME_KEY, PRE_PROCESS_KEY,
-    Priority, PROCESSING_KEY, SCALE_PROJECTION_MAXIMUM,
-    SCALE_PROJECTION_MINIMUM, SPECIES_DATA_PATH)
-from LmServer.common.localconstants import (findOrInsert
-    DEFAULT_EPSG, POINT_COUNT_MAX, PUBLIC_USER)
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borg_scribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.mtx_column import MatrixColumn
-from LmServer.legion.sdm_proj import SDMProjection
-from LmServer.tools.occ_woc import (UserWoC, ExistingWoC)
-
-import csv
-import datetime
-import json
-import os
-import shutil
-import sys
-
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.api_query import GbifAPI
-from LmCommon.common.lmconstants import (
-    GBIF, JobStatus, LMFormat, ONE_HOUR, ProcessType, ENCODING)
-from LmCommon.common.occ_parse import OccDataParser
-from LmCommon.common.ready_file import ready_filename
-from LmCommon.common.time import gmt, LmTime
-from LmServer.base.taxon import ScientificName
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.legion.occ_layer import OccurrenceLayer
-import datetime
-import glob
-import os
-
-from LmBackend.command.server import (
-    MultiIndexPAVCommand, MultiStockpileCommand)
-from LmBackend.command.single import SpeciesParameterSweepCommand
-from LmBackend.common.lmconstants import RegistryKey, MaskMethod
-from LmBackend.common.lmobj import LMError, LMObject
-from LmBackend.common.parameter_sweep_config import ParameterSweepConfiguration
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (
-    BoomKeys, GBIF, JobStatus, LMFormat, MatrixType, ProcessType,
-    SERVER_BOOM_HEADING, SERVER_PIPELINE_HEADING,
-    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_DEFAULT_HEADING_POSTFIX,
-    SERVER_SDM_MASK_HEADING_PREFIX, ENCODING)
-from LmCommon.common.time import gmt, LmTime
-from LmDbServer.common.lmconstants import (TAXONOMIC_SOURCE, SpeciesDatasource)
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import (
-    BUFFER_KEY, CODE_KEY, DEFAULT_NUM_PERMUTATIONS, ECOREGION_MASK_METHOD,
-    LMFileType, MASK_KEY, MASK_LAYER_KEY, MASK_LAYER_NAME_KEY, PRE_PROCESS_KEY,
-    Priority, PROCESSING_KEY, SCALE_PROJECTION_MAXIMUM,
-    SCALE_PROJECTION_MINIMUM, SPECIES_DATA_PATH)
-from LmServer.common.localconstants import (
-    DEFAULT_EPSG, POINT_COUNT_MAX, PUBLIC_USER)
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borg_scribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.mtx_column import MatrixColumn
-from LmServer.legion.sdm_proj import SDMProjection
-from LmServer.tools.occ_woc import (UserWoC, ExistingWoC)
-
-TROUBLESHOOT_UPDATE_INTERVAL = ONE_HOUR
-
-config_fname = '/share/lm/data/archive/kubi/public_boom-2021.07.15.ini'
-
-
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-
-scriptname = 'testboomer'
-logname = '{}.{}'.format(scriptname, timestamp)
-logger = ScriptLogger(logname, level=logging.INFO)
-
-boombasename, _ = os.path.splitext(config_fname)
-success_fname = boombasename + '.success'
-boomer = Boomer(config_fname, success_fname, log=logger)
-boomer.initialize_me()
-chris = boomer.christopher()
-woc = chris.weapon_of_choice()
-self = woc
-(data_chunk, taxon_key, taxon_name) = self.occ_parser.pull_current_chunk()
-# ##########################################################################
-(rank_str, sciname_str, canonical_str, accepted_key, accepted_str, nub_key, tax_status, 
- kingdom_str, phylum_str, class_str, order_str, family_str, genus_str, species_str,
- genus_key, species_key, log_lines) = GbifAPI.get_taxonomy(taxon_key)
-                 
-                 
-# ##########################################################################
-
-
-# ##########################################################################
-# ##########################################################################
-
-# ##########################################################################
-
-
-# ####################
-# ##########################################################################
-
-# ##########################################################################
-# ####################
-# ##########################################################################
-
-# ##########################################################################
-# ####################
-# ##########################################################################
-
-# ####################
-# ##########################################################################
-
-
-# ####################
-#self.christopher.initialize_me()
-# ##########################################################################
-
-self.gridset = self.christopher.boom_gridset
-self.gridset_id = self.christopher.boom_gridset.get_id()
-
-self.do_pam_stats = self.christopher.compute_pam_stats
-self.do_mcpa = self.christopher.compute_mcpa
-self.priority = self.christopher.priority
-
-self.christopher.move_to_start()
-self.log.debug(
-    'Starting Chris at location {} ... '.format(
-        self.christopher.curr_rec_num))
-self.keep_walken = True
-
-self.pav_index_filenames = []
-# master MF chain
-self.master_potato_head = None
-self.log.info('Create first potato')
-self.potato_bushel = self._create_bushel_makeflow()
-self.squid_names = []
-
-# ####################
-#boomer.initialize_me()
-# ##########################################################################
-boomer.process_all_species()
-
-
-# ##########################################################################
-# ####################
-#
-# ##########################################################################
-
-# ##########################################################################
-
-    
-# ##########################################################################
-
-# ##########################################################################
-
-# ##########################################################################
-
-# ##########################################################################
 """
