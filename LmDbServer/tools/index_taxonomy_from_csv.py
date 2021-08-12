@@ -4,14 +4,13 @@ Note:
     Change the value of taxon_source_id for the taxonomy to index.
     This script processes the output of:
        set client_encoding = 'UTF8'
-       \copy (select * from lm_v3.lm_taxon_solr where taxon_source_id = 1) to '/state/partition1/taxonomy.export3.csv' csv header         
+       \copy (select * from lm_v3.lm_taxon_solr where taxon_source_id = 1) to '/state/partition1/taxonomy.export3.csv' csv header
 """
 import argparse
 import csv
 import os
 import time
 
-from LmCommon.common.lmconstants import ENCODING
 from LmServer.common.lmconstants import NUM_DOCS_PER_POST
 import LmServer.common.solr as lm_solr
 from LmBackend.common.lmobj import LMError
