@@ -887,9 +887,29 @@ CREATE OR REPLACE VIEW lm_v3.lm_mfprocess
         FROM lm_v3.MFProcess mfp, lm_v3.Gridset g
         WHERE mfp.gridsetid = g.gridsetid;
 -- ----------------------------------------------------------------------------
--- ----------------------------------------------------------------------------
--- DATA TYPES (used on multiple tables)
--- Note: All column names are returned in lower case
+-- lm_taxon_solr
+DROP VIEW IF EXISTS lm_v3.lm_taxon_solr CASCADE;
+CREATE OR REPLACE VIEW lm_v3.lm_taxon_solr
+(
+	-- Solr fields for taxon information
+	id, 
+	taxon_source_id, 
+	taxon_key, 
+	squid, 
+	taxon_kingdom, 
+	taxon_phylum, 
+	taxon_class, 
+	taxon_order, 
+	taxon_family, 
+	taxon_genus, 
+	taxon_rank, 
+	canonical_name, 
+	scientific_name) AS
+		SELECT tax.taxonid, tax.taxonomysourceid, tax.taxonomykey, tax.squid, tax.kingdom, 
+			   tax.phylum, tax.tx_class, tax.tx_order, tax.family, tax.genus, tax.rank, 
+			   tax.canonical, tax.sciname 
+		FROM lm_v3.Taxon tax;
+		
 -- ----------------------------------------------------------------------------
         
 -- ----------------------------------------------------------------------------
@@ -1027,4 +1047,5 @@ CREATE TYPE lm_v3.lm_occStats AS
 CREATE TYPE lm_v3.lm_progress AS (
   status int,
   total int);
+   
    

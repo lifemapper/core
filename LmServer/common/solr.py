@@ -150,28 +150,49 @@ def raw_query(collection, query_string):
     res = urllib.request.urlopen(url)
     return res.read()
 
+# .............................................................................
+def _get_record_from_scientificname(sciname):
+    rec = [
+        [SOLR_TAXONOMY_FIELDS.TAXON_RANK, sciname.rank],
+        [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sciname.canonical_name],
+        [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sciname.scientific_name],
+        [SOLR_TAXONOMY_FIELDS.SQUID, sciname.squid],
+        [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sciname.class_],
+        [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sciname.family],
+        [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sciname.genus],
+        [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sciname.source_taxon_key],
+        [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sciname.kingdom],
+        [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sciname.order_],
+        [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sciname.phylum],
+        [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, sciname.taxonomy_source_id],
+        [SOLR_TAXONOMY_FIELDS.ID, sciname.get_id()] ]
+    return rec
+
+# .............................................................................
+def _get_record_from_taxon_csv(taxon_info):
+    rec = [
+        [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
+        [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID, taxon_info['taxonomysourceid']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
+        [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_info['kingdom']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_info['phylum']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, taxon_info['tx_class']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_info['tx_order']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
+        [SOLR_TAXONOMY_FIELDS.TAXON_RANK, taxon_info['rank']],
+        [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
+        [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']] ]
+    return rec
 
 # .............................................................................
 def add_taxa_to_taxonomy_index(sciname_objects):
     """Create a solr document and post it for the provided objects."""
     doc_pairs = []
     for sno in sciname_objects:
-        doc_pairs.append([
-            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, sno.canonical_name],
-            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, sno.scientific_name],
-            [SOLR_TAXONOMY_FIELDS.SQUID, sno.squid],
-            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, sno.class_],
-            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, sno.family],
-            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, sno.genus],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, sno.source_taxon_key],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, sno.kingdom],
-            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, sno.order_],
-            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, sno.phylum],
-            [SOLR_TAXONOMY_FIELDS.USER_ID, sno.user_id],
-            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-             sno.taxonomy_source_id],
-            [SOLR_TAXONOMY_FIELDS.ID, sno.get_id()]
-        ])
+        rec = _get_record_from_scientificname(sno)
+        doc_pairs.append(rec)
     post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.
     # TODO: Modify _post to accept a string or file like object as well
@@ -188,39 +209,14 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
     """Create a solr document and post it for the provided objects.
 
     Note:
-        Should have the following keys
-            taxonid,
-            taxonomysourceid,
-            userid,
-            taxonomykey,
-            squid,
-            kingdom,
-            phylum,
-            tx_class,
-            tx_order,
-            family,
-            genus,
-            canonical,
-            sciname
+        Should be able to post directly from a CSV with header matching solr fields
+        
+    TODO: Implement writing to CSV and posting directly from CSV
     """
     doc_pairs = []
     for taxon_info in taxon_dicts:
-        doc_pairs.append([
-            [SOLR_TAXONOMY_FIELDS.ID, taxon_info['taxonid']],
-            [SOLR_TAXONOMY_FIELDS.TAXONOMY_SOURCE_ID,
-             taxon_info['taxonomysourceid']],
-            [SOLR_TAXONOMY_FIELDS.USER_ID, taxon_info['userid']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KEY, taxon_info['taxonomykey']],
-            [SOLR_TAXONOMY_FIELDS.SQUID, taxon_info['squid']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_info['kingdom']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_info['phylum']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_CLASS, taxon_info['tx_class']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_info['tx_order']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_FAMILY, taxon_info['family']],
-            [SOLR_TAXONOMY_FIELDS.TAXON_GENUS, taxon_info['genus']],
-            [SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, taxon_info['canonical']],
-            [SOLR_TAXONOMY_FIELDS.SCIENTIFIC_NAME, taxon_info['sciname']]
-        ])
+        rec = _get_record_from_taxon_csv(taxon_info)
+        doc_pairs.append(rec)
     post_doc = build_solr_document(doc_pairs)
     # Note: This is somewhat redundant.
     # TODO: Modify _post to accept a string or file like object as well
@@ -228,6 +224,22 @@ def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
         SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
     req = urllib.request.Request(
         url, data=post_doc, headers={'Content-Type': 'text/xml'})
+    return urllib.request.urlopen(req).read()
+
+# .............................................................................
+def add_taxa_to_taxonomy_from_csv(taxon_filename):
+    """
+    Post a CSV solr document to the taxonomy index
+
+    Note:
+        CSV must have a header containing solr fieldnames 
+    """
+    with open(taxon_filename, 'rb') as in_file:
+        post_data = in_file.read()
+    url = '{}{}/update?commit=true'.format(
+        SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
+    req = urllib.request.Request(
+        url, data=post_data, headers={'Content-Type': 'application/csv'})
     return urllib.request.urlopen(req).read()
 
 
@@ -422,11 +434,10 @@ def query_snippet_index(ident1=None, provider=None, collection=None,
 
 
 # .............................................................................
-def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
-                         taxon_class=None, taxon_order=None, taxon_family=None,
-                         taxon_genus=None, taxon_key=None,
-                         scientific_name=None, canonical_name=None, squid=None,
-                         user_id=None):
+def query_taxonomy_index(
+        taxon_kingdom=None, taxon_phylum=None, taxon_class=None, taxon_order=None, taxon_family=None,
+        taxon_genus=None, taxon_key=None, scientific_name=None, canonical_name=None, squid=None,
+        taxon_rank=None):
     """Query the Taxonomy index.
 
     Args:
@@ -439,7 +450,7 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         scientific_name:
         canonical_name:
         squid:
-        user_id:
+        taxon_rank:
     """
     q_params = [
         (SOLR_TAXONOMY_FIELDS.CANONICAL_NAME, canonical_name),
@@ -452,7 +463,7 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         (SOLR_TAXONOMY_FIELDS.TAXON_KINGDOM, taxon_kingdom),
         (SOLR_TAXONOMY_FIELDS.TAXON_ORDER, taxon_order),
         (SOLR_TAXONOMY_FIELDS.TAXON_PHYLUM, taxon_phylum),
-        (SOLR_TAXONOMY_FIELDS.USER_ID, user_id)
+        (SOLR_TAXONOMY_FIELDS.TAXON_RANK, taxon_rank)
         ]
 
     try:
@@ -461,3 +472,13 @@ def query_taxonomy_index(taxon_kingdom=None, taxon_phylum=None,
         raise LMError(err)
 
     return r_dict['response']['docs']
+
+
+"""
+Post:
+/opt/solr/bin/post -c spcoco /state/partition1/git/t-rex/data/solrtest/occurrence.solr.csv
+
+Query:
+curl http://localhost:8983/solr/taxonomy/select?q=occurrence_guid:47d04f7e-73fa-4cc7-b50a-89eeefdcd162
+curl http://localhost:8983/solr/taxonomy/select?q=*:*
+"""

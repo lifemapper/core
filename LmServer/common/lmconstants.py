@@ -1167,7 +1167,7 @@ class SOLR_TAXONOMY_FIELDS:
     TAXON_ORDER = 'taxon_order'
     TAXON_PHYLUM = 'taxon_phylum'
     TAXON_SPECIES = 'taxon_species'
-    USER_ID = 'user_id'
+    TAXON_RANK = 'taxon_rank'
     TAXONOMY_SOURCE_ID = 'taxon_source_id'
 
 

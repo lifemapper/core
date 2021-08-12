@@ -16,10 +16,10 @@
    <field name="taxon_family" type="cap_text" indexed="true" stored="true" />
    <field name="taxon_genus" type="cap_text" indexed="true" stored="true" />
    <field name="taxon_key" type="cap_text" indexed="true" stored="true" />
+   <field name="taxon_rank" type="text_lwrcase" indexed="true" stored="true" />
    <field name="scientific_name" type="taxonname" indexed="true" stored="true" />
    <field name="canonical_name" type="taxonname" indexed="true" stored="true" />
    <field name="squid" type="string" indexed="true" stored="true" />
-   <field name="user_id" type="string" indexed="true" stored="true" />
    <field name="taxon_source_id" type="string" indexed="true" stored="true" />
    
    <uniqueKey>id</uniqueKey>
@@ -35,6 +35,13 @@
    
    <fieldType name="url" class="solr.StrField" sortMissingLast="true" />
 
+   <fieldType name="text_lwrcase" class="solr.TextField" positionIncrementGap="100">
+      <analyzer>
+	     <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+	     <filter class="solr.LowerCaseFilterFactory"/>
+	  </analyzer>
+   </fieldType>
+ 
    <!-- Taxon name type -->
    <fieldType name="taxonname" class="solr.TextField" positionIncrementGap="100">
       <!-- Index design -->
