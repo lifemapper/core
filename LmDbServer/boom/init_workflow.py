@@ -1628,7 +1628,6 @@ if __name__ == '__main__':
     main()
 
 """
-import argparse
 import configparser
 import glob
 import imp
@@ -1681,78 +1680,27 @@ from LmServer.legion.tree import Tree
 
 from LmDbServer.boom.init_workflow import *
 
-
-config_file = '/opt/lifemapper/config/boom.public.params'
-
-import time
-secs = time.time()
-timestamp = "{}".format(time.strftime("%Y%m%d-%H%M", time.localtime(secs)))
-logname = 'initWorkflow.debug.{}'.format(timestamp)
-
-boomer = BOOMFiller(config_file, logname=logname)
-self = boomer          
-
-self.initialize_inputs()
-
-scen_grims, boom_gridset = self.add_shapegrid_gpam_gridset()
-_other_layer_names = self.add_other_layers()
-
-script_name = 'test'
-meta = {
-    MFChain.META_CREATED_BY: script_name,
-    MFChain.META_GRIDSET: boom_gridset.get_id(),
-    MFChain.META_DESCRIPTION: 'Makeflow for gridset {}'.format(
-        boom_gridset.get_id())
-    }
-
-new_mfc = MFChain(
-    self.user_id, priority=Priority.HIGH, metadata=meta,
-    status=JobStatus.GENERAL, status_mod_time=gmt().mjd)
-
-gridset_mf = self.scribe.insert_mf_chain(
-    new_mfc, boom_gridset.get_id())
-
-target_dir = gridset_mf.get_relative_directory()
+param_fname = '/share/lm/data/archive/testams/heuchera_boom_na_10min.params'
+filler = BOOMFiller(param_fname, logname='tst_2021-08-10')
+self = filler
 
 
-rules = []
-rules.extend(self.add_grim_mfs(scen_grims, target_dir))
-if self.occ_id_fname:
-    self._check_occurrence_sets()
+config = Config(site_fn=param_fname)
 
-self._fix_directory_permissions(boom_gridset)
+# ..........................
+usr = self._get_boom_param(
+    config, BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
+earl = EarlJr()
+user_path = earl.create_data_path(usr, LMFileType.BOOM_CONFIG)
+user_email = self._get_boom_param(
+    config, BoomKeys.ARCHIVE_USER_EMAIL,
+    default_value='{}{}'.format(usr, DEFAULT_EMAIL_POSTFIX))
 
-tree = self.add_tree(boom_gridset, encoded_tree=None)
+archive_name = self._get_boom_param(config, BoomKeys.ARCHIVE_NAME)
 
-(biogeo_mtx, biogeo_layer_names
- ) = self.add_biogeo_hypotheses_matrix_and_layers(boom_gridset)
+# self.initialize_inputs()
 
-if biogeo_mtx and len(biogeo_layer_names) > 0:
-    bgh_success_fname = os.path.join(target_dir, 'bg.success')
-    bg_cmd = EncodeBioGeoHypothesesCommand(
-        self.user_id, boom_gridset.name, bgh_success_fname)
-    rules.append(bg_cmd.get_makeflow_rule(local=True))
+# gridset = filler.init_boom()
 
-rules.extend(self.add_boom_rules(tree, target_dir))
-
-
-
-self.scribe.log.info('******')
-self.scribe.log.info(
-    '--config_file={}'.format(self.out_config_filename))
-self.scribe.log.info('******')
-
-self.write_config_file(tree=tree, biogeo_layers=biogeo_layer_names)
-
-
-# Write rules
-gridset_mf.add_commands(rules)
-self._write_update_mf(gridset_mf)
-
-
-
-
-###################################################################
-###################################################################
 
 """
