@@ -98,9 +98,9 @@ class ChristopherWalken(LMObject):
             raise LMError('Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
                           .format(self.cfg.config_files))
         earl = EarlJr()
-        boom_path = earl.create_data_path(self.user_id, LMFileType.BOOM_CONFIG)
+        self.boom_path = earl.create_data_path(self.user_id, LMFileType.BOOM_CONFIG)
         # Species parser/puller
-        weapon_of_choice, _ = self._get_occ_weapon_of_choice(boom_path)
+        self.weapon_of_choice = self._get_occ_weapon_of_choice()
         
         # SDM inputs
         self.min_points = self._get_boom_or_default(BoomKeys.POINT_COUNT_MIN)
@@ -110,13 +110,12 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (self.boom_gridset, self.intersect_params) = self._get_global_pam_objects()
         self._obsolete_time = self.boom_gridset.mod_time
-        weapon_of_choice.reset_expiration_date(self._obsolete_time)
+        self.weapon_of_choice.reset_expiration_date(self._obsolete_time)
         self.num_permutations = self._get_boom_or_default(
             BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
         self.compute_pam_stats = self._get_boom_or_default(BoomKeys.COMPUTE_PAM_STATS, is_bool=True)
         self.compute_mcpa = self._get_boom_or_default(BoomKeys.COMPUTE_MCPA, is_bool=True)
 
-        self.index_taxonomy = self._get_boom_or_default(BoomKeys.INDEX_TAXONOMY, is_bool=False)
 
         self.column_meta = None
         try:
@@ -220,7 +219,7 @@ class ChristopherWalken(LMObject):
         return var
 
     # ....................................
-    def _get_occ_weapon_of_choice(self, boom_path):
+    def _get_occ_weapon_of_choice(self):
         # Get data_source and optional taxonomy source
         data_source = self._get_boom_or_default(BoomKeys.DATA_SOURCE)
         try:
@@ -229,13 +228,11 @@ class ChristopherWalken(LMObject):
             taxon_source_name = None
 
         # Expiration date for retrieved species data
-        # TODO: get expiration date as MJD, written as woof date in ini file
-        exp_date = LmTime(
-            dtime=datetime.datetime(
-                self._get_boom_or_default(BoomKeys.OCC_EXP_YEAR),
-                self._get_boom_or_default(BoomKeys.OCC_EXP_MONTH),
-                self._get_boom_or_default(BoomKeys.OCC_EXP_DAY),
-                tzinfo=datetime.timezone.utc)).mjd
+        exp_date = LmTime(dtime=datetime.datetime(
+            self._get_boom_or_default(BoomKeys.OCC_EXP_YEAR),
+            self._get_boom_or_default(BoomKeys.OCC_EXP_MONTH),
+            self._get_boom_or_default(BoomKeys.OCC_EXP_DAY),
+            tzinfo=datetime.timezone.utc)).mjd
 
         # Copy public data to user space
         # TODO: Handle taxonomy, use_gbif_taxonomy=??
@@ -247,23 +244,22 @@ class ChristopherWalken(LMObject):
 
         else:
             occ_name = self._get_boom_or_default(BoomKeys.OCC_DATA_NAME)
-#             occ_dir = self._get_boom_or_default(BoomKeys.OCC_DATA_DIR)
             occ_dir = None
             occ_delimiter = str(
                 self._get_boom_or_default(BoomKeys.OCC_DATA_DELIMITER))
             if occ_delimiter != ',':
                 occ_delimiter = GBIF.DATA_DUMP_DELIMITER
             (occ_csv_fname, occ_meta_fname, self.more_data_to_process
-             ) = self._find_data(occ_name, occ_dir, boom_path)
+             ) = self._find_data(occ_name, occ_dir, self.boom_path)
 
             # Handle GBIF data, saving taxononomy data with GBIF acceptedTaxonKey
             use_gbif_taxon_ids = False
             if data_source == SpeciesDatasource.GBIF:
                 use_gbif_taxon_ids = True
             weapon_of_choice = UserWoC(
-                self._scribe, self.user_id, self.archive_name, self.epsg, exp_date,
+                self._scribe, self.user_id, self.archive_name, self.epsg, exp_date, 
                 occ_csv_fname, occ_meta_fname, occ_delimiter, logger=self.log,
-                use_gbif_taxonomy=use_gbif_taxon_ids,
+                use_gbif_taxonomy=use_gbif_taxon_ids, 
                 taxon_source_name=taxon_source_name)
 
         weapon_of_choice.initialize_me()
@@ -525,52 +521,52 @@ class ChristopherWalken(LMObject):
         config = Config(site_fn=config_fname)
         return config
 
-    # ....................................
-    def _get_configured_objects(self):
-        """Return configured string values and any corresponding db objects.
-    
-        Todo:
-            Make all archive/default config keys consistent
-        """
-        user_id = self._get_boom_or_default(
-            BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
-        archive_name = self._get_boom_or_default(BoomKeys.ARCHIVE_NAME)
-        archive_priority = self._get_boom_or_default(
-            BoomKeys.ARCHIVE_PRIORITY, default_value=Priority.NORMAL)
-        # Get user-archive configuration file
-        if user_id is None or archive_name is None:
-            raise LMError('Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
-                          .format(self.cfg.config_files))
-        earl = EarlJr()
-        boom_path = earl.create_data_path(user_id, LMFileType.BOOM_CONFIG)
-        epsg = self._get_boom_or_default(
-            BoomKeys.EPSG, default_value=DEFAULT_EPSG)
-    
-        # Species parser/puller
-        weapon_of_choice, _ = self._get_occ_weapon_of_choice(
-            user_id, archive_name, epsg, boom_path)
-        # SDM inputs
-        min_points = self._get_boom_or_default(BoomKeys.POINT_COUNT_MIN)
-        algorithms = self._get_algorithms(
-            section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
-    
-        (mdl_scen, prj_scens, model_mask_base) = self._get_proj_params(
-            user_id, epsg)
-        # Global PAM inputs
-        (boom_gridset, intersect_params) = self._get_global_pam_objects(
-            user_id, archive_name, epsg)
-        new_date_mjd = boom_gridset.mod_time
-        exp_date = new_date_mjd
-        weapon_of_choice.reset_expiration_date(new_date_mjd)
-    
-        num_permutations = self._get_boom_or_default(
-            BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
-    
-        return (
-            user_id, archive_name, archive_priority, boom_path,
-            weapon_of_choice, exp_date, epsg, min_points, algorithms, mdl_scen,
-            prj_scens, model_mask_base, boom_gridset, intersect_params,
-            num_permutations)
+    # # ....................................
+    # def _get_configured_objects(self):
+    #     """Return configured string values and any corresponding db objects.
+    #
+    #     Todo:
+    #         Make all archive/default config keys consistent
+    #     """
+    #     user_id = self._get_boom_or_default(
+    #         BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
+    #     archive_name = self._get_boom_or_default(BoomKeys.ARCHIVE_NAME)
+    #     archive_priority = self._get_boom_or_default(
+    #         BoomKeys.ARCHIVE_PRIORITY, default_value=Priority.NORMAL)
+    #     # Get user-archive configuration file
+    #     if user_id is None or archive_name is None:
+    #         raise LMError('Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
+    #                       .format(self.cfg.config_files))
+    #     earl = EarlJr()
+    #     boom_path = earl.create_data_path(user_id, LMFileType.BOOM_CONFIG)
+    #     epsg = self._get_boom_or_default(
+    #         BoomKeys.EPSG, default_value=DEFAULT_EPSG)
+    #
+    #     # Species parser/puller
+    #     weapon_of_choice, _ = self._get_occ_weapon_of_choice(
+    #         user_id, archive_name, epsg, boom_path)
+    #     # SDM inputs
+    #     min_points = self._get_boom_or_default(BoomKeys.POINT_COUNT_MIN)
+    #     algorithms = self._get_algorithms(
+    #         section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+    #
+    #     (mdl_scen, prj_scens, model_mask_base) = self._get_proj_params(
+    #         user_id, epsg)
+    #     # Global PAM inputs
+    #     (boom_gridset, intersect_params) = self._get_global_pam_objects(
+    #         user_id, archive_name, epsg)
+    #     new_date_mjd = boom_gridset.mod_time
+    #     exp_date = new_date_mjd
+    #     weapon_of_choice.reset_expiration_date(new_date_mjd)
+    #
+    #     num_permutations = self._get_boom_or_default(
+    #         BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
+    #
+    #     return (
+    #         user_id, archive_name, archive_priority, boom_path,
+    #         weapon_of_choice, exp_date, epsg, min_points, algorithms, mdl_scen,
+    #         prj_scens, model_mask_base, boom_gridset, intersect_params,
+    #         num_permutations)
 
     # ....................................
     def _get_json_objects(self):
