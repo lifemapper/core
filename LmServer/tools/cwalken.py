@@ -88,23 +88,35 @@ class ChristopherWalken(LMObject):
     def initialize_me(self):
         """Set objects and parameters for workflow on this object."""
         self.more_data_to_process = False
-        (self.user_id,
-         self.archive_name,
-         self.priority,
-         self.boom_path,
-         self.weapon_of_choice,
-         self._obsolete_time,
-         self.epsg,
-         self.min_points,
-         self.algs,
-         self.mdl_scen,
-         self.prj_scens,
-         self.model_mask_base,
-         self.boom_gridset,
-         self.intersect_params,
-         self.compute_pam_stats,
-         self.compute_mcpa,
-         self.num_permutations) = self._get_configured_objects()
+
+        self.user_id = self._get_boom_or_default(BoomKeys.ARCHIVE_USER, default_value=PUBLIC_USER)
+        self.archive_name = self._get_boom_or_default(BoomKeys.ARCHIVE_NAME)
+        self.archive_priority = self._get_boom_or_default(BoomKeys.ARCHIVE_PRIORITY, default_value=Priority.NORMAL)
+        self.epsg = self._get_boom_or_default(BoomKeys.EPSG, default_value=DEFAULT_EPSG)
+
+        if self.user_id is None or self.archive_name is None:
+            raise LMError('Missing ARCHIVE_USER or ARCHIVE_NAME in {}'
+                          .format(self.cfg.config_files))
+        earl = EarlJr()
+        boom_path = earl.create_data_path(self.user_id, LMFileType.BOOM_CONFIG)
+        # Species parser/puller
+        weapon_of_choice, _ = self._get_occ_weapon_of_choice(boom_path)
+        
+        # SDM inputs
+        self.min_points = self._get_boom_or_default(BoomKeys.POINT_COUNT_MIN)
+        self.algorithms = self._get_algorithms(section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
+        (self.mdl_scen, self.prj_scens, self.model_mask_base) = self._get_proj_params()
+        
+        # Global PAM inputs
+        (self.boom_gridset, self.intersect_params) = self._get_global_pam_objects()
+        self._obsolete_time = self.boom_gridset.mod_time
+        weapon_of_choice.reset_expiration_date(self._obsolete_time)
+        self.num_permutations = self._get_boom_or_default(
+            BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
+        self.compute_pam_stats = self._get_boom_or_default(BoomKeys.COMPUTE_PAM_STATS, is_bool=True)
+        self.compute_mcpa = self._get_boom_or_default(BoomKeys.COMPUTE_MCPA, is_bool=True)
+
+        self.index_taxonomy = self._get_boom_or_default(BoomKeys.INDEX_TAXONOMY, is_bool=False)
 
         self.column_meta = None
         try:
@@ -208,8 +220,7 @@ class ChristopherWalken(LMObject):
         return var
 
     # ....................................
-    def _get_occ_weapon_of_choice(self, user_id, archive_name, epsg,
-                                  boom_path):
+    def _get_occ_weapon_of_choice(self, boom_path):
         # Get data_source and optional taxonomy source
         data_source = self._get_boom_or_default(BoomKeys.DATA_SOURCE)
         try:
@@ -231,7 +242,7 @@ class ChristopherWalken(LMObject):
         if data_source == SpeciesDatasource.EXISTING:
             occ_id_fname = self._get_boom_or_default(BoomKeys.OCC_ID_FILENAME)
             weapon_of_choice = ExistingWoC(
-                self._scribe, user_id, archive_name, epsg, exp_date,
+                self._scribe, self.user_id, self.archive_name, self.epsg, exp_date,
                 occ_id_fname, logger=self.log)
 
         else:
@@ -250,7 +261,7 @@ class ChristopherWalken(LMObject):
             if data_source == SpeciesDatasource.GBIF:
                 use_gbif_taxon_ids = True
             weapon_of_choice = UserWoC(
-                self._scribe, user_id, archive_name, epsg, exp_date,
+                self._scribe, self.user_id, self.archive_name, self.epsg, exp_date,
                 occ_csv_fname, occ_meta_fname, occ_delimiter, logger=self.log,
                 use_gbif_taxonomy=use_gbif_taxon_ids,
                 taxon_source_name=taxon_source_name)
@@ -374,18 +385,16 @@ class ChristopherWalken(LMObject):
         return algs
 
     # ....................................
-    def _get_proj_params(self, user_id, epsg):
+    def _get_proj_params(self):
         prj_scens = []
         mdl_scen = None
         model_mask_base = None
 
         # Get environmental data model and projection scenarios
-        mdl_scen_code = self._get_boom_or_default(
-            BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
-        prj_scen_codes = self._get_boom_or_default(
-            BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, is_list=True)
+        mdl_scen_code = self._get_boom_or_default(BoomKeys.SCENARIO_PACKAGE_MODEL_SCENARIO)
+        prj_scen_codes = self._get_boom_or_default(BoomKeys.SCENARIO_PACKAGE_PROJECTION_SCENARIOS, is_list=True)
         scen_pkgs = self._scribe.get_scen_packages_for_user_codes(
-            user_id, prj_scen_codes, fill_layers=True)
+            self.user_id, prj_scen_codes, fill_layers=True)
         if not scen_pkgs:
             scen_pkgs = self._scribe.get_scen_packages_for_user_codes(
                 PUBLIC_USER, prj_scen_codes, fill_layers=True)
@@ -395,12 +404,10 @@ class ChristopherWalken(LMObject):
             for pcode in prj_scen_codes:
                 prj_scens.append(scen_pkg.get_scenario(code=pcode))
         else:
-            raise LMError('Failed to retrieve ScenPackage for scenarios {}'
-                          .format(prj_scen_codes))
+            raise LMError('Failed to retrieve ScenPackage for scenarios {}'.format(prj_scen_codes))
 
         # Put params into SDMProject metadata
-        mask_alg_list = self._get_algorithms(
-            section_prefix=SERVER_SDM_MASK_HEADING_PREFIX)
+        mask_alg_list = self._get_algorithms(section_prefix=SERVER_SDM_MASK_HEADING_PREFIX)
         if len(mask_alg_list) > 1:
             raise LMError('Unable to handle > 1 SDM pre-process')
         if len(mask_alg_list) == 1:
@@ -427,30 +434,27 @@ class ChristopherWalken(LMObject):
                     }
                 }
 
-            mask_layer_name = proc_params[
-                PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
+            mask_layer_name = proc_params[PRE_PROCESS_KEY][MASK_KEY][MASK_LAYER_KEY]
             mask_layer = self._scribe.get_layer(
-                user_id=user_id, lyr_name=mask_layer_name, epsg=epsg)
+                user_id=self.user_id, lyr_name=mask_layer_name, epsg=self.epsg)
             if mask_layer is None:
                 raise LMError(
-                    'Failed to retrieve layer {} for user {}'.format(
-                        mask_layer_name, user_id))
+                    'Failed to retrieve layer {}'.format(mask_layer_name))
             model_mask_base = {
                 RegistryKey.REGION_LAYER_PATH: mask_layer.get_dlocation(),
-                RegistryKey.BUFFER: proc_params[
-                    PRE_PROCESS_KEY][MASK_KEY][BUFFER_KEY],
+                RegistryKey.BUFFER: proc_params[PRE_PROCESS_KEY][MASK_KEY][BUFFER_KEY],
                 RegistryKey.METHOD: MaskMethod.HULL_REGION_INTERSECT
                 }
 
         return (mdl_scen, prj_scens, model_mask_base)
 
     # ....................................
-    def _get_global_pam_objects(self, user_id, archive_name, epsg):
+    def _get_global_pam_objects(self):
         # Get existing intersect grid, gridset and parameters for Global PAM
         grid_name = self._get_boom_or_default(BoomKeys.GRID_NAME)
         if grid_name:
             intersect_grid = self._scribe.get_shapegrid(
-                user_id=user_id, lyr_name=grid_name, epsg=epsg)
+                user_id=self.user_id, lyr_name=grid_name, epsg=self.epsg)
             if intersect_grid is None:
                 raise LMError(
                     'Failed to retrieve Shapegrid for intersection {}'.format(
@@ -458,11 +462,11 @@ class ChristopherWalken(LMObject):
 
         # Global PAM and Scenario GRIM for each scenario
         boom_gridset = self._scribe.get_gridset(
-            name=archive_name, user_id=user_id, fill_matrices=True)
+            name=self.archive_name, user_id=self.user_id, fill_matrices=True)
         if boom_gridset is None:
             raise LMError(
                 'Failed to retrieve Gridset for shapegrid {}, user {}'.format(
-                    grid_name, user_id))
+                    grid_name, self.user_id))
         boom_gridset.set_matrix_process_type(
             ProcessType.CONCATENATE_MATRICES,
             matrix_types=[
@@ -489,7 +493,7 @@ class ChristopherWalken(LMObject):
                 raise LMError('Unable to process > 1 input SDM mask layer')
             for input_key, lyr_name in sdm_mask_alg.get_inputs().items():
                 sdm_mask_input_layer = self._scribe.get_layer(
-                    user_id=user_id, lyr_name=lyr_name, epsg=epsg)
+                    user_id=self.user_id, lyr_name=lyr_name, epsg=self.epsg)
                 sdm_mask_alg.set_input(input_key, sdm_mask_input_layer)
 
             proc_params = {
@@ -524,7 +528,7 @@ class ChristopherWalken(LMObject):
     # ....................................
     def _get_configured_objects(self):
         """Return configured string values and any corresponding db objects.
-
+    
         Todo:
             Make all archive/default config keys consistent
         """
@@ -541,7 +545,7 @@ class ChristopherWalken(LMObject):
         boom_path = earl.create_data_path(user_id, LMFileType.BOOM_CONFIG)
         epsg = self._get_boom_or_default(
             BoomKeys.EPSG, default_value=DEFAULT_EPSG)
-
+    
         # Species parser/puller
         weapon_of_choice, _ = self._get_occ_weapon_of_choice(
             user_id, archive_name, epsg, boom_path)
@@ -549,7 +553,7 @@ class ChristopherWalken(LMObject):
         min_points = self._get_boom_or_default(BoomKeys.POINT_COUNT_MIN)
         algorithms = self._get_algorithms(
             section_prefix=SERVER_SDM_ALGORITHM_HEADING_PREFIX)
-
+    
         (mdl_scen, prj_scens, model_mask_base) = self._get_proj_params(
             user_id, epsg)
         # Global PAM inputs
@@ -558,19 +562,15 @@ class ChristopherWalken(LMObject):
         new_date_mjd = boom_gridset.mod_time
         exp_date = new_date_mjd
         weapon_of_choice.reset_expiration_date(new_date_mjd)
-
-        compute_pam_stats = self._get_boom_or_default(
-            BoomKeys.COMPUTE_PAM_STATS, is_bool=True)
-        compute_mcpa = self._get_boom_or_default(
-            BoomKeys.COMPUTE_MCPA, is_bool=True)
+    
         num_permutations = self._get_boom_or_default(
             BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
-
+    
         return (
             user_id, archive_name, archive_priority, boom_path,
             weapon_of_choice, exp_date, epsg, min_points, algorithms, mdl_scen,
             prj_scens, model_mask_base, boom_gridset, intersect_params,
-            compute_pam_stats, compute_mcpa, num_permutations)
+            num_permutations)
 
     # ....................................
     def _get_json_objects(self):
