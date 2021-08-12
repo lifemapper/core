@@ -479,6 +479,5 @@ Post:
 /opt/solr/bin/post -c spcoco /state/partition1/git/t-rex/data/solrtest/occurrence.solr.csv
 
 Query:
-curl http://localhost:8983/solr/taxonomy/select?q=occurrence_guid:47d04f7e-73fa-4cc7-b50a-89eeefdcd162
 curl http://localhost:8983/solr/taxonomy/select?q=*:*
 """
