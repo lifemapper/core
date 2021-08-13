@@ -122,7 +122,7 @@ class ChristopherWalken(LMObject):
         except Exception:
             pass
         # One Global PAM for each scenario
-        for alg in self.algs:
+        for alg in self.algorithms:
             for prjscen in self.prj_scens:
                 pamcode = '{}_{}'.format(prjscen.code, alg.code)
                 self.global_pams[
@@ -262,7 +262,7 @@ class ChristopherWalken(LMObject):
 
         weapon_of_choice.initialize_me()
 
-        return weapon_of_choice, exp_date
+        return weapon_of_choice
 
     # ....................................
     @staticmethod
@@ -613,7 +613,7 @@ class ChristopherWalken(LMObject):
             # If we have enough points to model
             # TODO: why is boomer creating projections for occsets with < min points??
             if occ.query_count >= self.min_points:
-                for alg in self.algs:
+                for alg in self.algorithms:
                     prjs = []
                     mtx_cols = []
                     for prj_scen in self.prj_scens:
