@@ -611,6 +611,7 @@ class ChristopherWalken(LMObject):
             sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
 
             # If we have enough points to model
+            # TODO: why is boomer creating projections for occsets with < min points??
             if occ.query_count >= self.min_points:
                 for alg in self.algs:
                     prjs = []
