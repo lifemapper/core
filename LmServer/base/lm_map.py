@@ -442,7 +442,7 @@ class LMMap(LMSpatialObject):
         if (isinstance(sdl_lyr, OccurrenceLayer) and
                 sdl_lyr.get_user_id() == PUBLIC_USER and
                 sdl_lyr.query_count > POINT_COUNT_MAX):
-            dlocation = sdl_lyr.get_dlocation(largeFile=False)
+            dlocation = sdl_lyr.get_dlocation(large_file=False)
             if not os.path.exists(dlocation):
                 dlocation = sdl_lyr.get_dlocation()
         else:
