@@ -79,7 +79,14 @@ class MapService(LmService):
             try:
                 usr = obj.get_user_id()
             except:
-                pass
+                if file_type == LMFileType.SDM_MAP:
+                    raise cherrypy.HTTPError(
+                        HTTPStatus.BAD_REQUEST,
+                        'No map {} for non-existent occurrenceset {}'.format(map_name, occ_set_id))
+                else:
+                    raise cherrypy.HTTPError(
+                        HTTPStatus.BAD_REQUEST,
+                        'No map {} for non-existent gridset {}'.format(map_name, gridset_id))
         
         pth = earl_jr.get_map_path_from_parts(
             file_type, user_id=usr, occ_set_id=occ_set_id, gridset_id=gridset_id)
