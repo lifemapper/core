@@ -130,8 +130,9 @@ class BorgScribe(LMObject):
         return self._borg.find_or_insert_layer(lyr)
 
     # ................................
-    def get_env_layer(self, env_lyr_id=None, lyr_id=None, lyr_verify=None,
-                      user_id=None, lyr_name=None, epsg=None):
+    def get_env_layer(
+            self, env_lyr_id=None, lyr_id=None, lyr_verify=None, user_id=None, lyr_name=None, 
+            epsg=None):
         """Get an environmental layer object."""
         return self._borg.get_env_layer(
             env_lyr_id, lyr_id, lyr_verify, user_id, lyr_name, epsg)
@@ -153,21 +154,20 @@ class BorgScribe(LMObject):
         return self._borg.delete_env_layer(env_lyr)
 
     # ................................
-    def count_env_layers(self, user_id=PUBLIC_USER, env_code=None,
-                         gcm_code=None, alt_pred_code=None, date_code=None,
-                         after_time=None, before_time=None, epsg=None,
-                         env_type_id=None, scenario_code=None):
+    def count_env_layers(
+        self, user_id=PUBLIC_USER, env_code=None, gcm_code=None, alt_pred_code=None, 
+        date_code=None, after_time=None, before_time=None, epsg=None, env_type_id=None, 
+        scenario_code=None):
         """Count the number of environmental layers that match the criteria."""
         return self._borg.count_env_layers(
             user_id, env_code, gcm_code, alt_pred_code, date_code, after_time,
             before_time, epsg, env_type_id, scenario_code)
 
     # ................................
-    def list_env_layers(self, first_rec_num, max_num, user_id=PUBLIC_USER,
-                        env_code=None, gcm_code=None, alt_pred_code=None,
-                        date_code=None, after_time=None, before_time=None,
-                        epsg=None, env_type_id=None, scen_code=None,
-                        atom=True):
+    def list_env_layers(
+        self, first_rec_num, max_num, user_id=PUBLIC_USER, env_code=None, gcm_code=None, 
+        alt_pred_code=None, date_code=None, after_time=None, before_time=None, epsg=None, 
+        env_type_id=None, scen_code=None, atom=True):
         """Return a list of environmental layers matching the criteria."""
         return self._borg.list_env_layers(
             first_rec_num, max_num, user_id, env_code, gcm_code, alt_pred_code,
@@ -183,16 +183,16 @@ class BorgScribe(LMObject):
         raise LMError('Invalid object for EnvType insertion')
 
     # ................................
-    def count_scen_packages(self, user_id=PUBLIC_USER, after_time=None,
-                            before_time=None, epsg=None, scen_id=None):
+    def count_scen_packages(
+        self, user_id=PUBLIC_USER, after_time=None, before_time=None, epsg=None, scen_id=None):
         """Count the scenario packages that match the specified criteria."""
         return self._borg.count_scen_packages(
             user_id, after_time, before_time, epsg, scen_id)
 
     # ................................
-    def list_scen_packages(self, first_rec_num, max_num, user_id=PUBLIC_USER,
-                           after_time=None, before_time=None, epsg=None,
-                           scen_id=None, atom=True):
+    def list_scen_packages(
+        self, first_rec_num, max_num, user_id=PUBLIC_USER, after_time=None, before_time=None, 
+        epsg=None, scen_id=None, atom=True):
         """List scenario packages that match the specified criteria.
         """
         return self._borg.list_scen_packages(
@@ -210,24 +210,21 @@ class BorgScribe(LMObject):
         return self._borg.find_or_insert_scen_package(scen_package)
 
     # ................................
-    def get_scen_packages_for_scenario(self, scen=None, scen_id=None,
-                                       user_id=None, scen_code=None,
-                                       fill_layers=False):
+    def get_scen_packages_for_scenario(
+            self, scen=None, scen_id=None, user_id=None, scen_code=None, fill_layers=False):
         """Get scenario packages that include the specified scenario."""
         return self._borg.get_scen_packages_for_scenario(
             scen, scen_id, user_id, scen_code, fill_layers)
 
     # ................................
-    def get_scenarios_for_scen_package(self, scen_package=None,
-                                       scen_package_id=None, user_id=None,
-                                       scen_package_name=None):
+    def get_scenarios_for_scen_package(
+            self, scen_package=None, scen_package_id=None, user_id=None, scen_package_name=None):
         """Get scenarios in the specified scenario package."""
         return self._borg.get_scenarios_for_scen_package(
             scen_package, scen_package_id, user_id, scen_package_name, False)
 
     # ................................
-    def get_scen_packages_for_user_codes(self, usr, scen_codes,
-                                         fill_layers=False):
+    def get_scen_packages_for_user_codes(self, usr, scen_codes, fill_layers=False):
         """Get scenario packages for the specified user scenario codes.
 
         Note:
@@ -252,9 +249,9 @@ class BorgScribe(LMObject):
         return scen_packages
 
     # ................................
-    def get_scen_package(self, scen_package=None, scen_package_id=None,
-                         user_id=None, scen_package_name=None,
-                         fill_layers=False):
+    def get_scen_package(
+            self, scen_package=None, scen_package_id=None, user_id=None, scen_package_name=None,
+            fill_layers=False):
         """Return a scenario package."""
         return self._borg.get_scen_package(
             scen_package, scen_package_id, user_id, scen_package_name,
@@ -351,33 +348,32 @@ class BorgScribe(LMObject):
             user_id, cell_sides, cell_size, after_time, before_time, epsg)
 
     # ................................
-    def list_shapegrids(self, first_rec_num, max_num, user_id=PUBLIC_USER,
-                        cell_sides=None, cell_size=None, after_time=None,
-                        before_time=None, epsg=None, atom=True):
+    def list_shapegrids(
+            self, first_rec_num, max_num, user_id=PUBLIC_USER, cell_sides=None, cell_size=None, 
+            after_time=None, before_time=None, epsg=None, atom=True):
         """Return a list of shapegrids matching the specified criteria."""
         return self._borg.list_shapegrids(
             first_rec_num, max_num, user_id, cell_sides, cell_size, after_time,
             before_time, epsg, atom)
 
     # ................................
-    def get_layer(self, lyr_id=None, lyr_verify=None, user_id=None,
-                  lyr_name=None, epsg=None):
+    def get_layer(self, lyr_id=None, lyr_verify=None, user_id=None, lyr_name=None, epsg=None):
         """Get a layer object from the database.
         """
         return self._borg.get_base_layer(
             lyr_id, lyr_verify, user_id, lyr_name, epsg)
 
     # ................................
-    def count_layers(self, user_id=PUBLIC_USER, squid=None, after_time=None,
-                     before_time=None, epsg=None):
+    def count_layers(
+            self, user_id=PUBLIC_USER, squid=None, after_time=None, before_time=None, epsg=None):
         """Count layers matching the specified criteria."""
         return self._borg.count_layers(
             user_id, squid, after_time, before_time, epsg)
 
     # ................................
-    def list_layers(self, first_rec_num, max_num, user_id=PUBLIC_USER,
-                    squid=None, after_time=None, before_time=None, epsg=None,
-                    atom=True):
+    def list_layers(
+            self, first_rec_num, max_num, user_id=PUBLIC_USER, squid=None, after_time=None, 
+            before_time=None, epsg=None, atom=True):
         """Return a list of layers matching the specified criteria."""
         return self._borg.list_layers(
             first_rec_num, max_num, user_id, squid, after_time, before_time,
@@ -394,8 +390,7 @@ class BorgScribe(LMObject):
         return self._borg.get_columns_for_matrix(mtx_id)
 
     # ................................
-    def get_sdm_columns_for_matrix(self, mtx_id, return_columns=True,
-                                   return_projections=True):
+    def get_sdm_columns_for_matrix(self, mtx_id, return_columns=True, return_projections=True):
         """Get SDM-based matrix columns for the specified matrix."""
         return self._borg.get_sdm_columns_for_matrix(
             mtx_id, return_columns, return_projections)
@@ -406,10 +401,9 @@ class BorgScribe(LMObject):
         return self._borg.get_occ_layers_for_matrix(mtx_id)
 
     # ................................
-    def count_matrix_columns(self, user_id=None, squid=None, ident=None,
-                             after_time=None, before_time=None, epsg=None,
-                             after_status=None, before_status=None,
-                             gridset_id=None, matrix_id=None, layer_id=None):
+    def count_matrix_columns(
+        self, user_id=None, squid=None, ident=None, after_time=None, before_time=None, epsg=None,
+        after_status=None, before_status=None, gridset_id=None, matrix_id=None, layer_id=None):
         """Count matrix columns that match the specified criteria.
         """
         return self._borg.count_matrix_columns(
@@ -417,11 +411,10 @@ class BorgScribe(LMObject):
             before_status, gridset_id, matrix_id, layer_id)
 
     # ................................
-    def list_matrix_columns(self, first_rec_num, max_num, user_id=None,
-                            squid=None, ident=None, after_time=None,
-                            before_time=None, epsg=None, after_status=None,
-                            before_status=None, gridset_id=None,
-                            matrix_id=None, layer_id=None, atom=True):
+    def list_matrix_columns(
+        self, first_rec_num, max_num, user_id=None, squid=None, ident=None, after_time=None,
+        before_time=None, epsg=None, after_status=None, before_status=None, gridset_id=None,
+        matrix_id=None, layer_id=None, atom=True):
         """Return a list of matrix columns matching the specified criteria.
         """
         return self._borg.list_matrix_columns(
@@ -430,10 +423,9 @@ class BorgScribe(LMObject):
             matrix_id, layer_id, atom)
 
     # ................................
-    def get_matrix(self, mtx=None, mtx_id=None, gridset_id=None,
-                   gridset_name=None, user_id=None, mtx_type=None,
-                   gcm_code=None, alt_pred_code=None, date_code=None,
-                   alg_code=None):
+    def get_matrix(
+            self, mtx=None, mtx_id=None, gridset_id=None, gridset_name=None, user_id=None, 
+            mtx_type=None, gcm_code=None, alt_pred_code=None, date_code=None, alg_code=None):
         """Get a matrix object from the database.
 
         Args:
@@ -456,11 +448,10 @@ class BorgScribe(LMObject):
             alt_pred_code, date_code, alg_code)
 
     # ................................
-    def count_matrices(self, user_id=None, matrix_type=None,
-                       gcm_code=None, alt_pred_code=None, date_code=None,
-                       alg_code=None, keyword=None, gridset_id=None,
-                       after_time=None, before_time=None, epsg=None,
-                       after_status=None, before_status=None):
+    def count_matrices(
+            self, user_id=None, matrix_type=None, gcm_code=None, alt_pred_code=None, date_code=None,
+            alg_code=None, keyword=None, gridset_id=None, after_time=None, before_time=None, epsg=None,
+            after_status=None, before_status=None):
         """Count matrices that match the specified criteria.
         """
         return self._borg.count_matrices(
@@ -469,12 +460,11 @@ class BorgScribe(LMObject):
             before_status)
 
     # ................................
-    def list_matrices(self, first_rec_num, max_num, user_id=None,
-                      matrix_type=None, gcm_code=None, alt_pred_code=None,
-                      date_code=None, alg_code=None, keyword=None,
-                      gridset_id=None, after_time=None, before_time=None,
-                      epsg=None, after_status=None, before_status=None,
-                      atom=True):
+    def list_matrices(
+            self, first_rec_num, max_num, user_id=None, matrix_type=None, gcm_code=None, 
+            alt_pred_code=None, date_code=None, alg_code=None, keyword=None, gridset_id=None, 
+            after_time=None, before_time=None, epsg=None, after_status=None, before_status=None,
+            atom=True):
         """List matrices that match the specified criteria.
         """
         return self._borg.list_matrices(
