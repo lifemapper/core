@@ -636,7 +636,7 @@ class ChristopherWalken(LMObject):
                     self.log.info(
                         'Compute for Grid {} alg {}: {} projs, {}'
                         'intersects where occ has {} points (>= {} min points)').format(
-                            gs_id, alg.code, len(prjs), len(mtx_cols), occ.query_count, self.min_points))
+                            gs_id, alg.code, len(prjs), len(mtx_cols), occ.query_count, self.min_points)
 
                     if do_sdm:
                         # Add SDM commands for the algorithm
