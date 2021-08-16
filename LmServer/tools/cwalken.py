@@ -110,6 +110,7 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (self.boom_gridset, self.intersect_params) = self._get_global_pam_objects()
         self._obsolete_time = self.boom_gridset.mod_time
+        # Reset computation time to gridset modtime
         self.weapon_of_choice.reset_expiration_date(self._obsolete_time)
         self.num_permutations = self._get_boom_or_default(
             BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
@@ -613,7 +614,7 @@ class ChristopherWalken(LMObject):
             # If we have enough points to model
             # TODO: why is boomer creating projections for occsets with < min points??
             if occ.query_count < self.min_points:
-                self._delete_sdm_projs_and_intersections(occ)
+                self._delete_projs_and_intersections_for_occ(occ)
                 do_sdm = self._do_compute_sdm(occ, [], [])
                 if do_sdm:
                     self._fill_sweep_config(sweep_config, None, occ, [], [])
@@ -635,8 +636,8 @@ class ChristopherWalken(LMObject):
                     do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
                     self.log.info(
                         'Compute for Grid {} alg {}: {} projs, {}'
-                        'intersects where occ has {} points (>= {} min points)').format(
-                            gs_id, alg.code, len(prjs), len(mtx_cols), occ.query_count, self.min_points)
+                        'intersects where occ has {} points (>= {} min points)'.format(
+                            gs_id, alg.code, len(prjs), len(mtx_cols), occ.query_count, self.min_points))
 
                     if do_sdm:
                         # Add SDM commands for the algorithm
