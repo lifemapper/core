@@ -612,7 +612,7 @@ class ChristopherWalken(LMObject):
 
             # If we have enough points to model
             # TODO: why is boomer creating projections for occsets with < min points??
-            if occ.query_count < :
+            if occ.query_count < self.min_points:
                 self._delete_sdm_projs_and_intersections(occ)
                 do_sdm = self._do_compute_sdm(occ, [], [])
                 if do_sdm:
