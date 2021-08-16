@@ -612,7 +612,12 @@ class ChristopherWalken(LMObject):
 
             # If we have enough points to model
             # TODO: why is boomer creating projections for occsets with < min points??
-            if occ.query_count >= self.min_points:
+            if occ.query_count < :
+                self._delete_sdm_projs_and_intersections(occ)
+                do_sdm = self._do_compute_sdm(occ, [], [])
+                if do_sdm:
+                    self._fill_sweep_config(sweep_config, None, occ, [], [])
+            else:
                 for alg in self.algorithms:
                     prjs = []
                     mtx_cols = []
@@ -629,21 +634,14 @@ class ChristopherWalken(LMObject):
                                 mtx_cols.append(mtx_col)
                     do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
                     self.log.info(
-                        ('    Will compute for Grid {} alg {}: {} projs, {}'
-                         'intersects').format(
-                             gs_id, alg.code, len(prjs), len(mtx_cols)))
+                        'Compute for Grid {} alg {}: {} projs, {}'
+                        'intersects where occ has {} points (>= {} min points)').format(
+                            gs_id, alg.code, len(prjs), len(mtx_cols), occ.query_count, self.min_points))
 
                     if do_sdm:
                         # Add SDM commands for the algorithm
                         self._fill_sweep_config(
                             sweep_config, alg, occ, prjs, mtx_cols)
-            else:
-                do_sdm = self._do_compute_sdm(occ, [], [])
-                if do_sdm:
-                    # Only add the occurrence set to the sweep config.  Empty
-                    #    lists for projections and PAVs will omit those objects
-                    self._fill_sweep_config(
-                        sweep_config, None, occ, [], [])
 
             # Only add rules if we have something to compute
             num_comps = sum([
@@ -813,20 +811,17 @@ class ChristopherWalken(LMObject):
 
     # ....................................
     def _do_reset(self, status, status_mod_time):
+        # return true if incomplete, failed, obsolete
         return any(
             [JobStatus.incomplete(status), JobStatus.failed(status),
-             (
-                 status == JobStatus.COMPLETE and
-                 status_mod_time < self.weapon_of_choice.expiration_date
-                 )])
+             status_mod_time < self.weapon_of_choice.expiration_date])
 
     # ....................................
     def _find_or_insert_sdm_project(self, occ, alg, prj_scen, curr_time):
         prj = None
         if occ is not None:
             tmp_prj = SDMProjection(
-                occ, alg, self.mdl_scen, prj_scen,
-                data_format=LMFormat.GTIFF.driver,
+                occ, alg, self.mdl_scen, prj_scen, data_format=LMFormat.GTIFF.driver,
                 status=JobStatus.GENERAL, status_mod_time=curr_time)
             prj = self._scribe.find_or_insert_sdm_project(tmp_prj)
             if prj is not None:
@@ -836,6 +831,22 @@ class ChristopherWalken(LMObject):
                 prj._model_scenario = self.mdl_scen
                 prj._proj_scenario = prj_scen
         return prj
+    
+    # ....................................
+    def _delete_projs_and_intersections_for_occ(self, occ):
+        """
+        Delete SDMProjects and MatrixColumns for occurrenceset and gridset PAMs
+        """
+        prjs = self._scribe.list_sdm_projects(
+            0, 100, user_id=self.user_id, occ_set_id=occ.get_id(), atom=False)
+        for prj in prjs:
+            for mtx in self.global_pams:
+                mtxcols = self._scribe.list_matrix_columns(
+                    0, 100, user_id=self.user_id, matrix_id=mtx.get_id(), 
+                    layer_id=prj.get_id(), atom=False)
+                for mcol in mtxcols:
+                    self._scribe.delete_object(mcol)
+            self._scribe.delete_object(prj)
 
     # ....................................
     def _write_done_walken_file(self):
