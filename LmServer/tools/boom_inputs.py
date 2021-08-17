@@ -7,9 +7,8 @@ import os
 import sys
 
 from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (LM_USER, JobStatus, PhyloTreeKeys,
-                                         MatrixType, ProcessType,
-                                         SERVER_BOOM_HEADING, BoomKeys)
+from LmCommon.common.lmconstants import (
+    LM_USER, JobStatus, PhyloTreeKeys, MatrixType, ProcessType, SERVER_BOOM_HEADING, BoomKeys)
 from LmCommon.common.time import gmt
 from LmCommon.encoding.layer_encoder import LayerEncoder
 from LmServer.base.service_object import ServiceObject

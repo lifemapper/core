@@ -11,11 +11,8 @@ import sys
 import time
 
 from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import (
-    ChainCommand, ConcatenateMatricesCommand, IdigbioQueryCommand,
-    SystemCommand)
-from LmBackend.command.server import (
-    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
+from LmBackend.command.common import (ConcatenateMatricesCommand, IdigbioQueryCommand)
+from LmBackend.command.server import (EncodeBioGeoHypothesesCommand, StockpileCommand)
 from LmBackend.command.single import GrimRasterCommand
 from LmBackend.common.lmobj import LMError, LMObject
 from LmCommon.common.api_query import IdigbioAPI
@@ -34,8 +31,7 @@ from LmServer.base.utilities import is_lm_user
 from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import (
     ARCHIVE_KEYWORD, DEFAULT_EMAIL_POSTFIX, DEFAULT_NUM_PERMUTATIONS,
-    ENV_DATA_PATH, GGRIM_KEYWORD, GPAM_KEYWORD, LMFileType, Priority,
-    SPECIES_DATA_PATH)
+    ENV_DATA_PATH, GGRIM_KEYWORD, GPAM_KEYWORD, LMFileType, Priority)
 from LmServer.common.lmuser import LMUser
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import ScriptLogger
