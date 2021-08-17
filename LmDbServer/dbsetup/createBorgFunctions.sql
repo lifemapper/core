@@ -3250,22 +3250,21 @@ BEGIN
 	DELETE FROM lm_v3.MFProcess WHERE userid = usr AND metadata not like '%GRIM%';
 	GET DIAGNOSTICS total = ROW_COUNT;
    RAISE NOTICE 'Deleted % MF processes for User %', total, usr;
-
-   -- Matrix Intersect Columns from SDM
-	DELETE FROM lm_v3.MatrixColumn WHERE layerid IN 
-	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
-	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % MatrixColumns using SDMProject layers for User %', currCount, usr;
-   total = total + currCount;
    
-   -- Matrix SDMProject Layers
+   -- Gridsets (Cascades to Matrix, then MatrixColumn)
+	DELETE FROM lm_v3.Gridset WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Gridsets for User %', currCount, usr;
+   total = total + currCount;
+      
+   -- Layer linked to SDMProject
 	DELETE FROM lm_v3.Layer WHERE layerid IN 
 	   (SELECT layerid FROM lm_v3.lm_sdmproject WHERE userid = usr);
 	GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Layers for SDMProjects for User %', currCount, usr;
    total = total + currCount;
 
-   -- OccurrenceSet and SDMProjects
+   -- OccurrenceSet
 	DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr;
 	GET DIAGNOSTICS currCount = ROW_COUNT;
    RAISE NOTICE 'Deleted % Occurrencesets for User %', currCount, usr;
@@ -3275,6 +3274,24 @@ BEGIN
 END;
 $$  LANGUAGE 'plpgsql' VOLATILE;
 
+
+-- ----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION lm_v3.lm_clearOccurrenceUserData(usr varchar)
+RETURNS int AS
+$$
+DECLARE
+   currCount int := -1;
+   total int;
+BEGIN
+   -- OccurrenceSet
+	DELETE FROM lm_v3.OccurrenceSet WHERE userid = usr;
+	GET DIAGNOSTICS currCount = ROW_COUNT;
+   RAISE NOTICE 'Deleted % Occurrencesets for User %', currCount, usr;
+   total = total + currCount;
+
+   RETURN currCount;
+END;
+$$  LANGUAGE 'plpgsql' VOLATILE;
 
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION lm_v3.lm_deleteGridsetMatrixColumns(gsid int)
@@ -3375,11 +3392,7 @@ BEGIN
    RAISE NOTICE 'Deleted % MF processes for User %', total, usr;
 
    SELECT * INTO total FROM lm_v3.lm_clearComputedUserData(usr);
-   
-   -- Gridsets (Cascades to Matrix, then MatrixColumn)
-	DELETE FROM lm_v3.Gridset WHERE userid = usr;
-	GET DIAGNOSTICS currCount = ROW_COUNT;
-   RAISE NOTICE 'Deleted % Gridsets for User %', currCount, usr;
+   SELECT * INTO currCount FROM lm_v3.lm_clearOccurrenceUserData(usr);
    total = total + currCount;
    
    -- Scenarios
