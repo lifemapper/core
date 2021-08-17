@@ -26,9 +26,7 @@ from LmCommon.common.lmconstants import (
     SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX)
 from LmCommon.common.ready_file import ready_filename
 from LmCommon.common.time import gmt
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
-from LmDbServer.common.localconstants import (
-    GBIF_PROVIDER_FILENAME, GBIF_TAXONOMY_FILENAME)
+from LmDbServer.common.lmconstants import SpeciesDatasource
 from LmDbServer.tools.catalog_scen_package import SPFiller
 from LmServer.base.layer import Vector, Raster
 from LmServer.base.service_object import ServiceObject
@@ -681,10 +679,6 @@ class BOOMFiller(LMObject):
                 self.taxon_id_filename)
         # Use GBIF data dump, with supporting provider and taxonomy files
         elif self.data_source == SpeciesDatasource.GBIF:
-            config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_PROVIDER_FILENAME,
-                       GBIF_PROVIDER_FILENAME)
-            config.set(SERVER_BOOM_HEADING, BoomKeys.GBIF_TAXONOMY_FILENAME,
-                       GBIF_TAXONOMY_FILENAME)
             config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
             config.set(
@@ -1375,41 +1369,41 @@ class BOOMFiller(LMObject):
         """Get a command to insert taxonomic information into the database.
         """
         cat_tax_cmd = tax_success_fname = tax_success_local_fname = None
-        tax_data_fname = None
-        config = Config(site_fn=self.in_param_fname)
-        if self.data_source == SpeciesDatasource.GBIF:
-            tax_data_base_name = self._get_boom_param(
-                config, BoomKeys.GBIF_TAXONOMY_FILENAME,
-                GBIF_TAXONOMY_FILENAME)
-            tax_data_fname = os.path.join(
-                SPECIES_DATA_PATH, tax_data_base_name)
-            tax_source_name = TAXONOMIC_SOURCE['GBIF']['name']
-            tax_source_url = TAXONOMIC_SOURCE['GBIF']['url']
-
-        # If there is taxonomy ...
-        if tax_data_fname and os.path.exists(tax_data_fname):
-            tax_data_base, _ = os.path.splitext(tax_data_fname)
-            tax_success_fname = os.path.join(tax_data_base + '.success')
-            if os.path.exists(tax_success_fname):
-                self.scribe.log.info(
-                    'Taxonomy {} has already been cataloged'.format(
-                        tax_data_fname))
-            else:
-                # logfile, walkedTaxFname added to outputs in command
-                #    construction
-                tax_success_local_fname = os.path.join(
-                    target_dir, 'catalog_taxonomy.success')
-                # Write taxonomy success to workspace and pass that along, also
-                #    copy local taxonomy success file to absolute location
-                cat_tax_cmd = ChainCommand(
-                    [CatalogTaxonomyCommand(
-                        tax_source_name, tax_data_fname,
-                        tax_success_local_fname, source_url=tax_source_url,
-                        delimiter='\t'),
-                     SystemCommand(
-                         'cp', '{} {}'.format(
-                             tax_success_local_fname, tax_success_fname),
-                         inputs=tax_success_local_fname)])
+        # tax_data_fname = None
+        # config = Config(site_fn=self.in_param_fname)
+        # if self.data_source == SpeciesDatasource.GBIF:
+        #     tax_data_base_name = self._get_boom_param(
+        #         config, BoomKeys.GBIF_TAXONOMY_FILENAME,
+        #         GBIF_TAXONOMY_FILENAME)
+        #     tax_data_fname = os.path.join(
+        #         SPECIES_DATA_PATH, tax_data_base_name)
+        #     tax_source_name = TAXONOMIC_SOURCE['GBIF']['name']
+        #     tax_source_url = TAXONOMIC_SOURCE['GBIF']['url']
+        #
+        # # If there is taxonomy ...
+        # if tax_data_fname and os.path.exists(tax_data_fname):
+        #     tax_data_base, _ = os.path.splitext(tax_data_fname)
+        #     tax_success_fname = os.path.join(tax_data_base + '.success')
+        #     if os.path.exists(tax_success_fname):
+        #         self.scribe.log.info(
+        #             'Taxonomy {} has already been cataloged'.format(
+        #                 tax_data_fname))
+        #     else:
+        #         # logfile, walkedTaxFname added to outputs in command
+        #         #    construction
+        #         tax_success_local_fname = os.path.join(
+        #             target_dir, 'catalog_taxonomy.success')
+        #         # Write taxonomy success to workspace and pass that along, also
+        #         #    copy local taxonomy success file to absolute location
+        #         cat_tax_cmd = ChainCommand(
+        #             [CatalogTaxonomyCommand(
+        #                 tax_source_name, tax_data_fname,
+        #                 tax_success_local_fname, source_url=tax_source_url,
+        #                 delimiter='\t'),
+        #              SystemCommand(
+        #                  'cp', '{} {}'.format(
+        #                      tax_success_local_fname, tax_success_fname),
+        #                  inputs=tax_success_local_fname)])
         return cat_tax_cmd, tax_success_local_fname
 
     # ................................
@@ -1628,56 +1622,6 @@ if __name__ == '__main__':
     main()
 
 """
-import configparser
-import glob
-import imp
-import json
-import logging
-import os
-import stat
-import sys
-import time
-
-from LmBackend.command.boom import BoomerCommand
-from LmBackend.command.common import (
-    ChainCommand, ConcatenateMatricesCommand, IdigbioQueryCommand,
-    SystemCommand)
-from LmBackend.command.server import (
-    CatalogTaxonomyCommand, EncodeBioGeoHypothesesCommand, StockpileCommand)
-from LmBackend.command.single import GrimRasterCommand
-from LmBackend.common.lmobj import LMError, LMObject
-from LmCommon.common.api_query import IdigbioAPI
-from LmCommon.common.config import Config
-from LmCommon.common.lmconstants import (
-    BoomKeys, DEFAULT_POST_USER, GBIF, JobStatus, LMFormat, MatrixType,
-    ProcessType, SERVER_BOOM_HEADING, SERVER_DEFAULT_HEADING_POSTFIX, ENCODING,
-    SERVER_SDM_ALGORITHM_HEADING_PREFIX, SERVER_SDM_MASK_HEADING_PREFIX)
-from LmCommon.common.ready_file import ready_filename
-from LmCommon.common.time import gmt
-from LmDbServer.common.lmconstants import (SpeciesDatasource, TAXONOMIC_SOURCE)
-from LmDbServer.common.localconstants import (
-    GBIF_PROVIDER_FILENAME, GBIF_TAXONOMY_FILENAME)
-from LmDbServer.tools.catalog_scen_package import SPFiller
-from LmServer.base.layer import Vector, Raster
-from LmServer.base.service_object import ServiceObject
-from LmServer.base.utilities import is_lm_user
-from LmServer.common.data_locator import EarlJr
-from LmServer.common.lmconstants import (
-    ARCHIVE_KEYWORD, DEFAULT_EMAIL_POSTFIX, DEFAULT_NUM_PERMUTATIONS,
-    ENV_DATA_PATH, GGRIM_KEYWORD, GPAM_KEYWORD, LMFileType, Priority,
-    SPECIES_DATA_PATH)
-from LmServer.common.lmuser import LMUser
-from LmServer.common.localconstants import PUBLIC_USER
-from LmServer.common.log import ScriptLogger
-from LmServer.db.borg_scribe import BorgScribe
-from LmServer.legion.algorithm import Algorithm
-from LmServer.legion.gridset import Gridset
-from LmServer.legion.lm_matrix import LMMatrix
-from LmServer.legion.mtx_column import MatrixColumn
-from LmServer.legion.process_chain import MFChain
-from LmServer.legion.shapegrid import Shapegrid
-from LmServer.legion.tree import Tree
-
 from LmDbServer.boom.init_workflow import *
 
 param_fname = '/share/lm/data/archive/testams/heuchera_boom_na_10min.params'
