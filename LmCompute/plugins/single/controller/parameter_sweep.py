@@ -332,7 +332,7 @@ class ParameterSweep:
                         'Unknown process type: {} for model {}'.format(
                             process_type, model_id))
             else:
-                status = occ_status
+                status = max([occ_status, mask_status])
 
             # Register model output
             self._register_output_object(
