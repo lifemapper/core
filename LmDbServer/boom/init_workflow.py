@@ -88,7 +88,7 @@ class BOOMFiller(LMObject):
 
         # Initialize variables
         self.user_id = self.user_id_path = self.user_email = None
-        self.user_taxonomy_base_filename = self.archive_name = None
+        self.archive_name = None
         self.priority = self.scen_package_name = self.data_source = None
         self.occ_id_fname = self.taxon_name_filename = None
         self.taxon_id_filename = self.occ_fname = self.occ_sep = None
@@ -113,7 +113,6 @@ class BOOMFiller(LMObject):
         """Initialize configured inputs for workflow."""
         (self.user_id, self.user_id_path,
          self.user_email,
-         self.user_taxonomy_base_filename,
          self.archive_name,
          self.priority,
          self.scen_package_name,
@@ -451,7 +450,7 @@ class BOOMFiller(LMObject):
 
         # ..........................
         # Species data source and input
-        occ_fname = occ_sep = user_taxonomy_base_filename = occ_id_fname = None
+        occ_fname = occ_sep = occ_id_fname = None
         taxon_id_filename = taxon_name_filename = None
         data_source = self._get_boom_param(config, BoomKeys.DATA_SOURCE)
         if data_source is None:
@@ -465,17 +464,13 @@ class BOOMFiller(LMObject):
             raise LMError('Failed to configure supported DATA_SOURCE')
         if data_source in (SpeciesDatasource.GBIF, SpeciesDatasource.USER):
             occ_fname = self._get_boom_param(config, BoomKeys.OCC_DATA_NAME)
-            occ_sep = self._get_boom_param(config, BoomKeys.OCC_DATA_DELIMITER)
-            # Taxonomy is optional,
-            if data_source == SpeciesDatasource.USER:
-                user_taxonomy_base_filename = self._get_boom_param(
-                    config, BoomKeys.USER_TAXONOMY_FILENAME)
-            if occ_sep is None:
-                occ_sep = GBIF.DATA_DUMP_DELIMITER
             if occ_fname is None:
                 raise LMError(
                     ('Failed to configure OCC_DATA_NAME for DATA_SOURCE=GBIF '
                      'or USER'))
+            occ_sep = self._get_boom_param(config, BoomKeys.OCC_DATA_DELIMITER)
+            if occ_sep is None:
+                occ_sep = GBIF.DATA_DUMP_DELIMITER
         elif data_source == SpeciesDatasource.EXISTING:
             occ_id_fname = self._get_boom_param(
                 config, BoomKeys.OCC_ID_FILENAME)
@@ -600,7 +595,7 @@ class BOOMFiller(LMObject):
             self.log.info(
                 'Retrieve all scenarios from SCENARIO_PACKAGE metadata')
 
-        return (usr, user_path, user_email, user_taxonomy_base_filename,
+        return (usr, user_path, user_email, 
                 archive_name, priority, scen_package_name,
                 mdl_scencode, prj_scencodes, data_source,
                 occ_id_fname, taxon_name_filename, taxon_id_filename,
@@ -685,11 +680,6 @@ class BOOMFiller(LMObject):
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_NAME, self.occ_fname)
             config.set(
                 SERVER_BOOM_HEADING, BoomKeys.OCC_DATA_DELIMITER, self.occ_sep)
-            # optional user-provided taxonomy
-            if self.user_taxonomy_base_filename is not None:
-                config.set(
-                    SERVER_BOOM_HEADING, BoomKeys.USER_TAXONOMY_FILENAME,
-                    self.user_taxonomy_base_filename)
 
         # Expiration date triggering re-query and computation
         config.set(
@@ -1448,13 +1438,14 @@ class BOOMFiller(LMObject):
             # Boom requires iDigBio data
             boom_cmd.inputs.extend(idig_cmd.outputs)
 
+        # Todo: Add rule to index taxonomy from db-exported CSV file AFTER boom 
         # Add taxonomy before Boom, if taxonomy is specified
-        cat_tax_cmd, tax_success_fname = self._get_taxonomy_command(target_dir)
-        if cat_tax_cmd:
-            # Add catalog taxonomy command to this Makeflow
-            rules.append(cat_tax_cmd.get_makeflow_rule(local=True))
-            # Boom requires catalog taxonomy completion
-            boom_cmd.inputs.append(tax_success_fname)
+        # cat_tax_cmd, tax_success_fname = self._get_taxonomy_command(target_dir)
+        # if cat_tax_cmd:
+        #     # Add catalog taxonomy command to this Makeflow
+        #     rules.append(cat_tax_cmd.get_makeflow_rule(local=True))
+        #     # Boom requires catalog taxonomy completion
+        #     boom_cmd.inputs.append(tax_success_fname)
 
         # Add boom command to this Makeflow
         rules.append(boom_cmd.get_makeflow_rule(local=True))

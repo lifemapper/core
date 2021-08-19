@@ -106,7 +106,6 @@ class BoomKeys:
 
     TREE = 'TREE'
     TROUBLESHOOTERS = 'TROUBLESHOOTERS'
-    TAXONOMY_FILENAME = 'TAXONOMY_FILENAME'
 
 
 # .............................................................................

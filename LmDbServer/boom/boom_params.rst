@@ -13,7 +13,6 @@ EPSG
 DATA_SOURCE (GBIF, USER, EXISTING, TAXON_IDS, TAXON_NAMES)
   if USER or GBIF, need OCC_DATA_NAME
                         OCC_DATA_DELIMITER
-          then optional TAXONOMY_FILENAME (not yet implemented)
   if EXISTING then need OCC_ID_FILENAME
   if TAXON_IDS then need  TAXON_ID_FILENAME
 
