@@ -394,8 +394,8 @@ self = boomer
 # ........
 workdir = self.potato_bushel.get_relative_directory()
 
-(squid, spud_rules, idx_success_filename
- ) = self.christopher.start_walken(workdir)
+(squid, spud_rules, idx_success_filename) = self.christopher.start_walken(workdir)
+
 # ........
 self = boomer.christopher
 work_dir = workdir
@@ -418,93 +418,5 @@ squid = occ.squid
 
 occ_work_dir = 'occ_{}'.format(occ.get_id())
 sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
-
-# If we have enough points to model
-# TODO: why is boomer creating projections for occsets with < min points??
-if occ.query_count >= self.min_points:
-    for alg in self.algorithms:
-        prjs = []
-        mtx_cols = []
-        for prj_scen in self.prj_scens:
-            pamcode = '{}_{}'.format(prj_scen.code, alg.code)
-            prj = self._find_or_insert_sdm_project(
-                occ, alg, prj_scen, gmt().mjd)
-            if prj is not None:
-                prjs.append(prj)
-                mtx = self.global_pams[pamcode]
-                mtx_col = self._find_or_insert_intersect(
-                    prj, mtx, curr_time)
-                if mtx_col is not None:
-                    mtx_cols.append(mtx_col)
-        do_sdm = self._do_compute_sdm(occ, prjs, mtx_cols)
-        self.log.info(
-            ('    Will compute for Grid {} alg {}: {} projs, {}'
-             'intersects').format(
-                 gs_id, alg.code, len(prjs), len(mtx_cols)))
-
-        if do_sdm:
-            # Add SDM commands for the algorithm
-            self._fill_sweep_config(
-                sweep_config, alg, occ, prjs, mtx_cols)
-else:
-    do_sdm = self._do_compute_sdm(occ, [], [])
-    if do_sdm:
-        # Only add the occurrence set to the sweep config.  Empty
-        #    lists for projections and PAVs will omit those objects
-        self._fill_sweep_config(
-            sweep_config, None, occ, [], [])
-
-# Only add rules if we have something to compute
-num_comps = sum([
-    len(sweep_config.occurrence_sets),
-    len(sweep_config.models),
-    len(sweep_config.projections),
-    len(sweep_config.pavs)
-    ])
-if num_comps > 0:
-    # Write the sweep config file
-    species_config_filename = os.path.join(
-        os.path.dirname(occ.get_dlocation()),
-        'species_config_{}{}'.format(
-            occ.get_id(), LMFormat.JSON.ext))
-    sweep_config.save_config(species_config_filename)
-
-    # Add sweep rule
-    param_sweep_cmd = SpeciesParameterSweepCommand(
-        species_config_filename, sweep_config.get_input_files(),
-        sweep_config.get_output_files(work_dir), work_dir)
-    spud_rules.append(param_sweep_cmd.get_makeflow_rule())
-
-    # Add stockpile rule
-    stockpile_success_filename = os.path.join(
-        work_dir, occ_work_dir, 'occ_{}stockpile.success'.format(
-            occ.get_id()))
-    stockpile_cmd = MultiStockpileCommand(
-        os.path.join(work_dir, sweep_config.stockpile_filename),
-        stockpile_success_filename,
-        pav_filename=os.path.join(
-            work_dir, sweep_config.pavs_filename))
-    spud_rules.append(
-        stockpile_cmd.get_makeflow_rule(local=True))
-
-    # Add multi-index rule if we added PAVs
-    if len(sweep_config.pavs) > 0:
-        index_pavs_document_filename = os.path.join(
-            work_dir, occ_work_dir, 'solr_pavs_post{}'.format(
-                LMFormat.XML.ext))
-        index_cmd = MultiIndexPAVCommand(
-            os.path.join(work_dir, sweep_config.pavs_filename),
-            index_pavs_document_filename)
-        spud_rules.append(index_cmd.get_makeflow_rule(local=True))
-
-
-
-# # while self.keep_walken:
-# self.process_one_species()
-# count += 1
-
-
-# boomer.process_all_species()
-
 
 """

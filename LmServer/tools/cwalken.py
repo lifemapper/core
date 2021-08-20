@@ -110,7 +110,7 @@ class ChristopherWalken(LMObject):
         # Global PAM inputs
         (self.boom_gridset, self.intersect_params) = self._get_global_pam_objects()
         self._obsolete_time = self.boom_gridset.mod_time
-        # Reset computation time to gridset modtime
+        # Reset expiration date to gridset modtime
         self.weapon_of_choice.reset_expiration_date(self._obsolete_time)
         self.num_permutations = self._get_boom_or_default(
             BoomKeys.NUM_PERMUTATIONS, default_value=DEFAULT_NUM_PERMUTATIONS)
