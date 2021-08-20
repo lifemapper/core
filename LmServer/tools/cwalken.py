@@ -235,7 +235,6 @@ class ChristopherWalken(LMObject):
             tzinfo=datetime.timezone.utc)).mjd
 
         # Copy public data to user space
-        # TODO: Handle taxonomy, use_gbif_taxonomy=??
         if data_source == SpeciesDatasource.EXISTING:
             occ_id_fname = self._get_boom_or_default(BoomKeys.OCC_ID_FILENAME)
             weapon_of_choice = ExistingWoC(

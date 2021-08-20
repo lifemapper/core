@@ -15,8 +15,7 @@ from LmServer.common.localconstants import SMTP_SENDER
 # ............................................................................
 # ............................................................................
 class LMAbstractObject(LMObject):
-    """Base class for all abstract objects in the Lifemapper project
-    """
+    """Base class for all abstract objects in the Lifemapper project"""
     # ................................
     @staticmethod
     def abstract():
@@ -30,8 +29,7 @@ class LMAbstractObject(LMObject):
 
 # ............................................................................
 class LMSpatialObject(LMObject):
-    """Superclass for all Lifemapper spatial objects
-    """
+    """Superclass for all Lifemapper spatial objects"""
     # ................................
     def __init__(self, epsg_code, bbox, map_units):
         """LMSpatialObject superclass constructor
@@ -66,8 +64,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @staticmethod
     def get_srs():
-        """Get the spatial reference system
-        """
+        """Get the spatial reference system"""
         raise LMError('get_srs is only implemented on subclasses')
 
     # ................................
@@ -163,8 +160,7 @@ class LMSpatialObject(LMObject):
 
     # ................................
     def get_dimensions_by_bbox(self, bbox=None, limit_width=1000):
-        """Get the dimensions by the bounding box
-        """
+        """Get the dimensions by the bounding box"""
         if bbox is None or len(bbox) != 4:
             bbox = self._bbox
         ratio = (bbox[3] - bbox[1]) / (bbox[2] - bbox[0])
@@ -173,14 +169,12 @@ class LMSpatialObject(LMObject):
 
     # ................................
     def _get_bbox(self):
-        """Gets the bounding box tuple
-        """
+        """Gets the bounding box tuple"""
         return self._bbox
 
     # ................................
     def _set_bbox(self, bbox):
-        """Sets the bounding box
-        """
+        """Sets the bounding box"""
         if bbox is None:
             self._bbox = bbox
 
@@ -224,8 +218,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @classmethod
     def get_extent_string(cls, bbox_list, separator=' '):
-        """Get the bbox of the dataset as a string of separted values.
-        """
+        """Get the bbox of the dataset as a string of separated values."""
         bbox_str = None
         if bbox_list is not None:
             bbox_str = ('{:.2f}{sep}{:.2f}{sep}{:.2f}{sep}{:.2f}'.format(
@@ -260,8 +253,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @property
     def min_x(self):
-        """Gets the minimum x value
-        """
+        """Gets the minimum x value"""
         if self._bbox is not None:
             return self._bbox[0]
 
@@ -270,8 +262,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @property
     def min_y(self):
-        """Gets the minimum y value
-        """
+        """Gets the minimum y value"""
         if self._bbox is not None:
             return self._bbox[1]
 
@@ -280,8 +271,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @property
     def max_x(self):
-        """Gets the maximum x value
-        """
+        """Gets the maximum x value"""
         if self._bbox is not None:
             return self._bbox[2]
 
@@ -290,8 +280,7 @@ class LMSpatialObject(LMObject):
     # ................................
     @property
     def max_y(self):
-        """Gets the maximum y value
-        """
+        """Gets the maximum y value"""
         if self._bbox is not None:
             return self._bbox[3]
 
@@ -583,8 +572,7 @@ class LmHTTPError(LMError):
 
 # .............................................................................
 class LMMessage(LMObject):
-    """Class for communication, by email, text, etc
-    """
+    """Class for communication, by email, text, etc"""
 
     def __init__(self, body, to_addresses, from_address=SMTP_SENDER,
                  subject=None):

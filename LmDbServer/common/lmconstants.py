@@ -1,39 +1,8 @@
-"""LmDbServer constants
-"""
-import os.path
-
-from LmDbServer.common.localconstants import (
-    GBIF_PROVIDER_FILENAME, GBIF_TAXONOMY_FILENAME)
-from LmServer.common.lmconstants import SPECIES_DATA_PATH
-
+"""LmDbServer constants"""
 try:
     from osgeo.ogr import wkbPolygon
 except ImportError:
     wkbPolygon = 3
-
-# from LmCommon.common.lmconstants import LMFormat
-# from LmServer.common.localconstants import PID_PATH
-
-# ............................................................................
-
-# BOOM_PID_FILE = os.path.join(PID_PATH, 'daboom.pid')
-# GBIF_DUMP_FILE = os.path.join(SPECIES_DATA_PATH, GBIF_OCCURRENCE_FILENAME)
-GBIF_TAXONOMY_DUMP_FILE = os.path.join(
-    SPECIES_DATA_PATH, GBIF_TAXONOMY_FILENAME)
-GBIF_PROVIDER_DUMP_FILE = os.path.join(
-    SPECIES_DATA_PATH, GBIF_PROVIDER_FILENAME)
-# BISON_TSN_FILE = os.path.join(SPECIES_DATA_PATH, BISON_TSN_FILENAME)
-
-# IDIG_OCCURRENCE_DIR = os.path.join(SPECIES_DATA_PATH, IDIG_OCCURRENCE_DATA)
-# IDIG_OCCURRENCE_CSV = os.path.join(
-#     SPECIES_DATA_PATH, IDIG_OCCURRENCE_DATA + LMFormat.CSV.ext)
-# IDIG_OCCURRENCE_META = os.path.join(
-#     SPECIES_DATA_PATH, IDIG_OCCURRENCE_DATA + LMFormat.METADATA.ext)
-#
-# USER_OCCURRENCE_CSV = os.path.join(
-#     SPECIES_DATA_PATH, USER_OCCURRENCE_DATA + LMFormat.CSV.ext)
-# USER_OCCURRENCE_META = os.path.join(
-#     SPECIES_DATA_PATH, USER_OCCURRENCE_DATA + LMFormat.METADATA.ext)
 
 
 # ............................................................................
@@ -51,12 +20,7 @@ class SpeciesDatasource:
 
     GBIF = 'GBIF'
     """The default or boom config file must specify GBIF_OCCURRENCE_FILENAME, a
-        CSV file (with extension) grouped by TaxonId.  Two additional files may
-        be provided:
-            1) GBIF_TAXONOMY_FILENAME (with extension) containing CSV data for
-                the GBIF backbone taxonomy of the species in the data file
-            2) GBIF_PROVIDER_FILENAME (with extension) containing CSV data for
-                the data providers referenced in the data file.
+        CSV file (with extension) grouped by TaxonId.
     """
 
     USER = 'USER'
