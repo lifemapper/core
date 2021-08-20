@@ -1,4 +1,13 @@
 
+Jobs stuck in qw status
+------------------------
+Check SGE (sgemaster.<FQDN>) on Frontend, restart if not "active (running)"::
+	systemctl status sgemaster.notyeti-194
+	systemctl restart sgemaster.notyeti-194
+
+Check SGE (sgeexecd.<FQDN>) on the nodes, restart if not "active (running)".::
+	rocks run host compute "systemctl status sgeexecd.notyeti-194"
+	rocks run host compute "systemctl restart sgeexecd.notyeti-194"
 
 Matt Daemon exits after one iteration
 -------------------------------------
