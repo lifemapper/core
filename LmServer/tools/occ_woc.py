@@ -315,71 +315,6 @@ class _SpeciesWeaponOfChoice(LMObject):
         return occ
 
     # ................................
-    def _get_insert_sci_name_for_gbif_species_key(self, taxon_key,
-                                                  taxon_count):
-        """Returns an existing or newly inserted ScientificName
-        """
-        sci_name = self._scribe.find_or_insert_taxon(
-            taxon_source_id=self._taxon_source_id, taxon_key=taxon_key)
-        if sci_name is not None:
-            self.log.info(
-                'Found sci_name for taxon_key {}, {}, with {} points'.format(
-                    taxon_key, sci_name.scientific_name, taxon_count))
-        else:
-            # Use API to get and insert species name
-            try:
-                (rank_str, sciname_str, canonical_str, accepted_key,
-                 accepted_str, nub_key, tax_status, kingdom_str, phylum_str,
-                 class_str, order_str, family_str, genus_str, species_str,
-                 genus_key, species_key, log_lines
-                 ) = GbifAPI.get_taxonomy(taxon_key)
-            except Exception as err:
-                self.log.info(
-                    'Failed lookup for key {}, ({})'.format(taxon_key, err))
-            else:
-                # if no species key, this is not a species
-                if rank_str in ('SPECIES', 'GENUS'):
-                    if accepted_key is not None:
-                        # Update to accepted values
-                        taxon_key = accepted_key
-                        sciname_str = accepted_str
-                    else:
-                        self.log.warning(
-                            'No accepted key for taxon_key {}'.format(
-                                taxon_key))
-                        return None
-
-                    curr_time = gmt().mjd
-                    # Do not tie GBIF taxonomy to one userid
-                    s_name = ScientificName(
-                        sciname_str, rank=rank_str,
-                        canonical_name=canonical_str, squid=None,
-                        last_occurrence_count=taxon_count, kingdom=kingdom_str,
-                        phylum=phylum_str, class_=class_str, order_=order_str,
-                        family=family_str, genus=genus_str, mod_time=curr_time,
-                        taxonomy_source_id=self._taxon_source_id,
-                        taxonomy_source_key=taxon_key,
-                        taxonomy_source_genus_key=genus_key,
-                        taxonomy_source_species_key=species_key)
-                    try:
-                        sci_name = self._scribe.find_or_insert_taxon(
-                            sci_name=s_name)
-                        self.log.info(
-                            'Inserted sci_name for taxon_key {}, {}'.format(
-                                taxon_key, sci_name.scientific_name))
-                    except LMError as lme:
-                        raise lme
-                    except Exception as err:
-                        raise LMError(
-                            'Failed on taxon_key {}, linenum {}'.format(
-                                taxon_key, self._line_num),
-                            err, line_num=self.get_line_num())
-                else:
-                    self.log.info(
-                        'Taxon key ({}) is not accepted'.format(taxon_key))
-        return sci_name
-
-    # ................................
     @staticmethod
     def _raise_subclass_error():
         raise LMError('Function must be implemented in subclass')
@@ -618,8 +553,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 the OccurrenceLayer.displayname will use the GroupBy value
         """
         occ = None
-        (data_chunk, taxon_key, taxon_name
-         ) = self.occ_parser.pull_current_chunk()
+        (data_chunk, taxon_key, taxon_name) = self.occ_parser.pull_current_chunk()
         if data_chunk:
             # TODO: enable generic replacement lookup
             # if self._replacements and self._replace_col:
@@ -627,7 +561,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             # Get or insert ScientificName (squid)
             if self.use_gbif_taxonomy:
                 # returns None if GBIF API does NOT return this or another key
-                #    as ACCEPTED
+                #    as ACCEPTED, or if parsing error indicated by non-integer taxon_key
                 sci_name = self._get_insert_sci_name_for_gbif_species_key(
                     taxon_key, len(data_chunk))
             else:
@@ -672,6 +606,79 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 with open(raw_meta_dloc, 'w', encoding=ENCODING) as meta_f:
                     json.dump(metadata, meta_f)
         return raw_dloc, raw_meta_dloc
+
+    # ................................
+    def _get_insert_sci_name_for_gbif_species_key(self, taxon_key,
+                                                  taxon_count):
+        """Returns an existing or newly inserted ScientificName
+        """
+        try: 
+            int(taxon_key)
+        except:
+            self.log.info('Parsing error: taxon_key {} is not an integer, linenum {}'.format(
+                taxon_key, self._line_num))
+            return None
+        else:            
+            sci_name = self._scribe.find_or_insert_taxon(
+                taxon_source_id=self._taxon_source_id, taxon_key=taxon_key)
+            
+        if sci_name is not None:
+            self.log.info(
+                'Found sci_name for taxon_key {}, {}, with {} points'.format(
+                    taxon_key, sci_name.scientific_name, taxon_count))
+        else:
+            # Use API to get and insert species name
+            try:
+                (rank_str, sciname_str, canonical_str, accepted_key,
+                 accepted_str, nub_key, tax_status, kingdom_str, phylum_str,
+                 class_str, order_str, family_str, genus_str, species_str,
+                 genus_key, species_key, log_lines
+                 ) = GbifAPI.get_taxonomy(taxon_key)
+            except Exception as err:
+                self.log.info(
+                    'Failed lookup for key {}, ({})'.format(taxon_key, err))
+            else:
+                # if no species key, this is not a species
+                if rank_str in ('SPECIES', 'GENUS'):
+                    if accepted_key is not None:
+                        # Update to accepted values
+                        taxon_key = accepted_key
+                        sciname_str = accepted_str
+                    else:
+                        self.log.warning(
+                            'No accepted key for taxon_key {}'.format(
+                                taxon_key))
+                        return None
+
+                    curr_time = gmt().mjd
+                    # Do not tie GBIF taxonomy to one userid
+                    s_name = ScientificName(
+                        sciname_str, rank=rank_str,
+                        canonical_name=canonical_str, squid=None,
+                        last_occurrence_count=taxon_count, kingdom=kingdom_str,
+                        phylum=phylum_str, class_=class_str, order_=order_str,
+                        family=family_str, genus=genus_str, mod_time=curr_time,
+                        taxonomy_source_id=self._taxon_source_id,
+                        taxonomy_source_key=taxon_key,
+                        taxonomy_source_genus_key=genus_key,
+                        taxonomy_source_species_key=species_key)
+                    try:
+                        sci_name = self._scribe.find_or_insert_taxon(
+                            sci_name=s_name)
+                        self.log.info(
+                            'Inserted sci_name for taxon_key {}, {}'.format(
+                                taxon_key, sci_name.scientific_name))
+                    except LMError as lme:
+                        raise lme
+                    except Exception as err:
+                        raise LMError(
+                            'Failed on taxon_key {}, linenum {}'.format(
+                                taxon_key, self._line_num),
+                            err, line_num=self.get_line_num())
+                else:
+                    self.log.info(
+                        'Taxon key ({}) is not accepted'.format(taxon_key))
+        return sci_name
 
 
 # ..............................................................................
