@@ -840,7 +840,7 @@ class ChristopherWalken(LMObject):
         prjs = self._scribe.list_sdm_projects(
             0, 100, user_id=self.user_id, occ_set_id=occ.get_id(), atom=False)
         for prj in prjs:
-            for mtx in self.global_pams:
+            for mtx in self.global_pams.values():
                 mtxcols = self._scribe.list_matrix_columns(
                     0, 100, user_id=self.user_id, matrix_id=mtx.get_id(), 
                     layer_id=prj.get_id(), atom=False)

@@ -378,7 +378,7 @@ if __name__ == '__main__':
 from LmDbServer.boom.boomer import *
 from LmServer.tools.cwalken import *
 
-config_fname = '/share/lm/data/archive/kubi/public_boom-2021.07.14.ini'
+config_fname = '/share/lm/data/archive/kubi/public_boom-2021.08.16.ini'
 boombasename, _ = os.path.splitext(config_fname)
 success_fname = boombasename + '.success'
 
@@ -396,27 +396,5 @@ workdir = self.potato_bushel.get_relative_directory()
 
 (squid, spud_rules, idx_success_filename) = self.christopher.start_walken(workdir)
 
-# ........
-self = boomer.christopher
-work_dir = workdir
-
-squid = None
-spud_rules = []
-index_pavs_document_filename = None
-gs_id = 0
-curr_time = gmt().mjd
-
-try:
-    gs_id = self.boom_gridset.get_id()
-except Exception:
-    self.log.warning('Missing self.boom_gridset id!!')
-
-woc = self.weapon_of_choice
-occ = self.weapon_of_choice.get_one()
-
-squid = occ.squid
-
-occ_work_dir = 'occ_{}'.format(occ.get_id())
-sweep_config = ParameterSweepConfiguration(work_dir=occ_work_dir)
 
 """
