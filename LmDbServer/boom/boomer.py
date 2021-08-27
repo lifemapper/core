@@ -244,8 +244,7 @@ class Boomer(LMObject):
     # .............................
     def restart_walken(self):
         """Restart species processing."""
-        if self.christopher.complete() and\
-                self.christopher.more_data_to_process():
+        if self.christopher.complete() and self.christopher.more_data_to_process():
             # Rename old file
             oldfname = self.christopher.weapon_of_choice.occ_parser.csv_fname
             ts = lt.localtime().tuple()
