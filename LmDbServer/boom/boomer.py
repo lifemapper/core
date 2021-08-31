@@ -87,7 +87,8 @@ class Boomer(LMObject):
 
         # MFChain for lots of spuds
         self.potato_bushel = None
-        self.squid_names = None
+        self.spuds_in_bushel = 0
+        # self.squid_names = None
         # Stop indicator
         self.keep_walken = False
 
@@ -155,7 +156,8 @@ class Boomer(LMObject):
         self.master_potato_head = None
         self.log.info('Create first potato')
         self.potato_bushel = self._create_bushel_makeflow()
-        self.squid_names = []
+        self.spuds_in_bushel = 0
+        # self.squid_names = []
 
     # .............................
     def process_one_species(self):
@@ -172,7 +174,8 @@ class Boomer(LMObject):
 
             # TODO: Track squids
             if squid is not None:
-                self.squid_names.append(squid)
+                self.spuds_in_bushel += 1
+                # self.squid_names.append(squid)
 
             self.keep_walken = not self.christopher.complete
             # TODO: Master process for occurrence only? SDM only?
@@ -180,13 +183,13 @@ class Boomer(LMObject):
                 self.log.debug('Processing spud for potatoes')
                 self.potato_bushel.add_commands(spud_rules)
                 # TODO: Don't write triage file, but don't delete code
-                if not self.do_pam_stats and len(
-                        self.squid_names) >= SPUD_LIMIT:
+                # if not self.do_pam_stats and len(
+                #         self.squid_names) >= SPUD_LIMIT:
+                if not self.do_pam_stats and self.spuds_in_bushel >= SPUD_LIMIT:
                     self.rotate_potatoes()
             self.log.info('-----------------')
         except Exception as e:
-            self.log.debug('Exception {} on spud, closing ...'.format(str(e)))
-            self.close()
+            self.log.error('Exception {} on one species spud ...'.format(str(e)))
             raise e
 
     # .............................
@@ -207,7 +210,7 @@ class Boomer(LMObject):
                 self._scribe.update_object(self.potato_bushel)
                 self.log.info(
                     '   Wrote potato_bushel {} ({} spuds)'.format(
-                        self.potato_bushel.obj_id, len(self.squid_names)))
+                        self.potato_bushel.obj_id, self.spuds_in_bushel)) #len(self.squid_names)))
             else:
                 self.log.info(
                     '   No commands in potato_bushel {}'.format(
@@ -226,7 +229,8 @@ class Boomer(LMObject):
         if not self.christopher.complete and not self.do_pam_stats:
             self.potato_bushel = self._create_bushel_makeflow()
             self.log.info('Create new potato')
-            self.squid_names = []
+            self.spuds_in_bushel = 0
+            # self.squid_names = []
 
     # .............................
     def close(self):
@@ -240,8 +244,7 @@ class Boomer(LMObject):
     # .............................
     def restart_walken(self):
         """Restart species processing."""
-        if self.christopher.complete() and\
-                self.christopher.more_data_to_process():
+        if self.christopher.complete() and self.christopher.more_data_to_process():
             # Rename old file
             oldfname = self.christopher.weapon_of_choice.occ_parser.csv_fname
             ts = lt.localtime().tuple()
@@ -319,8 +322,16 @@ class Boomer(LMObject):
         print(('processAll with config_fname = {}'.format(self.config_fname)))
         count = 0
         while self.keep_walken:
-            self.process_one_species()
-            count += 1
+            try:
+                self.process_one_species()
+                count += 1
+            except:
+                # if 10% of this bushel has failed, stop for debugging
+                if self.spuds_in_bushel > (SPUD_LIMIT / 20 ):
+                    self.log.error('Failed to process 10% of bushel, examine data and code for error')
+                    self.keep_walken = False
+                else:
+                    self.log.error('Failed to process species, moving on')
         if not self.keep_walken:
             self.close()
         self.write_success_file(

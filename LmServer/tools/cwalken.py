@@ -614,8 +614,9 @@ class ChristopherWalken(LMObject):
             # TODO: why is boomer creating projections for occsets with < min points??
             if occ.query_count < self.min_points:
                 self._delete_projs_and_intersections_for_occ(occ)
-                do_sdm = self._do_compute_sdm(occ, [], [])
-                if do_sdm:
+                do_occ = self._do_compute_sdm(occ, [], [])
+                if do_occ:
+                    self.log.info('Compute only occ for {}'.format(occ.display_name))
                     self._fill_sweep_config(sweep_config, None, occ, [], [])
             else:
                 for alg in self.algorithms:

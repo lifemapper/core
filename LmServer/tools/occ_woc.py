@@ -568,8 +568,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
                 if not taxon_name:
                     taxon_name = taxon_key
                 bbsci_name = ScientificName(taxon_name, user_id=self.user_id)
-                sci_name = self._scribe.find_or_insert_taxon(
-                    sci_name=bbsci_name)
+                sci_name = self._scribe.find_or_insert_taxon(sci_name=bbsci_name)
 
             if sci_name is not None:
                 occ = self._find_or_insert_occurrence_set(
@@ -618,7 +617,7 @@ class UserWoC(_SpeciesWeaponOfChoice):
             self.log.info('Parsing error: taxon_key {} is not an integer, linenum {}'.format(
                 taxon_key, self._line_num))
             return None
-        else:            
+        else:
             sci_name = self._scribe.find_or_insert_taxon(
                 taxon_source_id=self._taxon_source_id, taxon_key=taxon_key)
             

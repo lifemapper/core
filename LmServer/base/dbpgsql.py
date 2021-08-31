@@ -428,7 +428,7 @@ class DbPostgresql(LMAbstractObject):
         self.last_commands = [cmd]
         try:
             rows, idxs = self._send_command(cmd)
-        except LMError as err:
+        except:
             # Sometimes needs a reset, try up to 5 times
             tries = 0
             success = False
@@ -439,15 +439,15 @@ class DbPostgresql(LMAbstractObject):
                 try:
                     rows, idxs = self._send_command(cmd)
                     success = True
-                except LMError as err:
+                except:
                     self.log.warning(
                         '   #{} Trying to re-open, is_open {}, ...'.format(
                             tries, self.is_open))
                     self.reopen()
             if not success:
                 raise LMError(
-                    'Failed to execute command {}, pconn={}, err={}'.format(
-                        cmd, self.pconn, err))
+                    'Failed to execute command {} after {} tries, pconn={}'.format(
+                        cmd, self.pconn, tries))
         return rows, idxs
 
     # ................................
