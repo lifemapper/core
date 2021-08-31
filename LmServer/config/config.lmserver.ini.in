@@ -104,7 +104,7 @@ EXTRA_MAKEFLOW_OPTIONS : --local-cores=2 -T wq -t 600 -u 600
 
 ; Use this option to specify extra worker factory options other than min / max
 ;    workers and worker options
-EXTRA_WORKER_FACTORY_OPTIONS : -M lifemapper.\\* -T sge --workers-per-cycle=0
+EXTRA_WORKER_FACTORY_OPTIONS : -M lifemapper.\\* -T sge --workers-per-cycle=0 -o @LMSCRATCHDISK@/log/worker.log -O 1024
 
 ; .............................................................................
 [LmClient - Open Tree of Life]
