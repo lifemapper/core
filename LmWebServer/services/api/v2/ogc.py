@@ -130,7 +130,12 @@ class MapService(LmService):
             width: The width (in pixels) of the returned map
         """
         self.map_name = map_name
-        map_file_name = self._get_map_filename(map_name)
+        try:
+            map_file_name = self._get_map_filename(map_name)
+        except Exception as e:
+            raise cherrypy.HTTPError(
+                HTTPStatus.BAD_REQUEST,
+                'Cannot parse map_name {}  ({})'.format(map_name, e))
 
         # Use only when getting a new template or GBIF dump
         cutofftime = datetime.datetime(
@@ -463,6 +468,7 @@ PALETTES = (
 
 OBSOLETE_CUTOFF_YMD = (2021, 7, 16, 11, 29, 15)
 
+namestr = 'Necrophila japonica'
 map_name = 'data_346'
 ptlyr = 'occ_346'
 prjlayer = 'prj_297'
