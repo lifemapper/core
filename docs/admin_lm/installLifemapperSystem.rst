@@ -22,11 +22,6 @@ Current versions
 
      lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
 
-#. **Caution** If want to **completely destroy** existing install, including
-   deleting the database and clearing lm data from filesystem, run::
-
-   # bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
-   # bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
 
 Update existing code and script RPMs (without new roll)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,65 +54,85 @@ Update existing code and script RPMs (without new roll)
 Install both rolls on Frontend
 ------------------------------
 
-New install
-~~~~~~~~~~~
-If you do not need to save the existing data files and database records, 
-run the cleanRoll scripts for each roll. 
+* Update existing install
+	If you **do** need to save the existing data files and database records
    
-#. **Add a new roll and rpms**, ensuring that old rpms/files are replaced.  
-   Replace the following roll name with the latest version, identified
-   at the top of this document::
+	#. **Add and enable new roll(s)**.
+	   Replace the following roll name with the latest version::
+	
+	   rocks add roll lifemapper-server-*.iso clean=1
+	   rocks add roll lifemapper-compute-*.iso clean=1
+	   rocks enable roll lifemapper-compute version=(new)yyyy.mm.dd
+	   rocks enable roll lifemapper-server version=(new)yyyy.mm.dd
+	
+	#. **Disable old roll versions**
+	   ::
+	   rocks disable roll lifemapper-compute version=(old)yyyy.mm.dd
+	   rocks disable roll lifemapper-server version=(old)yyyy.mm.dd
 
-   # rocks add roll lifemapper-server-*.iso clean=1
-   # rocks add roll lifemapper-compute-*.iso clean=1
+* New install
+	If you do not need to save the existing data files and database records.
+	
+	#. **Caution** If want to **completely destroy** existing install, including
+	   deleting the database and clearing lm data from filesystem, run these scripts 
+	   which also will rebuild the distro::
+	
+		   bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
+		   bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
+	   
+	#. **Add a new roll and enable**, ensuring that old rpms/files are replaced.  
+	   Replace the following roll name with the latest version, identified
+	   at the top of this document::
+	
+		   rocks add roll lifemapper-server-*.iso clean=1
+		   rocks add roll lifemapper-compute-*.iso clean=1
+		   rocks enable roll lifemapper-compute lifemapper-server
+	
+	#. **IFF** installing compute roll first or alone, manually set the 
+	   LM_dbserver and LM_webserver attributes.  If this server will also
+	   host the web/db server, set the value=true otherwise, value=<ip or FQDN>::
+	   
+			rocks add host attr localhost LM_webserver value=true
+			rocks add host attr localhost LM_dbserver value=true
    
+   
+Build and execute installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #. **Create distribution**::
-
-   # rocks enable roll lifemapper-compute lifemapper-server
-   # (module unload opt-python; \
+     (module unload opt-python; \
       cd /export/rocks/install; \
       rocks create distro; \
       yum clean all)
 
 #. **Create and run LmServer/LmCompute scripts**::
 
-    # (module unload opt-python; \
+    (module unload opt-python; \
        rocks run roll lifemapper-compute > add-compute.sh; \
        bash add-compute.sh 2>&1 | tee add-compute.out)
 
-    # (module unload opt-python; \
+    (module unload opt-python; \
        rocks run roll lifemapper-server > add-server.sh; \
        bash add-server.sh 2>&1 | tee add-server.out)
 
-#. **IFF** installing compute roll first or alone, manually set the 
-   LM_dbserver and LM_webserver attributes.  If this server will also
-   host the web/db server, set the value=true otherwise, value=<ip or FQDN>::
-   
-    # rocks add host attr localhost LM_webserver value=true
-    # rocks add host attr localhost LM_dbserver value=true
-
-    
-Finish install
---------------
-
 #. **Reboot front end** ::  
 
-   # shutdown -r now
+     shutdown -r now
    
 Install nodes from Frontend
 ---------------------------
 
 #. **Rebuild the compute nodes** ::  
 
-   # rocks set host boot compute action=install
-   # rocks run host compute reboot     
+   rocks set host boot compute action=install
+   rocks run host compute reboot     
 
 Install bugfixes
 ----------------
 
 #. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
 
-   # /opt/lifemapper/rocks/bin/fixNodePermissions
+   /opt/lifemapper/rocks/bin/fixNodePermissions
       
 Start matt_daemon
 -----------------------
