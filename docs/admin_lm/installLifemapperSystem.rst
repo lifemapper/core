@@ -13,49 +13,17 @@ Current versions
 #. **Download** new LmServer and LmCompute rolls to server, then validate 
    checksums.  Replace filename with latest roll names::
 
-   # sha256sum -c lifemapper-*.sha
+   # sha512sum -c lifemapper-*.512
 
-(If update) Stop processes
---------------------------
-
-#. **Stop the mattDaemon** as lmwriter::
-
-     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
-
-
-Update existing code and script RPMs (without new roll)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
-   This will only update RPMs that are part of the original roll.
-   To add rpms that are not yet part of the rolls, put them into a directory 
-   shared from FE to nodes (/share/lm/). 
-   
-#. then rebuild distribution.  ::
-   
-   # (cd /export/rocks/install; rocks create distro; yum clean all)
-   # yum list updates
-   # yum update
-   
-#. Run scripts to update config and DB types/views/functions ::
-   
-   # /opt/lifemapper/rocks/bin/updateLM
-   
-#. Install new rpms on FE (only if re-installed roll)  ::
-   
-   # rpm -iv /share/lm/*rpm
-
-#. Update nodes ::
-   
-   # rocks set host boot compute action=install
-   # rocks run host compute reboot
-
-   
 
 Install both rolls on Frontend
 ------------------------------
 
-* Update existing install
-	If you **do** need to save the existing data files and database records
+* Update existing install: to save the existing data files and database records
+
+	#. **Stop the mattDaemon** as lmwriter::
+	
+	     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
    
 	#. **Add and enable new roll(s)**.
 	   Replace the following roll name with the latest version::
@@ -70,12 +38,10 @@ Install both rolls on Frontend
 	   rocks disable roll lifemapper-compute version=(old)yyyy.mm.dd
 	   rocks disable roll lifemapper-server version=(old)yyyy.mm.dd
 
-* New install
-	If you do not need to save the existing data files and database records.
-	
-	#. **Caution** If want to **completely destroy** existing install, including
-	   deleting the database and clearing lm data from filesystem, run these scripts 
-	   which also will rebuild the distro::
+* New install: **Caution** Use only to **completely destroy** existing install, including
+	   deleting the database and clearing data from filesystem.
+	   
+	#. **Run scripts** to wipe data and rebuild the distro:: 
 	
 		   bash /opt/lifemapper/rocks/etc/clean-lm-server-roll.sh
 		   bash /opt/lifemapper/rocks/etc/clean-lm-compute-roll.sh
@@ -127,8 +93,8 @@ Install nodes from Frontend
    rocks set host boot compute action=install
    rocks run host compute reboot     
 
-Install bugfixes
-----------------
+(needed?) Install bugfixes
+--------------------------
 
 #. Compute Nodes - check/fix node group permissions on /state/partition1/lmscratch ::
 
@@ -139,7 +105,7 @@ Start matt_daemon
 
 #. Start makeflow with matt_daemon
 
-   # /opt/lifemapper/rocks/bin/matt_daemon
+   # /opt/lifemapper/rocks/bin/matt_daemon start
       
 Look for Errors
 ---------------
@@ -183,6 +149,34 @@ Check LmCompute
 
 Accepted species from GBIF:
 https://www.gbif.org/species/search?rank=SPECIES&dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&status=ACCEPTED&advanced=1
+
+
+Quick Fix: update existing code and script RPMs (without new roll)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
+   This will only update RPMs that are part of the original roll.
+   To add rpms that are not yet part of the rolls, put them into a directory 
+   shared from FE to nodes (/share/lm/). 
+   
+#. then rebuild distribution.  ::
+   
+   # (module unload opt-python; cd /export/rocks/install; rocks create distro; yum clean all)
+   # yum list updates
+   # yum update
+   
+#. Run scripts to update config and DB types/views/functions ::
+   
+   # /opt/lifemapper/rocks/bin/updateLM
+   
+#. Install new rpms on FE (only if re-installed roll)  ::
+   
+   # rpm -iv /share/lm/*rpm
+
+#. Update nodes ::
+   
+   # rocks set host boot compute action=install
+   # rocks run host compute reboot
+
 
 Troubleshooting
 ----------------
