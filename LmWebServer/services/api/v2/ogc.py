@@ -444,8 +444,13 @@ if __name__ == '__main__':
             
             
 """
-https://notyeti-194.lifemapper.org/api/v2/ogc?LAYERS=prj_297&MAP=data_346&SERVICE=WMS&VERSION=1.0.0&FORMAT=image%2Fpng&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326&BBOX=-180,-90,180,90&WIDTH=1200&HEIGHT=600
-https://notyeti-194.lifemapper.org/api/v2/ogc?service=WMS&request=GetMap&layers=bmng%2Cocc_1&styles=&format=image%2Fpng&transparent=true&version=1.1.0&map=data_1&height=256&width=256&srs=EPSG%3A4326&bbox=-90,0,0,66.51326044311188
+https://data.lifemapper.org/api/v2/ogc/
+data_872325?layers=occ_872325,prj_301203
+&service=wms&request=getmap&styles=&format=image%2Fpng&transparent=true&version=1.0&height=800&srs=EPSG%3A4326&width=1600&layerLabel=Occurrence%20Points&bbox=-180,-90,180,90
+
+https://dev.lifemapper.org/api/v2/ogc/
+data_4393?layers=occ_4393
+&service=wms&request=getmap&styles=&format=image%2Fpng&transparent=true&version=1.0&height=800&srs=EPSG%3A4326&width=1600&layerLabel=Occurrence%20Points&bbox=-180,-90,180,90
 
 import cherrypy
 import datetime
