@@ -21,6 +21,19 @@
   
 ## Running
   * submit jobs with Maxent and OM
+  * https://{FQDN}/biotaphy - submit jobs
+    * Anonymous
+      * Species list
+      * Taxonomy subset
+      * GBIF data
+      * CSV upload
+    * Logged in
+      * Log in
+      * Species list
+      * Taxonomy subset
+      * GBIF data
+      * CSV upload
+      * Log out
   	
   
 ## Edge cases
