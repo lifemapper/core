@@ -44,7 +44,7 @@ def get_map_content_for_proj(prj, scribe):
     if not os.path.exists(map_filename):
         map_svc = scribe.get_map_service_from_map_filename(map_filename)
         if map_svc is not None and map_svc.count > 0:
-            map_svc.write_map(MAP_TEMPLATE)
+            map_svc.write_map()
     map_params = [
         ('map', prj.map_name),
         ('bbox', str(prj.bbox).strip('(').strip(')')),
