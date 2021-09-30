@@ -117,14 +117,14 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         # Generate the model request XML file
         model_request_filename = os.path.join(
             self.work_dir, 'model_request.xml')
-        with open(model_request_filename, 'w', encoding=ENCODING) as req_f:
+        with open(model_request_filename, 'wt', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
-            if cnt.startswith("<?xml version"):
-                tmp = cnt.split('\n')
+            if cnt.startswith("<?xml version".encode()):
+                tmp = cnt.split('\n'.encode())
                 cnt = '\n'.join(tmp[1:])
 
-            req_f.write(cnt)
+            req_f.write(cnt.decode())
 
         model_options = [
             '-r {}'.format(model_request_filename),
@@ -177,14 +177,14 @@ class OpenModellerWrapper(ModelSoftwareWrapper):
         omr = OmProjectionRequest(
             ruleset_filename, layer_filenames, mask_filename=mask_filename)
 
-        with open(prj_request_filename, 'w', encoding=ENCODING) as req_f:
+        with open(prj_request_filename, 'wt', encoding=ENCODING) as req_f:
             cnt = omr.generate()
             # As of openModeller 1.3, need to remove <?xml ... first line
-            if cnt.startswith("<?xml version"):
-                tmp = cnt.split('\n')
+            if cnt.startswith("<?xml version".encode()):
+                tmp = cnt.split('\n'.encode())
                 cnt = '\n'.join(tmp[1:])
 
-            req_f.write(cnt)
+            req_f.write(cnt.decode())
 
         status_filename = os.path.join(self.work_dir, 'status.out')
 
@@ -328,7 +328,7 @@ class OmModelRequest(OmRequest):
         for local_id, x_coord, y_coord in self.points:
             SubElement(
                 presence_element, 'Point',
-                attrib={'Id': local_id, 'X': x_coord, 'Y': y_coord})
+                attrib={'Id': str(local_id), 'X': str(x_coord), 'Y': str(y_coord)})
 
         # Algorithm Element
         algorithm_element = SubElement(
@@ -340,29 +340,29 @@ class OmModelRequest(OmRequest):
             SubElement(
                 algorithm_parameters_element, 'Parameter',
                 attrib={'Id': param[PARAM_NAME_KEY],
-                        'Value': param[PARAM_VALUE_KEY]})
+                        'Value': str(param[PARAM_VALUE_KEY])})
 
         # Options Element
         options_element = SubElement(request_element, 'Options')
         for name, value in self.options:
-            SubElement(options_element, name, value=value)
+            SubElement(options_element, name, value=str(value))
 
         # Statistics Element
         stats_element = SubElement(request_element, 'Statistics')
         SubElement(
             stats_element, 'ConfusionMatrix',
             attrib={
-                'Threshold': self.stat_options['ConfusionMatrix']['Threshold']
+                'Threshold': str(self.stat_options['ConfusionMatrix']['Threshold'])
                 })
         SubElement(
             stats_element, 'RocCurve',
             attrib={
-                'Resolution': self.stat_options['RocCurve']['Resolution'],
-                'BackgroundPoints': self.stat_options[
-                    'RocCurve']['BackgroundPoints'],
-                'MaxOmission': self.stat_options['RocCurve']['MaxOmission']})
+                'Resolution': str(self.stat_options['RocCurve']['Resolution']),
+                'BackgroundPoints': str(self.stat_options[
+                    'RocCurve']['BackgroundPoints']),
+                'MaxOmission': str(self.stat_options['RocCurve']['MaxOmission'])})
 
-        return tostring(request_element)
+        return tostring(request_element, encoding=ENCODING)
 
 
 # .............................................................................
@@ -422,4 +422,4 @@ class OmProjectionRequest(OmRequest):
             output_parameters_element, 'TemplateLayer',
             attrib={'Id': self.mask_filename})
 
-        return tostring(request_element)
+        return tostring(request_element, encoding=ENCODING)
