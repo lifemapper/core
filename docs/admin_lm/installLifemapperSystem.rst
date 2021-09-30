@@ -37,6 +37,14 @@ Install both rolls on Frontend
 	   ::
 	   rocks disable roll lifemapper-compute version=(old)yyyy.mm.dd
 	   rocks disable roll lifemapper-server version=(old)yyyy.mm.dd
+	   
+	#. **Remove conflicting RPMs**
+	   rpm -evl --quiet --nodeps lifemapper-server
+	   rpm -evl --quiet --nodeps lifemapper-compute
+	   rpm -evl --quiet --nodeps rocks-lifemapper
+	   rpm -evl --quiet --nodeps rocks-lmcompute
+	   
+	#. Follow `Build and execute installation` instructions below
 
 * New install: **Caution** Use only to **completely destroy** existing install, including
 	   deleting the database and clearing data from filesystem.
@@ -61,6 +69,7 @@ Install both rolls on Frontend
 			rocks add host attr localhost LM_webserver value=true
 			rocks add host attr localhost LM_dbserver value=true
    
+	#. Follow `Build and execute installation` instructions below
    
 Build and execute installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
