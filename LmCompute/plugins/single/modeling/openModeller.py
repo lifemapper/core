@@ -270,7 +270,7 @@ class OmModelRequest(OmRequest):
             * Take options and statistic options as inputs
             * Constants
         """
-        super().__init__(self)
+        super().__init__()
         self.options = [
             # Ignore duplicate points (same coordinates)
             # ('OccurrencesFilter', 'SpatiallyUnique'),
@@ -367,8 +367,7 @@ class OmModelRequest(OmRequest):
 
 # .............................................................................
 class OmProjectionRequest(OmRequest):
-    """Class for generating openModeller projection requests
-    """
+    """Class for generating openModeller projection requests."""
 
     # .................................
     def __init__(self, ruleset_filename, layer_filenames, mask_filename=None):
@@ -379,7 +378,7 @@ class OmProjectionRequest(OmRequest):
             layer_filenames : A list of layers to project the ruleset on to.
             mask_filename : An optional mask layer for the projection.
         """
-        super().__init__(self)
+        super().__init__()
         self.layer_filenames = layer_filenames
         self.mask_filename = mask_filename
 
