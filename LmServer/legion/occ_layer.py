@@ -187,6 +187,19 @@ class OccurrenceLayer(OccurrenceType, Vector):
 
             return (x_val, y_val)
         return (None, None)
+    
+# ...............................................
+    def copy_for_user(self, user_id):
+        new_occ = OccurrenceLayer(
+            self.display_name, user_id, self.epsg_code, self.query_count, squid=self.squid, 
+            verify=self.verify, layer_metadata=self.layer_metadata, val_units=self.val_units, 
+            val_attribute=self.val_attribute, nodata_val=self.nodata_val,
+            min_val=self.min_val, max_val=self.max_val, map_units=self.map_units, 
+            resolution=self.resolution, bbox=self.bbox, fid_attribute=self.fid_attribute,
+            occ_metadata=self.param_metadata, sci_name=self.get_scientific_name(), 
+            status=self.status, status_mod_time=self.status_mod_time)
+        return new_occ
+
 
     # .............................
     def get_multipoint_wkt(self, ogr_format, feature_limit=None):
