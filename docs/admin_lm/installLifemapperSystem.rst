@@ -159,15 +159,18 @@ Check LmCompute
 Accepted species from GBIF:
 https://www.gbif.org/species/search?rank=SPECIES&dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&status=ACCEPTED&advanced=1
 
+Quick Fix: add new RPMs (without new roll)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Copy individual rpms to /share/lm/ then install on FE and nodes (if needed)::
+   
+   # rpm -iv /share/lm/*rpm
+   # rocks run host compute "rpm -iv /share/lm/*rpm"
 
 Quick Fix: update existing code and script RPMs (without new roll)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
    This will only update RPMs that are part of the original roll.
-   To add rpms that are not yet part of the rolls, put them into a directory 
-   shared from FE to nodes (/share/lm/). 
-   
-#. then rebuild distribution.  ::
+   then rebuild distribution.  ::
    
    # (module unload opt-python; cd /export/rocks/install; rocks create distro; yum clean all)
    # yum list updates
@@ -177,10 +180,6 @@ Quick Fix: update existing code and script RPMs (without new roll)
    
    # /opt/lifemapper/rocks/bin/updateLM
    
-#. Install new rpms on FE (only if re-installed roll)  ::
-   
-   # rpm -iv /share/lm/*rpm
-
 #. Update nodes ::
    
    # rocks set host boot compute action=install
