@@ -3,7 +3,8 @@
 import smtplib
 
 from LmBackend.common.lmobj import LMError
-from LmServer.common.localconstants import SMTP_SENDER, SMTP_SERVER
+from LmServer.common.lmconstants import SMTP_SENDER
+from LmServer.common.localconstants import SMTP_SERVER
 
 
 # .............................................................................
