@@ -7,7 +7,7 @@ Note:
 import os
 import pytest
 
-from LmServer.common.localconstants import WEBSERVICES_ROOT
+from LmServer.common.lmconstants import WEBSERVICES_ROOT
 from LmServer.common.log import UnittestLogger
 from LmServer.db.borg_scribe import BorgScribe
 from LmTest.service_tests.tools.lm_client import LmWebClient
