@@ -240,20 +240,20 @@ class UserUploadService(LmService):
 
         roles = metadata['role']
         for fld in metadata['field']:
-            if fld['fieldType'].lower() == 'string':
+            if fld['field_type'].lower() == 'string':
                 field_type = 'string'  # 4
-            elif fld['fieldType'].lower() == 'integer':
+            elif fld['field_type'].lower() == 'integer':
                 field_type = 'integer'  # 0
-            elif fld['fieldType'].lower() == 'real':
+            elif fld['field_type'].lower() == 'real':
                 field_type = 'real'  # 2
             else:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,
-                    'Field type: {} is unknown'.format(fld['fieldType']))
+                    'Field type: {} is unknown'.format(fld['field_type']))
             field_idx = fld['key']
 
             # If short name is None or has zero-length, get from csv
-            short_name = fld['shortName']
+            short_name = fld['short_name']
             if short_name is None or len(short_name) == 0:
                 short_name = headers[int(fld['key'])].strip()
             # If short name is too long
@@ -274,24 +274,24 @@ class UserUploadService(LmService):
             if 'geopoint' in list(roles.keys()) and fld[
                     'key'] == roles['geopoint']:
                 field_obj['role'] = 'geopoint'
-            elif 'taxaName' in list(roles.keys()) and fld[
-                    'key'] == roles['taxaName']:
-                field_obj['role'] = 'taxaName'
+            elif 'taxa_name' in list(roles.keys()) and fld[
+                    'key'] == roles['taxa_name']:
+                field_obj['role'] = 'taxaname'
             elif 'latitude' in list(roles.keys()) and fld[
                     'key'] == roles['latitude']:
                 field_obj['role'] = 'latitude'
             elif 'longitude' in list(roles.keys()) and fld[
                     'key'] == roles['longitude']:
                 field_obj['role'] = 'longitude'
-            elif 'uniqueId' in list(roles.keys()) and fld[
-                    'key'] == roles['uniqueId']:
-                field_obj['role'] = 'uniqueId'
-            elif 'groupBy' in list(roles.keys()) and fld[
-                    'key'] == roles['groupBy']:
+            elif 'unique_id' in list(roles.keys()) and fld[
+                    'key'] == roles['unique_id']:
+                field_obj['role'] = 'uniqueid'
+            elif 'group_by' in list(roles.keys()) and fld[
+                    'key'] == roles['group_by']:
                 field_obj['role'] = 'groupby'
             meta_obj[field_idx] = field_obj
 
-        with open(meta_filename, 'w') as out_f:
+        with open(meta_filename, 'wt') as out_f:
             json.dump(meta_obj, out_f)
 
         # Process file
