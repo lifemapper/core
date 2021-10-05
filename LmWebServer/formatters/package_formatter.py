@@ -305,27 +305,42 @@ def _add_sdms_to_package(zip_f, projections, scribe):
             sys_occ_path = '{}{}'.format(
                 os.path.splitext(occ.get_dlocation())[0], LMFormat.CSV.ext)
 
-            # string io object
-            occ_string_io = BytesIO()
-            headers = list(occ.get_feature_attributes().items())
-            with open(sys_occ_path) as in_f:
-                # Get Delimiter
-                dialect = sniffer.sniff(in_f.read(32))
-                in_f.seek(0)
-                delimiter = dialect.delimiter
+            # If we have a csv for this occurrence set, add it
+            if os.path.exists(sys_occ_path):
+                # string io object
+                occ_string_io = BytesIO()
+                headers = list(occ.get_feature_attributes().items())
+                with open(sys_occ_path) as in_f:
+                    # Get Delimiter
+                    dialect = sniffer.sniff(in_f.read(32))
+                    in_f.seek(0)
+                    delimiter = dialect.delimiter
 
-                # Write header line
-                header_line = delimiter.join(
-                    [i[1][0] for i in sorted(headers)])
-                occ_string_io.write(
-                    '{}\n'.format(header_line).encode(ENCODING))
-                # Write the rest of the lines
-                for line in in_f:
-                    occ_string_io.write(line.encode(ENCODING))
-            occ_string_io.seek(0)
-            zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
-            occ_string_io = None
-            # zip_f.write(sys_occ_path, arc_occ_path)
+                    # Write header line
+                    header_line = delimiter.join(
+                        [i[1][0] for i in sorted(headers)])
+                    occ_string_io.write(
+                        '{}\n'.format(header_line).encode(ENCODING))
+                    # Write the rest of the lines
+                    for line in in_f:
+                        occ_string_io.write(line.encode(ENCODING))
+                occ_string_io.seek(0)
+                zip_f.writestr(arc_occ_path, occ_string_io.getvalue())
+                occ_string_io = None
+            else:
+                # Write shapefile
+                for ext in LMFormat.SHAPE.get_extensions():
+                    arc_occ_path = os.path.join(
+                        prj_dir, '{}{}'.format(occ.display_name, ext)
+                    )
+                    server_file_path = '{}{}'.format(
+                        os.path.splitext(occ.get_dlocation())[0],
+                        ext
+                    )
+                    if os.path.exists(server_file_path):
+                        zip_f.write(server_file_path, arcname=arc_occ_path)
+                arc_occ_path = os.path.join(
+                    prj_dir, '{}.shp'.format(occ.display_name))
             added_occ_ids.append(occ.get_id())
             occ_info.append(
                 {
