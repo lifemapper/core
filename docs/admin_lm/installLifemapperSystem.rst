@@ -159,11 +159,17 @@ Check LmCompute
 Accepted species from GBIF:
 https://www.gbif.org/species/search?rank=SPECIES&dataset_key=d7dddbf4-2cf0-4f39-9b2a-bb099caae36c&status=ACCEPTED&advanced=1
 
+Quick Fix: add new RPMs (without new roll)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#. Copy individual rpms to /share/lm/ then install on FE and nodes (if needed)::
+   
+   # rpm -iv /share/lm/*rpm
+   # rocks run host compute "rpm -iv /share/lm/*rpm"
 
 Quick Fix: update existing code and script RPMs (without new roll)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
-   This will only update RPMs that are part of the original roll.
+   This will only update RPMs that are part of the original rolWe also pull data from the taxonomic ranks, including specificEpithetl.
    
 #. Stop matt_daemon  ::
    
@@ -179,7 +185,6 @@ Quick Fix: update existing code and script RPMs (without new roll)
    
    # /opt/lifemapper/rocks/bin/updateLM
    
-
 #. Update nodes ::
    
    # rocks set host boot compute action=install

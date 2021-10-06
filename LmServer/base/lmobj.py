@@ -9,7 +9,7 @@ from osgeo.osr import CoordinateTransformation, SpatialReference
 from LmBackend.common.lmobj import LMObject, LMError
 from LmCommon.common.lmconstants import (
     DEFAULT_EPSG, DEFAULT_MAPUNITS, LEGAL_MAP_UNITS)
-from LmServer.common.localconstants import SMTP_SENDER
+from LmServer.common.lmconstants import SMTP_SENDER
 
 
 # ............................................................................

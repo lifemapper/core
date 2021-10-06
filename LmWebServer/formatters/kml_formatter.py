@@ -12,8 +12,7 @@ from LmCommon.common.lm_xml import (
     tostring)
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.utilities import format_time_human
-from LmServer.common.lmconstants import OccurrenceFieldNames
-from LmServer.common.localconstants import WEBSERVICES_ROOT
+from LmServer.common.lmconstants import OccurrenceFieldNames, WEBSERVICES_ROOT
 from LmServer.legion.occ_layer import OccurrenceLayer
 from LmServer.legion.sdm_proj import SDMProjection
 

@@ -34,7 +34,7 @@ def format_atom(obj):
     return {
         'epsg': obj.epsg_code,
         'id': obj.get_id(),
-        'modificationTime': format_time_human(obj.mod_time),
+        'modification_time': format_time_human(obj.mod_time),
         'name': obj.name,
         'url': obj.url
     }
@@ -58,7 +58,7 @@ def format_env_layer(lyr):
     max_val = lyr.max_val
     val_units = lyr.val_units
     data_type = type(lyr.min_val).__name__
-    layer_dict['spatialRaster'] = _get_spatial_raster_metadata(
+    layer_dict['spatial_raster'] = _get_spatial_raster_metadata(
         lyr.epsg_code, lyr.bbox, lyr.map_units, data_url, lyr.verify,
         lyr.gdal_type, lyr.data_format, min_val, max_val, val_units, data_type,
         resolution=lyr.resolution)
@@ -79,14 +79,14 @@ def format_gridset(gridset):
         gridset.get_user_id(), metadata=gridset.grid_metadata)
     gridset_dict['epsg'] = gridset.epsg_code
 
-    gridset_dict['bioGeoHypotheses'] = []
+    gridset_dict['biogeo_hypotheses'] = []
     gridset_dict['grims'] = []
     gridset_dict['pams'] = []
     gridset_dict['matrices'] = []
 
     # Bio geo hypotheses
     for mtx in gridset.get_biogeographic_hypotheses():
-        gridset_dict['bio_geo_hypotheses'].append(
+        gridset_dict['biogeo_hypotheses'].append(
             {
                 'id': mtx.get_id(),
                 'url': mtx.metadata_url
@@ -166,11 +166,11 @@ def format_occurrence_set(occ):
         epsg=occ.epsg_code)
     occ_dict['map'] = _get_map_metadata(OGC_SERVICE_URL, map_name, occ.name)
     data_url = occ.get_data_url()
-    occ_dict['spatialVector'] = _get_spatial_vector_metadata(
+    occ_dict['spatial_vector'] = _get_spatial_vector_metadata(
         occ.epsg_code, occ.bbox, occ.map_units, data_url, occ.verify,
         occ.ogr_type, occ.data_format, occ.query_count,
         resolution=occ.resolution)
-    occ_dict['speciesName'] = occ.display_name
+    occ_dict['species_name'] = occ.display_name
     occ_dict['squid'] = occ.squid
     if len(occ.features) > 0:
         occ_dict['features'] = [f.getAttributes() for f in occ.features]
@@ -206,7 +206,7 @@ def format_projection(prj):
     min_val = 0
     max_val = 1
     val_units = 'prediction'
-    prj_dict['spatialRaster'] = _get_spatial_raster_metadata(
+    prj_dict['spatial_raster'] = _get_spatial_raster_metadata(
         prj.epsg_code, prj.bbox, prj.map_units, data_url, prj.verify,
         prj.gdal_type, prj.data_format, min_val, max_val, val_units,
         prj.gdal_type, prj.resolution)
@@ -315,7 +315,7 @@ def format_shapegrid(shapegrid):
         shapegrid.get_user_id(), status=shapegrid.status,
         status_mod_time=shapegrid.status_mod_time,
         metadata=shapegrid.layer_metadata)
-    shapegrid_dict['spatialVector'] = _get_spatial_vector_metadata(
+    shapegrid_dict['spatial_vector'] = _get_spatial_vector_metadata(
         shapegrid.epsg_code, shapegrid.bbox, shapegrid.map_units,
         shapegrid.get_data_url(), shapegrid.verify, shapegrid.ogr_type,
         shapegrid.data_format, shapegrid.feature_count,
@@ -349,7 +349,7 @@ def format_vector(vector_layer):
     vector_dict = _get_lifemapper_metadata(
         'Vector Layer', vector_layer.get_id(), vector_layer.metadata_url,
         vector_layer.get_user_id(), metadata=vector_layer.layer_metadata)
-    vector_dict['spatialVector'] = _get_spatial_vector_metadata(
+    vector_dict['spatial_vector'] = _get_spatial_vector_metadata(
         vector_layer.epsg_code, vector_layer.bbox, vector_layer.map_units,
         vector_layer.get_data_url(), vector_layer.verify,
         vector_layer.ogr_type, vector_layer.data_format,
@@ -415,7 +415,7 @@ def _get_lifemapper_metadata(object_type, lm_id, url, user_id, status=None,
     """Get general Lifemapper metadata that we want to return for each type
     """
     lm_dict = {
-        'objectType': object_type,
+        'object_type': object_type,
         'id': lm_id,
         'url': url,
         'user': user_id
@@ -442,18 +442,18 @@ def _get_map_metadata(base_url, map_name, layers):
     """
     map_dict = {
         'endpoint': base_url,
-        'mapName': map_name
+        'map_name': map_name
     }
     if isinstance(layers, list):
         lyrs = []
         for lyr in layers:
             lyrs.append({
                 'metadata_url': lyr.metadata_url,
-                'layerName': lyr.name
+                'layer_name': lyr.name
             })
         map_dict['layers'] = lyrs
     else:
-        map_dict['layerName'] = layers
+        map_dict['layer_name'] = layers
     return map_dict
 
 
