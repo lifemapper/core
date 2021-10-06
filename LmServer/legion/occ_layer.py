@@ -134,8 +134,7 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_user_point_feature_attributes():
-        """Return user point feature attributes
-        """
+        """Return user point feature attributes"""
         feature_attributes = {
             0: (Vector._local_id_field_name, Vector._local_id_field_type),
             1: (OccurrenceFieldNames.LONGITUDE[0], ogr.OFTReal),
@@ -147,16 +146,14 @@ class OccurrenceLayer(OccurrenceType, Vector):
     # ................................
     @staticmethod
     def get_user_point_feature(id_val, x_val, y_val):
-        """Return user point feature
-        """
+        """Return user point feature"""
         geom_wkt = OccurrenceLayer.get_point_wkt(x_val, y_val)
         return [id_val, x_val, y_val, geom_wkt]
 
     # ................................
     @staticmethod
     def equal_points(wkt1, wkt2):
-        """Check if two points are the same
-        """
+        """Check if two points are the same"""
         if wkt1 == wkt2:
             return True
 

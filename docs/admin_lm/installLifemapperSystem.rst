@@ -164,28 +164,38 @@ Quick Fix: update existing code and script RPMs (without new roll)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #. Copy individual rpms to /export/rocks/install/contrib/7.0/x86_64/RPMS/ 
    This will only update RPMs that are part of the original roll.
-   To add rpms that are not yet part of the rolls, put them into a directory 
-   shared from FE to nodes (/share/lm/). 
    
+#. Stop matt_daemon  ::
+   
+   # $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
+
 #. then rebuild distribution.  ::
    
    # (module unload opt-python; cd /export/rocks/install; rocks create distro; yum clean all)
    # yum list updates
-   # yum update
+   # yum update (do individual packages)
    
 #. Run scripts to update config and DB types/views/functions ::
    
    # /opt/lifemapper/rocks/bin/updateLM
    
-#. Install new rpms on FE (only if re-installed roll)  ::
-   
-   # rpm -iv /share/lm/*rpm
 
 #. Update nodes ::
    
    # rocks set host boot compute action=install
    # rocks run host compute reboot
 
+Quick Fix: add new RPMs (without new roll)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. To add rpms that are not yet part of the rolls, put them into a directory 
+   shared from FE to nodes (/share/lm/). Install new rpms on FE::
+   
+   # rpm -iv /share/lm/*rpm
+
+#. If rpms needed on compute nodes::
+   
+   # rocks run host compute "rpm -iv /share/lm/*rpm"
 
 Troubleshooting
 ----------------
