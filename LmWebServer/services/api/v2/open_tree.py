@@ -10,7 +10,9 @@ import os
 
 import cherrypy
 from biotaphy.client.ot_service_wrapper.open_tree import (
-    get_ottids_from_gbifids, induced_subtree)
+    get_info_for_names,
+    induced_subtree
+)
 
 from LmCommon.common.lmconstants import HTTPStatus, ENCODING
 from LmCommon.common.ready_file import ready_filename
@@ -26,32 +28,30 @@ from LmWebServer.services.cp_tools.lm_format import lm_formatter
 # .............................................................................
 @cherrypy.expose
 class OpenTreeService(LmService):
-    """Open Tree wrapper service for retrieving trees from GBIF Ids
-    """
+    """Open Tree wrapper service for retrieving trees from taxon names."""
 
     # ................................
     @lm_formatter
     def POST(self):
-        """Gets an Open Tree tree for a list of GBIF taxon ids
-        """
-        taxon_ids_obj = json.load(cherrypy.request.body)
+        """Gets an Open Tree tree for a list of taxon names.
 
-        if not isinstance(taxon_ids_obj, list):
+        Returns:
+            dict: A dictionary of tree information.
+        """
+        taxon_names_obj = json.load(cherrypy.request.body)
+
+        if not isinstance(taxon_names_obj, list):
             raise cherrypy.HTTPError(
                 HTTPStatus.BAD_REQUEST,
-                'Taxon IDs must be provided as a JSON list')
+                'Taxon names must be provided as a JSON list')
 
         try:
-            # Get OpenTree ids for GBIF ids
-            gbif_to_ott = get_ottids_from_gbifids(taxon_ids_obj)
-            # Get the unmatched GBIF IDs
-            unmatched_gbif_ids = [
-                k for k in list(gbif_to_ott.keys()) if gbif_to_ott[k] is None]
-            # Create a reverse lookup for OTT to GBIF IDs
-            ott_to_gbif = {v: k for (k, v) in gbif_to_ott.items()}
-            # Get the ids and drop Nones
-            ott_ids = [
-                oid for oid in list(gbif_to_ott.values()) if oid is not None]
+            # Get information about taxon names
+            taxa_info, unmatched_gbif_ids = get_info_for_names(taxon_names_obj)
+
+            # Get the Open Tree IDs
+            ott_ids = [tax_info['ott_id'] for for tax_info in taxa_info.values()]
+
             if len(ott_ids) <= 1:
                 raise cherrypy.HTTPError(
                     HTTPStatus.BAD_REQUEST,

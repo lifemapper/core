@@ -1,0 +1,24 @@
+{
+    "module": "lmtest.tests.files_exist_test",
+    "test_class": "FileExistenceTest",
+    "parameters": {
+       "files_list": [
+           {
+               "path": "/share/lm/data/archive",
+               "group": "lmwriter",
+               "permissions": "664"
+           },
+           {
+               "path": "/opt/lifemapper/bin/gdalinfo",
+               "owner": "root",
+               "group": "root",
+               "permissions": "755"
+           },
+           {
+               "path": "/opt/lifemapper"
+           }
+       ],
+       "delay_time": 0,
+       "delay_interval": 300
+    }
+}
