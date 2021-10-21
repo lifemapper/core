@@ -50,7 +50,7 @@ class OpenTreeService(LmService):
             taxa_info, unmatched_gbif_ids = get_info_for_names(taxon_names_obj)
 
             # Get the Open Tree IDs
-            ott_ids = [tax_info['ott_id'] for for tax_info in taxa_info.values()]
+            ott_ids = [tax_info['ott_id'] for tax_info in taxa_info.values()]
 
             if len(ott_ids) <= 1:
                 raise cherrypy.HTTPError(
@@ -62,7 +62,7 @@ class OpenTreeService(LmService):
             # Get the list of GBIF IDs that matched to OTT IDs but were not in
             #    tree
             nontree_ids = [
-                int(ott_to_gbif[ott]) for ott in output[
+                int(ott_ids[ott]) for ott in output[
                     Partners.OTT_MISSING_KEY]]
         except cherrypy.HTTPError:
             raise
