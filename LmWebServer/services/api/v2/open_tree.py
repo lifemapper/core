@@ -58,12 +58,13 @@ class OpenTreeService(LmService):
                     'Need more than one open tree ID to create a tree')
             # Get the tree from Open Tree
             output = induced_subtree(ott_ids)
-            tree_data = output[Partners.OTT_TREE_KEY]
+            tree_data = output['newick']
+            #tree_data = output[Partners.OTT_TREE_KEY]
             # Get the list of GBIF IDs that matched to OTT IDs but were not in
             #    tree
-            nontree_ids = [
-                int(ott_ids[ott]) for ott in output[
-                    Partners.OTT_MISSING_KEY]]
+            nontree_ids = []
+            #    int(ott_ids[ott]) for ott in output[
+            #        Partners.OTT_MISSING_KEY]]
         except cherrypy.HTTPError:
             raise
         except Exception as e:
@@ -75,8 +76,10 @@ class OpenTreeService(LmService):
         # Determine a name for the tree, use user id, 16 characters of hashed
         #    tree data, and mjd
         tree_name = '{}-{}-{}.tre'.format(
-            self.get_user_id(), hashlib.md5(tree_data).hexdigest()[:16],
-            gmt().mjd)
+            self.get_user_id(),
+            hashlib.md5(tree_data.encode()).hexdigest()[:16],
+            gmt().mjd
+        )
         # Write the tree
         out_filename = os.path.join(self._get_user_dir(), tree_name)
         if not os.path.exists(out_filename):
