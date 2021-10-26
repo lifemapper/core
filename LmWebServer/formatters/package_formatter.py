@@ -310,7 +310,7 @@ def _add_sdms_to_package(zip_f, projections, scribe):
                 # string io object
                 occ_string_io = BytesIO()
                 headers = list(occ.get_feature_attributes().items())
-                with open(sys_occ_path) as in_f:
+                with open(sys_occ_path, encoding=ENCODING) as in_f:
                     # Get Delimiter
                     dialect = sniffer.sniff(in_f.read(32))
                     in_f.seek(0)
