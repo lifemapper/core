@@ -230,3 +230,11 @@ class OccurrenceLayerService(LmService):
                 }
             )
         return occ_objs
+
+"""
+from LmWebServer.services.api.v2.occurrence import *
+
+self = LmService()
+occ = self.scribe.get_occurrence_set(occ_id=int(path_occset_id))
+
+"""
