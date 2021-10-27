@@ -62,9 +62,9 @@ Configure for new boom job
          shapefiles in a directory named <biogeographic hypotheses>
 
    * Verified test packages include: 
-       * sax_boom_data : 
-           * saxifragales data (~2300sp) 
-           * sax_layers_10min current scenario, 
+      * heuchera_boom_na_10min (smallest):  
+           * heuchera data (64sp) 
+           * 10min-past-present-future
            * tree
            * biogeo hypotheses
       * heuchera_boom_global_10min (smallest):  
@@ -72,9 +72,16 @@ Configure for new boom job
            * 10min-past-present-future
            * tree
            * biogeo hypotheses
-      * heuchera_boom_data 
-           * heuchera data (64sp) 
-           * biotaphyCONUS12 (30 sec/CONUS)
+       * sax_boom_global_10min: 
+           * saxifragales data (~2300sp) 
+           * sax_layers_10min current scenario, 
+           * tree
+           * biogeo hypotheses
+
+   * UN-Verified test packages include: 
+       * sax_boom_conus_30sec
+       	   * saxifragales data (~2300sp) 
+       	   * biotaphy12conus
            * tree
            * biogeo hypotheses
                
