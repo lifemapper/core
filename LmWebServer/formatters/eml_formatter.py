@@ -119,12 +119,12 @@ def _create_spatial_vector(spatial_vector):
 def make_eml(my_obj):
     """Generate an EML document representing metadata for the provided object
     """
-    # TODO: Add name
+    # Reconsider: multi-species functions could move to another service
     if isinstance(my_obj, Gridset):
         top_el = Element(
             'eml',
             attrib={
-                # TODO: Better package ids
+                # Reconsider: multi-species functions could move to another service
                 'packageId': 'org.lifemapper.gridset.{}'.format(
                     my_obj.get_id()),
                 'system': 'http://svc.lifemapper.org'})
@@ -145,7 +145,7 @@ def make_eml(my_obj):
 
         for mtx in my_obj.get_matrices():
             if os.path.exists(mtx.get_dlocation()):
-                # TODO: Enable GRIMs
+                # Reconsider: multi-species functions could move to another service
                 if mtx.matrix_type in [
                         MatrixType.ANC_PAM,  # MatrixType.GRIM,
                         MatrixType.PAM, MatrixType.SITES_OBSERVED]:
