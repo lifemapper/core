@@ -203,29 +203,6 @@ def add_taxa_to_taxonomy_index(sciname_objects):
     response = urllib.request.urlopen(req)
     return response.read()
 
-
-# .............................................................................
-def add_taxa_to_taxonomy_index_dicts(taxon_dicts):
-    """Create a solr document and post it for the provided objects.
-
-    Note:
-        Should be able to post directly from a CSV with header matching solr fields
-        
-    TODO: Implement writing to CSV and posting directly from CSV
-    """
-    doc_pairs = []
-    for taxon_info in taxon_dicts:
-        rec = _get_record_from_taxon_csv(taxon_info)
-        doc_pairs.append(rec)
-    post_doc = build_solr_document(doc_pairs)
-    # Note: This is somewhat redundant.
-    # TODO: Modify _post to accept a string or file like object as well
-    url = '{}{}/update?commit=true'.format(
-        SOLR_SERVER, SOLR_TAXONOMY_COLLECTION)
-    req = urllib.request.Request(
-        url, data=post_doc, headers={'Content-Type': 'text/xml'})
-    return urllib.request.urlopen(req).read()
-
 # .............................................................................
 def add_taxa_to_taxonomy_from_csv(taxon_filename):
     """
