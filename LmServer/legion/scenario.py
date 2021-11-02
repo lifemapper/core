@@ -75,7 +75,7 @@ class ScenPackage(ServiceObject, LMSpatialObject):
                 return scen
             elif (metadata_url 
                   and not (scen.metadata_url.endswith(ID_PLACEHOLDER)) 
-                  and scen.metadata_url == scen.metadata_url):
+                  and metadata_url == scen.metadata_url):
                 return scen
         return None
 
