@@ -5,6 +5,9 @@ Note:
 """
 import math
 
+VALID_PALETTES = [
+    "gray", "red", "green", "blue", "yellow", "fuschia", "aqua", "safe", "pretty", 
+    "bluered", "bluegreen", "greenred"]
 
 class ColorPalette:
     """Implements a simple color palette generator.
