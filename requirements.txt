@@ -1,22 +1,7 @@
 Cython>=0.29.24
 Flask>=2.0.2
 mapscript>=7.6.0
+scipy>=1.7.2
 matplotlib>=3.5.0
 psycopg2-binary>=2.9.2
 requests>=2.26.0
-
-//// Build manually
-// mapserver/mapscript
-// cctools
-// gdal
-// lmdata-*
-// lmpy
-// lmserver
-// lmtest
-// mod-wsgi?
-// proj
-// scripts in rocks-lifemapper
-// solr
-// specify-open-api-tools
-// webclient
-////
