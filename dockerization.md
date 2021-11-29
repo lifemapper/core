@@ -2,7 +2,9 @@
 
 ## Containers
 
-* Backend (PostgreSQL)
+* Backend (PostgreSQL server)
+* NGinx (PostgreSQL client)
+* System test (lmtest and specify-openapi-tools)
 * Solr
 * Flask
 * Compute
@@ -44,6 +46,8 @@ All repos are at github.com
 
 * lmcompute (lifemapper/core repo, check prepSrc in lifemapper/lifemapper-server/src/lmserver)
 * lmserver (lifemapper/core repo, check prepSrc in lifemapper/lifemapper-compute/src/lmcompute)
+
+### Testing container:
 * lmtest (lifemapper/lmtest repo)
 * specify-open-api-tools (specify/open_api_tools repo)
 
