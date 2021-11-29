@@ -20,7 +20,7 @@
 * mapserver 7.0.0 (including mapserver-bin, libmapserver2, python3-mapscript)
 * webclient (lifemapper/viz-client repo)
 * mod-wsgi ?
-* lmdata-image ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-image/prepData.sh.in) scripts and Environment variables above to pull data
+* lmdata-image [lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-image/prepData.sh.in) scripts and Environment variables above to pull data
 * geotiff (package manager)
 
 
@@ -33,11 +33,11 @@
 * PostgreSQL 9.6 (docker hub)
 * Postgis2
 * psycopg2-binary (python pip install)
-* lmdata-species ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-species/prepData.sh.in) scripts and Environment variables above to pull data
+* lmdata-species [lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-species/prepData.sh.in) scripts and Environment variables above to pull data
 
 ### Backend and Compute containers:
 
-* lmdata-env ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-env/prepData.sh.in) scripts and Environment variables above to pull data. Put data in shared volume;
+* lmdata-env [lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-env/prepData.sh.in) scripts and Environment variables above to pull data. Put data in shared volume;
 * [lmpy] (https://github.com/lifemapper/lmpy)
 * [biotaphypy] (https://github.com/biotaphy/BiotaPhyPy)
 * requests 
@@ -55,7 +55,7 @@
 
 Source or binary installs
 
-* cctools (http://ccl.cse.nd.edu/software/downloadfiles.php)
+* [cctools] (http://ccl.cse.nd.edu/software/downloadfiles.php)
 
 
 ## Installation resources
@@ -67,15 +67,13 @@ Combine Environmental variables and values with
 * variables in lifemapper/core/LmCompute/config/config.lmcompute.ini 
   and values in lifemapper-compute/src/version.mk
 
-Process 
+### Process 
 
-* lifemapper/lifemapper-server repo 
-  * ./nodes/lifemapper-server-base.xml for directory and user setup
-  * ./src/rocks-lifemapper/* scripts for post-install and configuration on all containers
-  
-* lifemapper/lifemapper-compute repo 
-  * ./nodes/lifemapper-compute-base.xml for directory and user setup
-  * ./src/rocks-lmcompute/initLMcompute.in for post-install and configuration on all Compute
+* XML files with [Backend post-install instructions] (https://github.com/lifemapper/lifemapper-server/tree/main/nodes) for directory and user setup
+* [Backend Post-install and config script] (https://github.com/lifemapper/lifemapper-server/blob/main/src/rocks-lifemapper/initLM.in)  
+
+* XML files with [Compute post-install instructions] (https://github.com/lifemapper/lifemapper-compute/tree/main/nodes) for directory and user setup
+* [Compute Post-install and config script] (https://github.com/lifemapper/lifemapper-compute/blob/main/src/rocks-lmcompute/initLMcompute.in) 
   
 ## Misc 
 
