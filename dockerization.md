@@ -3,28 +3,26 @@
 ## Containers
 
 * Backend (PostgreSQL server)
+* Compute
 * NGinx (PostgreSQL client)
 * System test (lmtest and specify-openapi-tools)
 * Solr
 * Flask
-* Compute
 
-## Python dependencies
-
-* from pip - in requirements.txt
-* lmpy (wheel file from lifemapper-server roll)
+## Environment variables 
+* from [lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/version.mk)
+* from [lifemapper-compute] (https://github.com/lifemapper/lifemapper-compute/blob/main/src/version.mk)
 
 ## System dependencies
-
-All repos are at github.com
 
 ### Flask container only:
 
 * mapserver 7.0.0 (including mapserver-bin, libmapserver2, python3-mapscript)
 * webclient (lifemapper/viz-client repo)
-* geotiff 
-* mod-wsgi?
-* lmdata-image (lifemapper/lifemapper-server repo, ./lmdata-image/src/prepSrc scripts to pull data) 
+* mod-wsgi ?
+* lmdata-image ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-image/prepData.sh.in) scripts and Environment variables above to pull data
+* geotiff (package manager)
+
 
 ### Solr container only:
 
@@ -35,33 +33,25 @@ All repos are at github.com
 * PostgreSQL 9.6 (docker hub)
 * Postgis2
 * psycopg2-binary (python pip install)
-* lmdata-species (lifemapper/lifemapper-server repo, ./lmdata-species/src/prepSrc scripts to pull data)
+* lmdata-species ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-species/prepData.sh.in) scripts and Environment variables above to pull data
 
 ### Backend and Compute containers:
 
-* lmdata-env (put data in shared volume; lifemapper/lifemapper-server repo, ./lmdata-env/src/prepSrc scripts to pull data)
+* lmdata-env ([lifemapper-server] (https://github.com/lifemapper/lifemapper-server/blob/main/src/lmdata-env/prepData.sh.in) scripts and Environment variables above to pull data. Put data in shared volume;
+* [lmpy] (https://github.com/lifemapper/lmpy)
+* [biotaphypy] (https://github.com/biotaphy/BiotaPhyPy)
+* requests 
+* scipy (includes numpy)
+* matplotlib
+* libgdal (package manager)
+* libproj (package manager)
 
 
-### All containers?:
-
-* lmcompute (lifemapper/core repo, check prepSrc in lifemapper/lifemapper-server/src/lmserver)
-* lmserver (lifemapper/core repo, check prepSrc in lifemapper/lifemapper-compute/src/lmcompute)
 
 ### Testing container:
-* lmtest (lifemapper/lmtest repo)
+* [lmtest] (https://github.com/lifemapper/lmtest/) 
 * specify-open-api-tools (specify/open_api_tools repo)
 
-Python installs via pip
-
-* Cython
-* scipy>=1.7.2
-* matplotlib>=3.5.0
-* requests>=2.26.0
-
-Package manager installs
-
-* libgdal
-* libproj
 
 Source or binary installs
 
