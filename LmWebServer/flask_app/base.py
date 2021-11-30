@@ -1,7 +1,6 @@
 """The module provides a base Lifemapper service class
 """
-from flask import Flask, session, request, json
-from werkzeug.exceptions import HTTPException
+from flask import Flask, session
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
 from LmServer.common.localconstants import PUBLIC_USER
@@ -38,6 +37,24 @@ class LmService:
 
     # ..........................
     @staticmethod
+    def get_user(self, user_id=None):
+        """Gets the user id for the service call.
+    
+        Gets the user id for the service call.  If urlUser is provided, try
+        that first.  Then try the session and finally fall back to the
+        PUBLIC_USER
+        
+        TODO: Save the username in the session
+        """
+        svc = LmService()
+        if user_id is None:
+            svc.get_user_id()
+        # Check to see if we should use url user
+        usr = svc.scribe.find_user(user_id)
+        return usr
+
+    # ..........................
+    @staticmethod
     def get_user_id(url_user=None):
         """Gets the user id for the service call.
     
@@ -49,9 +66,9 @@ class LmService:
         """
         # Check to see if we should use url user
         if url_user is not None:
-            if url_user.lower() == 'public'.lower():
+            if url_user.lower() == 'public':
                 return PUBLIC_USER
-            if url_user.lower() == DEFAULT_POST_USER.lower():
+            if url_user.lower() == DEFAULT_POST_USER:
                 return DEFAULT_POST_USER
         # Try to get the user from the session
         try:
