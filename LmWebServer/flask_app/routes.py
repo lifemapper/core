@@ -3,6 +3,8 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from LmWebServer.flask_app.occurrence import OccurrenceLayerService
 from LmWebServer.flask_app.base import LmService
+from LmWebServer.flask_app.biotaphy_names import GBIFTaxonService
+from LmWebServer.flask_app.biotaphy_points import IDigBioOccurrenceService
 
 app = Flask(__name__.split('.')[0])
 
@@ -153,6 +155,30 @@ def layer(identifier):
                 return BadRequest('{} is not a valid occurrenceset ID'.format(identifier))
             else:
                 response = svc.get_layer(user_id, layer_id, env_layer=(layer_type == 1))
-        
             
     return response
+
+# .....................................................................................
+@app.route('/api/v2/biotaphynames', methods=['POST'])
+def biotaphynames():
+    try:
+        names_obj = request.get_json()
+    except: 
+        return BadRequest('Name list must be in JSON format')
+    else:
+        svc = GBIFTaxonService()
+        response = svc.get_gbif_results(names_obj)
+        return response
+
+# .....................................................................................
+@app.route('/api/v2/biotaphypoints', methods=['POST'])
+def biotaphypoints():
+    try:
+        taxon_ids = request.get_json()
+    except: 
+        return BadRequest('Taxon ID list must be in JSON format')
+    else:
+        svc = IDigBioOccurrenceService()
+        response = svc.get_occurrence_counts_for_taxonids(names_obj)
+        return response
+
