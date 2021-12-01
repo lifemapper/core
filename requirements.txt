@@ -1,7 +1,8 @@
 Cython>=0.29.24
-Flask>=2.0.2
-mapscript>=7.6.0
-scipy>=1.7.2
+Flask (brings Werkzeug)
+mapscript
+scipy (brings numpy)
 matplotlib>=3.5.0
-psycopg2-binary>=2.9.2
+psycopg2-binary
 requests>=2.26.0
+dendropy

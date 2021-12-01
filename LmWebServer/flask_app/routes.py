@@ -1,10 +1,11 @@
 from flask import Flask, redirect, render_template, request, session
 from werkzeug.exceptions import BadRequest, NotFound
 
-from LmWebServer.flask_app.occurrence import OccurrenceLayerService
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.flask_app.biotaphy_names import GBIFTaxonService
 from LmWebServer.flask_app.biotaphy_points import IDigBioOccurrenceService
+from LmWebServer.flask_app.occurrence import OccurrenceLayerService
+from LmWebServer.flask_app.gridset import GridsetService
 
 app = Flask(__name__.split('.')[0])
 
@@ -64,7 +65,13 @@ def occurrence(identifier):
         gridset_id = request.args.get('gridset_id', default = None, type = str)
         fill_points = request.args.get('fill_points', default = False, type = bool)
         
-        if identifier.lower() == 'count':
+        if identifier is None:
+            response = svc.list_occurrence_sets(
+                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
+                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
+                offset=offset, gridset_id=gridset_id, status=status)
+
+        elif identifier.lower() == 'count':
             response = svc.count_occurrence_sets(
                 user_id, after_time=after_time, before_time=before_time, display_name=display_name,
                 epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points,
@@ -75,13 +82,7 @@ def occurrence(identifier):
                 user_id, after_time=after_time, before_time=before_time, display_name=display_name,
                 epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
                 offset=offset, gridset_id=gridset_id, status=status)
-            
-        elif identifier is None:
-            response = svc.list_occurrence_sets(
-                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
-                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
-                offset=offset, gridset_id=gridset_id, status=status)
-            
+        
         else:
             try:
                 occid = int(identifier)
@@ -89,8 +90,7 @@ def occurrence(identifier):
                 return BadRequest('{} is not a valid layer ID'.format(identifier))
             else:
                 response = svc.get_occurrence_set(occid, fill_points=fill_points)
-        
-            
+                
     return response
 
 # .....................................................................................
@@ -174,11 +174,75 @@ def biotaphynames():
 @app.route('/api/v2/biotaphypoints', methods=['POST'])
 def biotaphypoints():
     try:
-        taxon_ids = request.get_json()
+        taxonids_obj = request.get_json()
     except: 
         return BadRequest('Taxon ID list must be in JSON format')
     else:
         svc = IDigBioOccurrenceService()
-        response = svc.get_occurrence_counts_for_taxonids(names_obj)
+        response = svc.get_occurrence_counts_for_taxonids(taxonids_obj)
         return response
+
+# .....................................................................................
+@app.route('/api/v2/gridset/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
+def gridset(identifier):
+    svc = GridsetService()
+    user = svc.get_user()
+    user_id = user.user_id
+    
+    if request.method == 'POST' and request.is_json:
+        gridset_data = request.get_json()
+        svc.post_boom_data(user_id, user.email, gridset_data)
+
+    elif request.method == 'DELETE':
+        svc.delete_gridset(user_id, identifier)
+    
+    elif request.method == 'GET':
+        after_time = request.args.get('after_time', default = None, type = str)
+        before_time = request.args.get('before_time', default = None, type = str)
+        epsg_code = request.args.get('epsg_code', default= None, type = str)
+        meta_string = request.args.get('meta_string', default= None, type = str)
+        shapegrid_id = request.args.get('shapegrid_id', default= None, type = int)
+        limit = request.args.get('limit', default = 100, type = int)
+        offset = request.args.get('offset', default = 0, type = int)
+
+        if identifier is None:
+            response = svc.list_gridsets(
+                user_id, after_time=after_time, before_time=before_time, epsg_code=epsg_code, 
+                meta_string=meta_string, shapegrid_id=shapegrid_id, limit=limit, offset=offset)
+
+        elif identifier.lower() == 'count':
+            response = svc.count_gridsets(
+                user_id, after_time=after_time, before_time=before_time, epsg_code=epsg_code, 
+                meta_string=meta_string, shapegrid_id=shapegrid_id)
+            
+        else:
+            try:
+                gridset_id = int(identifier)
+            except:
+                return BadRequest('{} is not a valid gridset ID'.format(identifier))
+            else:
+                response = svc.get_gridset(user_id, gridset_id)
+
+        return response
+
+    # biotaphynames = GBIFTaxonService()
+    # biotaphypoints = IDigBioOccurrenceService()
+    # biotaphytree = OpenTreeService()
+    # envlayer = EnvLayerService()
+    # gbifparser = GBIFNamesService()
+    # globalpam = GlobalPAMService()
+    # gridset = GridsetService()
+    # hint = SpeciesHintService()
+    # layer = LayerService()
+    # occurrence = OccurrenceLayerService()
+    # opentree = OpenTreeService()
+    # scenario = ScenarioService()
+    # scenpackage = ScenarioPackageService()
+    # sdmproject = SdmProjectService()
+    # shapegrid = ShapegridService()
+    # snippet = SnippetService()
+    # rawsolr = RawSolrService()
+    # taxonomy = TaxonomyHintService()
+    # tree = TreeService()
+    # upload = UserUploadService()
 

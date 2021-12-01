@@ -1,4 +1,5 @@
 """This module provides REST services for Occurrence sets"""
+from http import HTTPStatus
 import werkzeug.exceptions as WEXC
 
 from LmCommon.common.lmconstants import (JobStatus)
@@ -33,7 +34,7 @@ class OccurrenceLayerService(LmService):
         if check_user_permission(user_id, occ, HTTPMethod.DELETE):
             success = self.scribe.delete_object(occ)
             if success:
-                return True
+                return HTTPStatus.NO_CONTENT
     
             # If unsuccessful, fail
             raise WEXC.InternalServerError('Failed to delete occurrence set')
