@@ -1,7 +1,6 @@
-"""This module provides REST services for grid sets
-"""
+"""This module provides REST services for grid sets"""
 import dendropy
-from flask import Response
+from flask import Response, make_response
 from http import HTTPStatus
 import json
 import os
@@ -53,6 +52,16 @@ def get_gridset(user_id, gridset_id):
     raise WEXC.Forbidden('User {} does not have permission to access GridSet {}'.format(
             user_id, gridset_id))
 
+# ................................
+def get_user_dir(user_id):
+    """Get the user's workspace directory
+
+    Todo:
+        Change this to use something at a lower level.  This is using the
+            same path construction as the getBoomPackage script
+    """
+    return os.path.join(ARCHIVE_PATH, user_id, 'uploads', 'biogeo')
+        
 # .............................................................................
 def summarize_object_statuses(summary):
     """Summarizes a summary
@@ -90,8 +99,7 @@ class GridsetAnalysisService(LmService):
 
     # ................................
     @lm_formatter
-    def POST(
-        self, gridset_id, do_mcpa=False, num_permutations=500, do_calc=False, **params):
+    def request_analysis(self, gridset_id, do_mcpa=False, num_permutations=500, do_calc=False, **params):
         """Adds a set of biogeographic hypotheses to the gridset"""
         # Get gridset
         gridset = self.get_gridset(gridset_id)
@@ -116,84 +124,116 @@ class GridsetAnalysisService(LmService):
             boom_col.create_workflow()
             boom_col.close()
 
-            # cherrypy.response.status = HTTPStatus.ACCEPTED
-            return gridset
-
-        raise WEXC.BadRequest('Must specify at least one analysis to perform')
-
-    # ................................
-    def _get_user_dir(self):
-        """Get the user's workspace directory
-
-        Todo:
-            Change this to use something at a lower level.  This is using the
-                same path construction as the getBoomPackage script
-        """
-        return os.path.join(
-            ARCHIVE_PATH, self.get_user_id(), 'uploads', 'biogeo')
+            response = make_response(gridset, HTTPStatus.ACCEPTED)
+            return response
+        else:
+            raise WEXC.BadRequest('Must specify at least one analysis to perform')
 
 
 # .............................................................................
 class GridsetBioGeoService(LmService):
-    """Service class for gridset biogeographic hypotheses
-    """
+    """Service class for gridset biogeographic hypotheses"""
 
     # ................................
     @lm_formatter
-    def GET(self, user_id, gridset_id, path_biogeo_id=None, **params):
+    def get_biogeo_hypotheses(self, user_id, gridset_id, biogeo_id=None, **params):
         """There is not a true service for limiting the biogeographic
                hypothesis matrices in a gridset, but return all when listing
         """
         gridset = get_gridset(user_id, gridset_id)
-
         bg_hyps = gridset.get_biogeographic_hypotheses()
 
-        if path_biogeo_id is None:
+        if biogeo_id is None:
             return bg_hyps
 
         for hyp in bg_hyps:
-            if hyp.get_id() == path_biogeo_id:
+            if hyp.get_id() == biogeo_id:
                 return hyp
 
         # If not found 404...
-        raise WEXC.NotFound('Biogeographic hypothesis mtx {} not found for gridset {}'.format(
-                path_biogeo_id, gridset_id))
-
+        raise WEXC.NotFound(
+            'Biogeographic hypothesis mtx {} not found for gridset {}'.format(biogeo_id, gridset_id))
+        
     # ................................
     @lm_formatter
-    def POST(self, user_id, gridset_id, bio_geo_data, **params):
+    def _encode_insert_biogeo(self, zip_f, hyp_lyr, gridset, encoder):
+        curr_time = gmt().mjd
+        min_coverage = 0.25
+        hyp_filename = hyp_lyr[FILE_NAME_KEY]
+        # Check to see if file is in zip package
+        if HYPOTHESIS_NAME_KEY in hyp_lyr:
+            hyp_name = hyp_lyr[HYPOTHESIS_NAME_KEY]
+        else:
+            hyp_name = os.path.splitext(os.path.basename(hyp_filename))[0]
+    
+        if EVENT_FIELD_KEY in hyp_lyr:
+            event_field = hyp_lyr[EVENT_FIELD_KEY]
+            column_name = '{} - {}'.format(
+                hyp_name, event_field)
+        else:
+            event_field = None
+            column_name = hyp_name
+    
+        int_param_val_key = MatrixColumn.INTERSECT_PARAM_VAL_NAME
+        lyr_meta = {
+            'name': hyp_name,
+            int_param_val_key.lower(): event_field,
+            ServiceObject.META_DESCRIPTION.lower():
+                'Biogeographic hypotheses based on layer {}'.format(hyp_filename),
+            ServiceObject.META_KEYWORDS.lower(): ['biogeographic hypothesis']
+        }
+    
+        if KEYWORD_KEY in hyp_lyr:
+            lyr_meta[ServiceObject.META_KEYWORDS.lower()].extend(hyp_lyr[KEYWORD_KEY])
+    
+        lyr = Vector(
+            hyp_name, gridset.get_user_id(), gridset.epsg, dlocation=None, metadata=lyr_meta,
+            data_format=LMFormat.SHAPE.driver, val_attribute=event_field, mod_time=curr_time)
+        updated_lyr = self.scribe.find_or_insert_layer(lyr)
+    
+        # Loop through files to write all matching
+        #    (ext) to out location
+        base_out = os.path.splitext(updated_lyr.get_dlocation())[0]
+    
+        for ext in LMFormat.SHAPE.get_extensions():
+            z_fn = '{}{}'.format(hyp_filename, ext)
+            out_fn = '{}{}'.format(base_out, ext)
+            if z_fn in zip_f.namelist():
+                zip_f.extract(z_fn, out_fn)
+    
+        # Add it to the list of files to be encoded
+        encoder.encode_biogeographic_hypothesis(
+            updated_lyr.get_dlocation(), column_name, min_coverage, event_field=event_field)
+
+                
+    # ................................
+    @lm_formatter
+    def post_biogeo_hypotheses(self, user_id, gridset_id, biogeo_data, **params):
         """Adds a set of biogeographic hypotheses to the gridset"""
         # Get gridset
         gridset = get_gridset(user_id, gridset_id)
-
-        # Process JSON
-        hypothesis_json = json.loads(bio_geo_data)
-
         # Check reference to get file
-        ref_obj = hypothesis_json[BG_REF_KEY]
-
+        hypothesis_reference_obj = biogeo_data[BG_REF_KEY]
         # If gridset,
-        if ref_obj[BG_REF_TYPE_KEY].lower() == 'gridset':
-            #      copy hypotheses from gridset
+        if hypothesis_reference_obj[BG_REF_TYPE_KEY].lower() == 'gridset':
+            # copy hypotheses from gridset
             try:
-                ref_gridset_id = int(ref_obj[BG_REF_ID_KEY])
+                ref_gridset_id = int(hypothesis_reference_obj[BG_REF_ID_KEY])
             except Exception:
                 # Probably not an integer or something
                 raise WEXC.BadRequest('Cannot get gridset for reference identfier {}'.format(
-                    ref_obj[BG_REF_ID_KEY]))
+                    hypothesis_reference_obj[BG_REF_ID_KEY]))
+                
             ref_gridset = get_gridset(user_id, ref_gridset_id)
 
             # Get hypotheses from other gridset
             ret = []
             for bg_hyp in ref_gridset.get_biogeographic_hypotheses():
                 new_bg_mtx = LMMatrix(
-                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
-                    process_type=ProcessType.ENCODE_HYPOTHESES,
-                    gcm_code=bg_hyp.gcm_code,
-                    alt_pred_code=bg_hyp.alt_pred_code,
-                    date_code=bg_hyp.date_code, metadata=bg_hyp.mtx_metadata,
-                    user_id=gridset.get_user_id(), gridset=gridset,
-                    status=JobStatus.INITIALIZE)
+                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES, process_type=ProcessType.ENCODE_HYPOTHESES,
+                    gcm_code=bg_hyp.gcm_code, alt_pred_code=bg_hyp.alt_pred_code, date_code=bg_hyp.date_code, 
+                    metadata=bg_hyp.mtx_metadata, user_id=user_id, gridset=gridset, status=JobStatus.INITIALIZE)
+                
                 inserted_bg = self.scribe.find_or_insert_matrix(new_bg_mtx)
                 inserted_bg.update_status(JobStatus.COMPLETE)
                 self.scribe.update_object(inserted_bg)
@@ -201,111 +241,47 @@ class GridsetBioGeoService(LmService):
                 bg_mtx = Matrix.load(bg_hyp.get_dlocation())
                 bg_mtx.write(inserted_bg.get_dlocation())
                 ret.append(inserted_bg)
-        elif ref_obj[BG_REF_TYPE_KEY].lower() == 'upload':
+                
+        elif hypothesis_reference_obj[BG_REF_TYPE_KEY].lower() == 'upload':
             curr_time = gmt().mjd
-            # Check for uploaded biogeo package
-            package_name = ref_obj[BG_REF_ID_KEY]
-            package_filename = os.path.join(
-                self._get_user_dir(), '{}{}'.format(
-                    package_name, LMFormat.ZIP.ext))
-
+            # # Check for uploaded biogeo package
+            package_name = hypothesis_reference_obj[BG_REF_ID_KEY]
+            package_filename = os.path.join(get_user_dir(), '{}{}'.format(package_name, LMFormat.ZIP.ext))
+            #
             encoder = LayerEncoder(gridset.get_shapegrid().get_dlocation())
+            self._encode_insert_biogeo(gridset, hypothesis_reference_obj, encoder, package_filename)
             # TODO(CJ): Pull this from config somewhere
-            min_coverage = 0.25
-
+            
+            
             if os.path.exists(package_filename):
                 with open(package_filename) as in_f:
                     with zipfile.ZipFile(in_f, allowZip64=True) as zip_f:
                         # Get file names in package
                         avail_files = zip_f.namelist()
-
-                        for hyp_lyr in ref_obj[LAYERS_KEY]:
+            
+                        for hyp_lyr in hypothesis_reference_obj[LAYERS_KEY]:
                             hyp_filename = hyp_lyr[FILE_NAME_KEY]
-
+                            self._encode_insert_biogeo(hyp_lyr, gridset, hypothesis_reference_obj, encoder, package_filename)
+                            
                             # Check to see if file is in zip package
-                            if hyp_filename in avail_files or \
-                                    '{}{}'.format(
-                                            hyp_filename, LMFormat.SHAPE.ext
-                                        ) in avail_files:
-                                if HYPOTHESIS_NAME_KEY in hyp_lyr:
-                                    hyp_name = hyp_lyr[HYPOTHESIS_NAME_KEY]
-                                else:
-                                    hyp_name = os.path.splitext(
-                                        os.path.basename(hyp_filename))[0]
-
-                                if EVENT_FIELD_KEY in hyp_lyr:
-                                    event_field = hyp_lyr[EVENT_FIELD_KEY]
-                                    column_name = '{} - {}'.format(
-                                        hyp_name, event_field)
-                                else:
-                                    event_field = None
-                                    column_name = hyp_name
-
-                                int_param_val_key = \
-                                    MatrixColumn.INTERSECT_PARAM_VAL_NAME
-                                lyr_meta = {
-                                    'name': hyp_name,
-                                    int_param_val_key.lower(): event_field,
-                                    ServiceObject.META_DESCRIPTION.lower():
-                                        '{} based on layer {}'.format(
-                                            'Biogeographic hypotheses',
-                                            hyp_filename),
-                                    ServiceObject.META_KEYWORDS.lower(): [
-                                        'biogeographic hypothesis'
-                                    ]
-                                }
-
-                                if KEYWORD_KEY in hyp_lyr:
-                                    lyr_meta[
-                                        ServiceObject.META_KEYWORDS.lower()
-                                        ].extend(hyp_lyr[KEYWORD_KEY])
-
-                                lyr = Vector(
-                                    hyp_name, gridset.get_user_id(),
-                                    gridset.epsg, dlocation=None,
-                                    metadata=lyr_meta,
-                                    data_format=LMFormat.SHAPE.driver,
-                                    val_attribute=event_field,
-                                    mod_time=curr_time)
-                                updated_lyr = self.scribe.find_or_insert_layer(
-                                    lyr)
-
-                                # Get dlocation
-                                # Loop through files to write all matching
-                                #    (ext) to out location
-                                base_out = os.path.splitext(
-                                    updated_lyr.get_dlocation())[0]
-
-                                for ext in LMFormat.SHAPE.get_extensions():
-                                    z_fn = '{}{}'.format(hyp_filename, ext)
-                                    out_fn = '{}{}'.format(base_out, ext)
-                                    if z_fn in avail_files:
-                                        zip_f.extract(z_fn, out_fn)
-
-                                # Add it to the list of files to be encoded
-                                encoder.encode_biogeographic_hypothesis(
-                                    updated_lyr.get_dlocation(), column_name,
-                                    min_coverage, event_field=event_field)
-                            else:
+                            if not (
+                                hyp_filename in avail_files or '{}{}'.format(hyp_filename, LMFormat.SHAPE.ext) in avail_files):
                                 raise WEXC.BadRequest('{} missing from package'.format(hyp_filename))
+                            else:
+                                self._encode_insert_biogeo(zip_f, hyp_lyr, gridset, encoder)
 
                 # Create biogeo matrix
                 # Add the matrix to contain biogeo hypotheses layer
                 #    intersections
                 meta = {
                     ServiceObject.META_DESCRIPTION.lower():
-                        'Biogeographic Hypotheses from package {}'.format(
-                            package_name),
-                    ServiceObject.META_KEYWORDS.lower(): [
-                        'biogeographic hypotheses'
-                    ]
-                }
+                        'Biogeographic Hypotheses from package {}'.format(package_name),
+                    ServiceObject.META_KEYWORDS.lower(): ['biogeographic hypotheses']}
 
                 tmp_mtx = LMMatrix(
-                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES,
-                    process_type=ProcessType.ENCODE_HYPOTHESES,
-                    user_id=self.get_user_id(), gridset=gridset, metadata=meta,
-                    status=JobStatus.INITIALIZE, status_mod_time=curr_time)
+                    None, matrix_type=MatrixType.BIOGEO_HYPOTHESES, process_type=ProcessType.ENCODE_HYPOTHESES,
+                    user_id=self.get_user_id(), gridset=gridset, metadata=meta, status=JobStatus.INITIALIZE, 
+                    status_mod_time=curr_time)
                 bg_mtx = self.scribe.find_or_insert_matrix(tmp_mtx)
 
                 # Encode the hypotheses
@@ -314,32 +290,17 @@ class GridsetBioGeoService(LmService):
 
                 # We'll return the newly inserted biogeo matrix
                 ret = [bg_mtx]
-            else:
-                raise WEXC.NotFound('Biogeography package: {} was not found'.format(
-                        package_name))
         else:
             raise WEXC.BadRequest('Cannot add hypotheses with reference type: {}'.format(
-                    ref_obj[BG_REF_TYPE_KEY]))
+                    hypothesis_reference_obj[BG_REF_TYPE_KEY]))
 
         # Return resulting list of matrices
         return ret
 
-    # ................................
-    def _get_user_dir(self, user_id):
-        """Get the user's workspace directory
-
-        Todo:
-            Change this to use something at a lower level.  This is using the
-                same path construction as the getBoomPackage script
-        """
-        return os.path.join(
-            ARCHIVE_PATH, user_id, 'uploads', 'biogeo')
-
 
 # .............................................................................
 class GridsetProgressService(LmService):
-    """Service class for gridset progress
-    """
+    """Service class for gridset progress"""
 
     # ................................
     @lm_formatter
@@ -350,8 +311,7 @@ class GridsetProgressService(LmService):
 
 # .............................................................................
 class GridsetTreeService(LmService):
-    """Service for the tree of a gridset
-    """
+    """Service for the tree of a gridset"""
 
     # ................................
     def delete_tree(self, user_id, tree_id):
@@ -371,8 +331,7 @@ class GridsetTreeService(LmService):
             if success:
                 return Response(status=HTTPStatus.NO_CONTENT)
 
-            # TODO: How can this happen?  Make sure we catch those cases and
-            #             respond appropriately.  We don't want 500 errors
+            # TODO: How can this happen?  Catch and respond appropriately, avoid 500 errors
             else:
                 raise WEXC.InternalServerError('Failed to delete tree')
         
@@ -381,7 +340,7 @@ class GridsetTreeService(LmService):
 
     # ................................
     @lm_formatter
-    def GET(self, user_id, gridset_id, tree_id=None, include_csv=None, include_sdms=None, **params):
+    def get_tree(self, user_id, gridset_id, tree_id=None, include_csv=None, include_sdms=None, **params):
         """Just return the gridset tree, no listing at this time
         
         TODO: remove unused args.  How is this called?

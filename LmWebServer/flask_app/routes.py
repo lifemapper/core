@@ -8,7 +8,8 @@ from LmWebServer.flask_app.gbif_parser import GBIFNamesService
 from LmWebServer.flask_app.global_pam import GlobalPAMService
 from LmWebServer.flask_app.layer import LayerService
 from LmWebServer.flask_app.occurrence import OccurrenceLayerService
-# from LmWebServer.flask_app.gridset import GridsetService
+from LmWebServer.flask_app.gridset import GridsetService
+from LmWebServer.flask_app.species_hint import SpeciesHintService
 
 app = Flask(__name__.split('.')[0])
 
@@ -56,8 +57,8 @@ def occurrence(identifier):
         svc.delete_occurrence_set(user_id, identifier)
     
     elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = str)
-        before_time = request.args.get('before_time', default = None, type = str)
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
         display_name = request.args.get('display_name', default = None, type = str)
         epsg_code = request.args.get('epsg_code', default= None, type = str) 
         minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
@@ -115,8 +116,8 @@ def layer(identifier):
         svc.delete_occurrence_set(user_id, identifier)
     
     elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = str)
-        before_time = request.args.get('before_time', default = None, type = str)
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
         alt_pred_code = request.args.get('alt_pred_code', default = None, type = str)
         date_code = request.args.get('date_code', default = None, type = str)
         epsg_code = request.args.get('epsg_code', default= None, type = str) 
@@ -204,21 +205,42 @@ def globalpam():
     user = svc.get_user()
     user_id = user.user_id
     
+    archive_name = request.args.get('display_name', default = None, type = str)
+    cell_size = request.args.get('cell_size', default = None, type = float)
+    algorithm_code = request.args.get('algorithm_code', default = None, type = str)
+    bbox = request.args.get('bbox', default = None, type = str)
+    display_name = request.args.get('display_name', default = None, type = str)
+    gridset_id = request.args.get('gridset_id', default = None, type = int)
+    model_scenario_code = request.args.get('model_scenario_code', default = None, type = str)
+    prj_scen_code = request.args.get('prj_scenario_code', default = None, type = str)
+    point_max = request.args.get('point_max', default = None, type = int)
+    point_min = request.args.get('point_min', default = None, type = int)
+    squid = request.args.get('squid', default = None, type = str)
+    taxon_kingdom = request.args.get('taxon_kingdom', default = None, type = str)
+    taxon_phylum = request.args.get('taxon_phylum', default = None, type = str)
+    taxon_class = request.args.get('taxon_class', default = None, type = str)
+    taxon_order = request.args.get('taxon_order', default = None, type = str)
+    taxon_family = request.args.get('taxon_family', default = None, type = str)
+    taxon_genus = request.args.get('taxon_genus', default = None, type = str)
+    taxon_species = request.args.get('taxon_species', default = None, type = str)
+        
     if request.method == 'POST':
-        svc.post_boom_data(user_id, user.email, boom_data)
+        response = svc.post_pam_subset(
+            user_id, archive_name, gridset_id, algorithm_code=algorithm_code, bbox=bbox, 
+            display_name=display_name, gridset_id=gridset_id, model_scenario_code=model_scenario_code, 
+            prj_scen_code=prj_scen_code, point_max=point_max, point_min=point_min, squid=squid, 
+            taxon_kingdom=taxon_kingdom, taxon_phylum=taxon_phylum, taxon_class=taxon_class, 
+            taxon_order=taxon_order, taxon_family=taxon_family, taxon_genus=taxon_genus, 
+            taxon_species=taxon_species)
 
     elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = str)
-        before_time = request.args.get('before_time', default = None, type = str)
-        display_name = request.args.get('display_name', default = None, type = str)
-        epsg_code = request.args.get('epsg_code', default= None, type = str) 
-        minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
-        # url_user = request.args.get('url_user', default = None, type = str) 
-        status = request.args.get('status', default = None, type = str)
-        gridset_id = request.args.get('gridset_id', default = None, type = str)
-        fill_points = request.args.get('fill_points', default = False, type = bool)
+        response = svc.post_pam_subset(
+            user_id, archive_name, cell_size=cell_size, algorithm_code=algorithm_code, bbox=bbox, 
+            display_name=display_name, gridset_id=gridset_id, model_scenario_code=model_scenario_code, 
+            prj_scen_code=prj_scen_code, point_max=point_max, point_min=point_min, squid=squid, 
+            taxon_kingdom=taxon_kingdom, taxon_phylum=taxon_phylum, taxon_class=taxon_class, 
+            taxon_order=taxon_order, taxon_family=taxon_family, taxon_genus=taxon_genus, 
+            taxon_species=taxon_species)
     
         return response
 
@@ -237,8 +259,8 @@ def gridset(identifier):
         svc.delete_gridset(user_id, identifier)
     
     elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = str)
-        before_time = request.args.get('before_time', default = None, type = str)
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
         epsg_code = request.args.get('epsg_code', default= None, type = str)
         meta_string = request.args.get('meta_string', default= None, type = str)
         shapegrid_id = request.args.get('shapegrid_id', default= None, type = int)
@@ -265,6 +287,18 @@ def gridset(identifier):
 
         return response
 
+# .....................................................................................
+@app.route('/api/v2/hint', methods=['GET'])
+def hint():
+    svc = SpeciesHintService()
+    user_id = svc.get_user()
+
+    search_string = request.args.get('search_string', default= None, type = str)
+    return svc.get_hint(user_id, search_string)
+    
+    
+    
+    
     # biotaphynames = GBIFTaxonService()
     # biotaphypoints = IDigBioOccurrenceService()
     # biotaphytree = OpenTreeService()

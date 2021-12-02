@@ -1,8 +1,10 @@
-Cython>=0.29.24
-Flask (brings Werkzeug)
+Cython
+Flask 		# brings Werkzeug
 mapscript
-scipy (brings numpy)
-matplotlib>=3.5.0
+scipy 		# brings numpy
+matplotlib
 psycopg2-binary
-requests>=2.26.0
+requests
 dendropy
+lmpy		# https://github.com/lifemapper/lifemapper-server/blob/main/src/lmpy/lmpy-2.9.99-py3-none-any.whl
+idigbio		# https://github.com/lifemapper/lifemapper-server/blob/main/src/lmserver/idigbio-0.8.5.tar.gz
