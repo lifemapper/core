@@ -3,11 +3,8 @@
 Todo:
     Use constants
 """
-
 from hashlib import md5
 import json
-
-import cherrypy
 
 from LmCommon.common.lmconstants import LMFormat
 from LmServer.base.atom import Atom
@@ -29,8 +26,7 @@ from LmServer.legion.tree import Tree
 # Provide methods for direct calls to formatters
 # .............................................................................
 def format_atom(obj):
-    """Format an Atom object into a dictionary
-    """
+    """Format an Atom object into a dictionary"""
     return {
         'epsg': obj.epsg_code,
         'id': obj.get_id(),
@@ -374,9 +370,8 @@ def json_object_formatter(obj):
 
 # .............................................................................
 def _format_object(obj):
-    """Helper method to format an individual object based on its type
-    """
-    cherrypy.response.headers['Content-Type'] = LMFormat.JSON.get_mime_type()
+    """Helper method to format an individual object based on its type"""
+    # cherrypy.response.headers['Content-Type'] = LMFormat.JSON.get_mime_type()
     if isinstance(obj, dict):
         return obj
     if isinstance(obj, Atom):
