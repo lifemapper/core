@@ -13,6 +13,9 @@ from LmWebServer.flask_app.occurrence import OccurrenceLayerService
 from LmWebServer.flask_app.gridset import GridsetService
 from LmWebServer.flask_app.species_hint import SpeciesHintService
 from LmWebServer.flask_app.open_tree import OpenTreeService
+from LmWebServer.flask_app.scenario_package import ScenarioPackageService
+from LmWebServer.flask_app.scenario import ScenarioService
+from _datetime import date
 
 app = Flask(__name__.split('.')[0])
 app.secret_key = str.encode(secrets.token_hex())
@@ -325,22 +328,76 @@ def hint():
     search_string = request.args.get('search_string', default= None, type = str)
     return svc.get_hint(user_id, search_string)
     
+# .....................................................................................
+@app.route('/api/v2/scenpackage/<string:identifier>', methods=['GET'])
+def scenpackage(identifier):
+    svc = ScenarioPackageService()
+    user_id = svc.get_user()
     
+    scenario_package_id = request.args.get('scenario_package_id', default = None, type = int)
+    scenario_id = request.args.get('scenario_id', default = None, type = int)
+    after_time = request.args.get('after_time', default = None, type = float)
+    before_time = request.args.get('before_time', default = None, type = float)
+    epsg_code = request.args.get('epsg_code', default= None, type = str) 
+    limit = request.args.get('limit', default = 100, type = int)
+    offset = request.args.get('offset', default = 0, type = int)
+    
+    if identifier is None:
+        response = svc.list_scenario_packages(
+            user_id, after_time=after_time, before_time=before_time, epsg_code=epsg_code, 
+            scenario_id=scenario_id, limit=limit, offset=offset)
 
+    elif identifier.lower() == 'count':
+        response = svc.count_scenario_packages(
+            user_id, after_time=after_time, before_time=before_time, epsg_code=epsg_code, scenario_id=scenario_id)
     
-    # biotaphynames = GBIFTaxonService()
-    # biotaphypoints = IDigBioOccurrenceService()
-    # biotaphytree = OpenTreeService()
-    # envlayer = EnvLayerService()
-    # gbifparser = GBIFNamesService()
-    # globalpam = GlobalPAMService()
-    # gridset = GridsetService()
-    # hint = SpeciesHintService()
-    # layer = LayerService()
-    # occurrence = OccurrenceLayerService()
-    # opentree = OpenTreeService()
-    # scenario = ScenarioService()
-    # scenpackage = ScenarioPackageService()
+    else:
+        try:
+            scenario_package_id = int(identifier)
+        except:
+            return BadRequest('{} is not a valid layer ID'.format(identifier))
+        else:
+            response = svc.get_scenario_package(user_id, scenario_package_id)
+                
+    return response
+    
+# .....................................................................................
+@app.route('/api/v2/scenario/<string:identifier>', methods=['GET'])
+def scenario(identifier):
+    svc = ScenarioPackageService()
+    user_id = svc.get_user_id()
+
+    scenario_id = request.args.get('scenario_id', default = None, type = int)
+    after_time = request.args.get('after_time', default = None, type = float)
+    before_time = request.args.get('before_time', default = None, type = float)
+    alt_pred_code = request.args.get('alt_pred_code', default= None, type = str) 
+    date_code = request.args.get('date_code', default= None, type = str) 
+    gcm_code = request.args.get('gcm_code', default= None, type = str) 
+    epsg_code = request.args.get('epsg_code', default= None, type = str) 
+    limit = request.args.get('limit', default = 100, type = int)
+    offset = request.args.get('offset', default = 0, type = int)
+
+    if identifier is None:
+        response = svc.list_scenarios(
+            user_id, after_time=after_time, before_time=before_time, alt_pred_code=alt_pred_code, 
+            date_code=date_code, gcm_code=gcm_code, epsg_code=epsg_code, limit=limit, offset=offset)
+
+    elif identifier.lower() == 'count':
+        response = svc.count_scenarios(
+            user_id, after_time=after_time, before_time=before_time, alt_pred_code=alt_pred_code, 
+            date_code=date_code, gcm_code=gcm_code, epsg_code=epsg_code)
+    
+    else:
+        try:
+            scenario_id = int(identifier)
+        except:
+            return BadRequest('{} is not a valid layer ID'.format(identifier))
+        else:
+            response = svc.get_scenario(user_id, scenario_id)
+
+    return response
+
+
     # sdmproject = SdmProjectService()
     # shapegrid = ShapegridService()
     # snippet = SnippetService()
