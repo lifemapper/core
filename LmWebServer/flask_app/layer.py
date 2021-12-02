@@ -30,7 +30,7 @@ class LayerService(LmService):
             env_code (str): Environmental type code for filtering environmental layers
             env_type_id (int): Database key of the environmental type for filtering environmental layers
             gcm_code (str) = GCM code for filtering environmental layers
-            scenario_code (str): Database key for filtering to environmental layers belonging to one scenario
+            scenario_code (str): Code for filtering to environmental layers belonging to one scenario
         """
         layer_count = self.scribe.count_env_layers(
             user_id=user_id, after_time=after_time, before_time=before_time, env_code=env_code, gcm_code=gcm_code, 

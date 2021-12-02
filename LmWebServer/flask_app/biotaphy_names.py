@@ -16,7 +16,7 @@ class GBIFTaxonService(LmService):
         """Queries GBIF for accepted names matching the provided list of names
         
         Args:
-            names_obj: a JSON list of name strings to match
+            names_obj(dict): a JSON list of name strings to match
         """
         if not isinstance(names_obj, list):
             return WEXC.BadRequest('Name data must be a JSON list')

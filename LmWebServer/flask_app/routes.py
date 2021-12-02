@@ -5,6 +5,9 @@ from LmWebServer.flask_app.occurrence import OccurrenceLayerService
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.flask_app.biotaphy_names import GBIFTaxonService
 from LmWebServer.flask_app.biotaphy_points import IDigBioOccurrenceService
+from LmWebServer.flask_app.gbif_parser import GBIFNamesService
+from LmWebServer.flask_app.global_pam import GlobalPAMService
+from LmWebServer.flask_app.layer import LayerService
 
 app = Flask(__name__.split('.')[0])
 
@@ -104,7 +107,7 @@ def layer(identifier):
     Returns:
         dict: A dictionary of metadata for the requested record.
     """
-    svc = OccurrenceLayerService()
+    svc = LayerService()
     user = svc.get_user()
     user_id = user.user_id
     
@@ -174,11 +177,46 @@ def biotaphynames():
 @app.route('/api/v2/biotaphypoints', methods=['POST'])
 def biotaphypoints():
     try:
-        taxon_ids = request.get_json()
+        taxonids_obj = request.get_json()
     except: 
         return BadRequest('Taxon ID list must be in JSON format')
     else:
         svc = IDigBioOccurrenceService()
-        response = svc.get_occurrence_counts_for_taxonids(names_obj)
+        response = svc.get_occurrence_counts_for_taxonids(taxonids_obj)
         return response
 
+# .....................................................................................
+@app.route('/api/v2/gbifparser', methods=['POST'])
+def gbifparser():
+    try:
+        names_obj = request.get_json()
+    except: 
+        return BadRequest('Name list must be in JSON format')
+    else:
+        svc = GBIFNamesService()
+        response = svc.get_gbif_names(names_obj)
+        return response
+
+# .....................................................................................
+@app.route('/api/v2/globalpam', methods=['GET', 'POST'])
+def globalpam():
+    svc = GlobalPAMService()()
+    user = svc.get_user()
+    user_id = user.user_id
+    
+    if request.method == 'POST':
+        svc.post_boom_data(user_id, user.email, boom_data)
+
+    elif request.method == 'GET':
+        after_time = request.args.get('after_time', default = None, type = str)
+        before_time = request.args.get('before_time', default = None, type = str)
+        display_name = request.args.get('display_name', default = None, type = str)
+        epsg_code = request.args.get('epsg_code', default= None, type = str) 
+        minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
+        limit = request.args.get('limit', default = 100, type = int)
+        offset = request.args.get('offset', default = 0, type = int)
+        # url_user = request.args.get('url_user', default = None, type = str) 
+        status = request.args.get('status', default = None, type = str)
+        gridset_id = request.args.get('gridset_id', default = None, type = str)
+        fill_points = request.args.get('fill_points', default = False, type = bool)
+    

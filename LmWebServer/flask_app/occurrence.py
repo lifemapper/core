@@ -62,11 +62,22 @@ class OccurrenceLayerService(LmService):
 
     # ................................
     @lm_formatter
-    def count_occurrence_sets(self, user_id, after_time=None,
-                               before_time=None, display_name=None,
-                               epsg_code=None, minimum_number_of_points=1,
-                               status=None, gridset_id=None):
+    def count_occurrence_sets(
+            self, user_id, after_time=None, before_time=None, display_name=None, epsg_code=None, 
+            minimum_number_of_points=1, status=None, gridset_id=None):
         """Return a count of occurrence sets matching the specified criteria
+        
+        Args:
+            user_id (str): The user authorized for this operation.  Note that this may not be 
+                the same user as is logged into the system
+            after_time (float): Time in MJD of the earliest modtime for filtering
+            before_time (float): Time in MJD of the latest modtime for filtering
+            display_name (str): Taxonomic name for filtering
+            squid (str): Unique taxon identifier for filtering 
+            minimum_number_of_points (int): Minimum number of points for filtering 
+            status (int): Status code for filtering
+            gridset_id (int): Database key to filter occurrencesets within a gridset
+
         """
         after_status = None
         before_status = None
