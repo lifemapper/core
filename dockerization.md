@@ -45,7 +45,7 @@
 * matplotlib
 * idigbio
 * dendropy
-* libgdal26 (package manager)
+* libgdal26, libgdal-dev (package manager)
 * gdal
 * libproj / (apt proj-bin, proj-data) (package manager)
 
