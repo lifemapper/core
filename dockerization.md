@@ -43,8 +43,11 @@
 * requests 
 * scipy (includes numpy)
 * matplotlib
-* libgdal (package manager)
-* libproj (package manager)
+* idigbio
+* dendropy
+* libgdal26 (package manager)
+* gdal
+* libproj / (apt proj-bin, proj-data) (package manager)
 
 
 
