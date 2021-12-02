@@ -1,8 +1,10 @@
 """The module provides a base Lifemapper service class
 """
 from flask import Flask, session
+import os
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
+from LmServer.common.lmconstants import ARCHIVE_PATH 
 from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import WebLogger
 from LmServer.db.borg_scribe import BorgScribe
@@ -36,7 +38,6 @@ class LmService:
         self.log = log
 
     # ..........................
-    @staticmethod
     def get_user(self, user_id=None):
         """Gets the user id for the service call.
     
@@ -46,16 +47,15 @@ class LmService:
         
         TODO: Save the username in the session
         """
-        svc = LmService()
         if user_id is None:
-            svc.get_user_id()
+            self.get_user_id()
         # Check to see if we should use url user
-        usr = svc.scribe.find_user(user_id)
+        usr = self.scribe.find_user(user_id)
         return usr
 
     # ..........................
-    @staticmethod
-    def get_user_id(url_user=None):
+    @classmethod
+    def get_user_id(cls, url_user=None):
         """Gets the user id for the service call.
     
         Gets the user id for the service call.  If urlUser is provided, try
@@ -76,6 +76,19 @@ class LmService:
         except Exception:
             # Fall back to PUBLIC_USER
             return PUBLIC_USER
+        
+    # ................................
+    @classmethod
+    def get_user_dir(cls, user_id):
+        """Get the user's workspace directory
+    
+        Todo:
+            Change this to use something at a lower level.  This is using the
+                same path construction as the getBoomPackage script
+        """
+        return os.path.join(ARCHIVE_PATH, user_id, 'uploads', 'biogeo')
+            
+
 
     # ..........................
     @staticmethod

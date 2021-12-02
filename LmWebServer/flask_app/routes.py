@@ -1,5 +1,7 @@
-from flask import Flask, redirect, render_template, request, session
-from werkzeug.exceptions import BadRequest, NotFound
+from flask import (Flask, redirect, render_template, request, session, url_for)
+from flask_cors import CORS
+import secrets
+from werkzeug.exceptions import BadRequest
 
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.flask_app.biotaphy_names import GBIFTaxonService
@@ -10,16 +12,25 @@ from LmWebServer.flask_app.layer import LayerService
 from LmWebServer.flask_app.occurrence import OccurrenceLayerService
 from LmWebServer.flask_app.gridset import GridsetService
 from LmWebServer.flask_app.species_hint import SpeciesHintService
+from LmWebServer.flask_app.open_tree import OpenTreeService
 
 app = Flask(__name__.split('.')[0])
+app.secret_key = str.encode(secrets.token_hex())
+CORS(app)
+
+# ..........................
+@app.route('/')
+def index():
+    if 'username' in session:
+        return f'Logged in as {session["username"]}'
+    return 'You are not logged in'
 
 # ..........................
 @app.route('/api/v2/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        req = request.form
-        username = req.get('username')
-        password = req.get('password')
+        username = request.form.get('username')
+        password = request.form.get('password')
         
         user = LmService.get_user(username)
         if user.check_password(password):
@@ -30,6 +41,13 @@ def login():
             return redirect(request.url)
 
     return render_template('public_html/login.html')
+
+# .....................................................................................
+@app.route('/logout')
+def logout():
+    # remove the username from the session if it's there
+    session.pop('username', None)
+    return redirect(url_for('index'))
 
 # .....................................................................................
 @app.route('/api/v2/occ/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
@@ -93,7 +111,7 @@ def occurrence(identifier):
             except:
                 return BadRequest('{} is not a valid layer ID'.format(identifier))
             else:
-                response = svc.get_occurrence_set(occid, fill_points=fill_points)
+                response = svc.get_occurrence_set(user_id, occid, fill_points=fill_points)
                 
     return response
 
@@ -168,7 +186,7 @@ def biotaphynames():
     try:
         names_obj = request.get_json()
     except: 
-        return BadRequest('Name list must be in JSON format')
+        return BadRequest('Names must be a JSON list')
     else:
         svc = GBIFTaxonService()
         response = svc.get_gbif_results(names_obj)
@@ -180,11 +198,22 @@ def biotaphypoints():
     try:
         taxonids_obj = request.get_json()
     except: 
-        return BadRequest('Taxon ID list must be in JSON format')
+        return BadRequest('Taxon IDs must be a JSON list')
     else:
         svc = IDigBioOccurrenceService()
         response = svc.get_occurrence_counts_for_taxonids(taxonids_obj)
         return response
+
+# .....................................................................................
+@app.route('/api/v2/biotaphytree', methods=['POST'])
+def biotaphytree():
+    try:
+        taxon_names_obj = request.get_json()
+    except:
+        return BadRequest('Taxon names must be a JSON list')
+    else:
+        svc =  OpenTreeService()
+        svc.get_tree_for_names(taxon_names_obj)
 
 # .....................................................................................
 @app.route('/api/v2/gbifparser', methods=['POST'])
@@ -297,7 +326,7 @@ def hint():
     return svc.get_hint(user_id, search_string)
     
     
-    
+
     
     # biotaphynames = GBIFTaxonService()
     # biotaphypoints = IDigBioOccurrenceService()

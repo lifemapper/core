@@ -2,7 +2,6 @@
 import dendropy
 from flask import Response, make_response
 from http import HTTPStatus
-import json
 import os
 import werkzeug.exceptions as WEXC
 import zipfile
@@ -17,7 +16,6 @@ from LmDbServer.boom.boom_collate import BoomCollate
 from LmServer.base.atom import Atom
 from LmServer.base.layer import Vector
 from LmServer.base.service_object import ServiceObject
-from LmServer.common.lmconstants import ARCHIVE_PATH
 from LmServer.legion.lm_matrix import LMMatrix
 from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.tree import Tree
@@ -52,16 +50,6 @@ def get_gridset(user_id, gridset_id):
     raise WEXC.Forbidden('User {} does not have permission to access GridSet {}'.format(
             user_id, gridset_id))
 
-# ................................
-def get_user_dir(user_id):
-    """Get the user's workspace directory
-
-    Todo:
-        Change this to use something at a lower level.  This is using the
-            same path construction as the getBoomPackage script
-    """
-    return os.path.join(ARCHIVE_PATH, user_id, 'uploads', 'biogeo')
-        
 # .............................................................................
 def summarize_object_statuses(summary):
     """Summarizes a summary
@@ -246,7 +234,7 @@ class GridsetBioGeoService(LmService):
             curr_time = gmt().mjd
             # # Check for uploaded biogeo package
             package_name = hypothesis_reference_obj[BG_REF_ID_KEY]
-            package_filename = os.path.join(get_user_dir(), '{}{}'.format(package_name, LMFormat.ZIP.ext))
+            package_filename = os.path.join(self.get_user_dir(), '{}{}'.format(package_name, LMFormat.ZIP.ext))
             #
             encoder = LayerEncoder(gridset.get_shapegrid().get_dlocation())
             self._encode_insert_biogeo(gridset, hypothesis_reference_obj, encoder, package_filename)
@@ -280,7 +268,7 @@ class GridsetBioGeoService(LmService):
 
                 tmp_mtx = LMMatrix(
                     None, matrix_type=MatrixType.BIOGEO_HYPOTHESES, process_type=ProcessType.ENCODE_HYPOTHESES,
-                    user_id=self.get_user_id(), gridset=gridset, metadata=meta, status=JobStatus.INITIALIZE, 
+                    user_id=user_id, gridset=gridset, metadata=meta, status=JobStatus.INITIALIZE, 
                     status_mod_time=curr_time)
                 bg_mtx = self.scribe.find_or_insert_matrix(tmp_mtx)
 
@@ -374,7 +362,7 @@ class GridsetTreeService(LmService):
                 raise WEXC.BadRequest('Must provide name for tree')
             
             tree = dendropy.Tree.get(file=tree_data, schema=tree_schema)
-            new_tree = Tree(name, user_id=self.get_user_id())
+            new_tree = Tree(name, user_id=user_id)
             updated_tree = self.scribe.find_or_insert_tree(new_tree)
             updated_tree.set_tree(tree)
             updated_tree.write_tree()

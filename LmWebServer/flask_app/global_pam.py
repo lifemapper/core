@@ -3,11 +3,14 @@ from flask import make_response
 from http import HTTPStatus
 
 from LmServer.base.atom import Atom
+
 from LmServer.common.lmconstants import SOLR_FIELDS
 from LmServer.common.solr import facet_archive_on_gridset, query_archive_index
 from LmServer.common.subset import subset_global_pam
-from LmWebServer.services.api.v2.base import LmService
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+
+from LmWebServer.flask_app.base import LmService
+
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................

@@ -103,7 +103,7 @@ class OccurrenceLayerService(LmService):
 
     # ................................
     @lm_formatter
-    def get_occurrence_set(self, occset_id, fill_points=False):
+    def get_occurrence_set(self, user_id, occset_id, fill_points=False):
         """Attempt to get an occurrence set"""
         occ = self.scribe.get_occurrence_set(occ_id=int(occset_id))
 
@@ -111,13 +111,12 @@ class OccurrenceLayerService(LmService):
             raise WEXC.NotFound('Occurrence set not found')
 
         # If allowed to, return
-        if check_user_permission(self.get_user_id(), occ, HTTPMethod.GET):
+        if check_user_permission(user_id, occ, HTTPMethod.GET):
             if fill_points:
                 occ.read_shapefile()
             return occ
 
-        raise WEXC.Forbidden('User {} does not have permission to GET occurrence set'.format(
-                self.get_user_id()))
+        raise WEXC.Forbidden('User {} does not have permission to GET occurrence set'.format(user_id))
 
     # ................................
     @lm_formatter
