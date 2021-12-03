@@ -51,9 +51,9 @@ def boolify_parameter(param, default=True):
         try:
             # Try processing a string
             str_val = param.lower().strip()
-            if str_val == 'false' or str_val == 'no':
+            if str_val in('false', 'f', 'no','n'):
                 return False
-            if str_val == 'true' or str_val == 'yes':
+            if str_val in ('true', 't', 'yes', 'y'):
                 return True
         except Exception:
             pass
@@ -93,7 +93,7 @@ QUERY_PARAMETERS = {
     },
     'atom': {
         QP_NAME_KEY: 'atom',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)
     },
     'beforestatus': {
         QP_NAME_KEY: 'before_status',
@@ -143,18 +143,18 @@ QUERY_PARAMETERS = {
     },
     'detail': {
         QP_NAME_KEY: 'detail',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'displayname': {
         QP_NAME_KEY: 'display_name'
     },
     'docalc': {
         QP_NAME_KEY: 'do_calc',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'domcpa': {
         QP_NAME_KEY: 'do_mcpa',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'envcode': {
         QP_NAME_KEY: 'env_code'
@@ -175,7 +175,7 @@ QUERY_PARAMETERS = {
     },
     'fillpoints': {
         QP_NAME_KEY: 'fill_points',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'format': {
         # TODO: Forward to respFormat since format is reserved
@@ -190,7 +190,7 @@ QUERY_PARAMETERS = {
     },
     'hasbranchlengths': {
         QP_NAME_KEY: 'has_branch_lengths',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)
     },
     'height': {
         QP_NAME_KEY: 'height',
@@ -204,19 +204,19 @@ QUERY_PARAMETERS = {
     },
     'includecsvs': {
         QP_NAME_KEY: 'include_csvs',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'includesdms': {
         QP_NAME_KEY: 'include_sdms',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)  # Boolify, default is false
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=False)
     },
     'isbinary': {
         QP_NAME_KEY: 'is_binary',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)
     },
     'isultrametric': {
         QP_NAME_KEY: 'is_ultrametric',
-        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)  # Boolify, default is true
+        QP_PROCESS_KEY: lambda x: boolify_parameter(x, default=True)
     },
     'keyword': {
         QP_NAME_KEY: 'keyword',
@@ -235,7 +235,7 @@ QUERY_PARAMETERS = {
     },
     'limit': {
         QP_NAME_KEY: 'limit',
-        QP_PROCESS_KEY: lambda x: max(1, int(x))  # Integer, minimum is one
+        QP_PROCESS_KEY: lambda x: max(1, int(x))  # min = 1
     },
     'map': {
         QP_NAME_KEY: 'map_name'
@@ -258,7 +258,7 @@ QUERY_PARAMETERS = {
     },
     'minimumnumberofpoints': {
         QP_NAME_KEY: 'minimum_number_of_points',
-        QP_PROCESS_KEY: lambda x: max(1, int(x))  # Integer, minimum is one
+        QP_PROCESS_KEY: lambda x: max(1, int(x))  # min = 1
     },
     'numpermutations': {
         QP_NAME_KEY: 'num_permutations',
@@ -273,7 +273,7 @@ QUERY_PARAMETERS = {
     },
     'offset': {
         QP_NAME_KEY: 'offset',
-        QP_PROCESS_KEY: lambda x: max(0, int(x))  # Integer, minimum is zero
+        QP_PROCESS_KEY: lambda x: max(0, int(x))  # min = 0
     },
     'pathbiogeoid': {
         QP_NAME_KEY: 'path_biogeo_id'
