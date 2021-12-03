@@ -1,13 +1,12 @@
 """This module provides services for querying snippets"""
 from LmServer.common.solr import query_snippet_index
 from LmWebServer.flask_app.base import LmService
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................
 class SnippetService(LmService):
-    """This class is responsible for the Lifemapper snippet services.
-    """
+    """This class is responsible for the Lifemapper snippet services."""
 
     # ................................
     @lm_formatter

@@ -9,7 +9,7 @@ from LmServer.common.data_locator import EarlJr
 from LmServer.common.lmconstants import LMFileType, FileFix
 from LmServer.common.localconstants import PUBLIC_USER
 from LmWebServer.flask_app.base import LmService
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................

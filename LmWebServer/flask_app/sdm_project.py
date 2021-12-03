@@ -9,7 +9,7 @@ from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # ................................................................0.............
@@ -56,41 +56,6 @@ class SdmProjectService(LmService):
             else:
                 # If we have permission but cannot delete, error
                 raise WEXC.InternalServerError('Failed to delete projection {}'.format(projection_id))
-
-    # ................................
-    @lm_formatter
-    def GET(self, projection_id=None, after_status=None, after_time=None,
-            algorithm_code=None, before_status=None, before_time=None,
-            display_name=None, epsg_code=None, limit=100,
-            model_scenario_code=None, occurrence_set_id=None, offset=0,
-            projection_scenario_code=None, url_user=None, scenario_id=None,
-            status=None, gridset_id=None, atom=True, **params):
-        """Perform a GET request. List, count, or get individual projection.
-        """
-        if projection_id is None:
-            return self._list_projections(
-                self.get_user_id(url_user=url_user), after_status=after_status,
-                after_time=after_time, alg_code=algorithm_code,
-                before_status=before_status, before_time=before_time,
-                display_name=display_name, epsg_code=epsg_code, limit=limit,
-                mdl_scenario_code=model_scenario_code,
-                occurrence_set_id=occurrence_set_id, offset=offset,
-                prj_scenario_code=projection_scenario_code, status=status,
-                gridset_id=gridset_id, atom=atom)
-
-        if projection_id.lower() == 'count':
-            return self._count_projections(
-                self.get_user_id(url_user=url_user), after_status=after_status,
-                after_time=after_time, alg_code=algorithm_code,
-                before_status=before_status, before_time=before_time,
-                display_name=display_name, epsg_code=epsg_code,
-                mdl_scenario_code=model_scenario_code,
-                occurrence_set_id=occurrence_set_id,
-                prj_scenario_code=projection_scenario_code, status=status,
-                gridset_id=gridset_id)
-
-        # Get individual as fall back
-        return self._get_projection(projection_id)
 
     # ................................
     @lm_formatter

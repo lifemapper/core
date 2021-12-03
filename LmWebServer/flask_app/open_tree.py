@@ -20,7 +20,7 @@ from LmServer.common.lmconstants import (
     NONTREE_GBIF_IDS_KEY, TREE_DATA_KEY, TREE_FORMAT_KEY, TREE_NAME_KEY, UNMATCHED_GBIF_IDS_KEY)
 
 from LmWebServer.flask_app.base import LmService
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................

@@ -7,7 +7,7 @@ from LmServer.legion.shapegrid import Shapegrid
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................
@@ -36,27 +36,6 @@ class ShapegridService(LmService):
 
         # If request is not permitted, raise exception
         raise WEXC.Forbidden('User does not have permission to delete this shapegrid')
-
-    # ................................
-    @lm_formatter
-    def GET(self, shapegrid_id=None, after_time=None, before_time=None,
-            cell_sides=None, cell_size=None, epsg_code=None, limit=100,
-            offset=0, url_user=None, **params):
-        """Perform a GET request, either list, count, or return individual."""
-        if shapegrid_id is None:
-            return self._list_shapegrids(
-                self.get_user_id(url_user=url_user), after_time=after_time,
-                before_time=before_time, cell_sides=cell_sides,
-                cell_size=cell_size, epsg_code=epsg_code, limit=limit,
-                offset=offset)
-        if shapegrid_id.lower() == 'count':
-            return self._count_shapegrids(
-                self.get_user_id(url_user=url_user), after_time=after_time,
-                before_time=before_time, cell_sides=cell_sides,
-                cell_size=cell_size, epsg_code=epsg_code)
-
-        # Fallback to return individual
-        return self._get_shapegrid(shapegrid_id)
 
     # ................................
     @lm_formatter

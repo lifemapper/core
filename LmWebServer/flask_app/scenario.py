@@ -4,35 +4,12 @@ import werkzeug.exceptions as WEXC
 from LmWebServer.common.lmconstants import HTTPMethod
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................
 class ScenarioService(LmService):
     """Scenarios service class."""
-
-    # ................................
-    # @lm_formatter
-    # def GET(self, scenario_id=None, after_time=None,
-    #         alt_pred_code=None, before_time=None, date_code=None,
-    #         epsg_code=None, gcm_code=None, limit=100, offset=0, url_user=None,
-    #         **params):
-    #     """GET request.  Individual, list, count
-    #     """
-    #     if scenario_id is None:
-    #         return self._list_scenarios(
-    #             self.get_user_id(url_user=url_user), after_time=after_time,
-    #             alt_pred_code=alt_pred_code, before_time=before_time,
-    #             date_code=date_code, epsg_code=epsg_code, gcm_code=gcm_code,
-    #             limit=limit, offset=offset)
-    #
-    #     if scenario_id.lower() == 'count':
-    #         return self._count_scenarios(
-    #             self.get_user_id(url_user=url_user), after_time=after_time,
-    #             alt_pred_code=alt_pred_code, before_time=before_time,
-    #             date_code=date_code, epsg_code=epsg_code, gcm_code=gcm_code)
-    #
-    #     return self._get_scenario(scenario_id)
 
     # ................................
     @lm_formatter

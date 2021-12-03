@@ -3,7 +3,7 @@ import werkzeug.exceptions as WEXC
 
 from LmCommon.common.api_query import GbifAPI
 from LmWebServer.flask_app.base import LmService
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 
 # .............................................................................

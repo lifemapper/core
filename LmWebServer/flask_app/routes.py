@@ -17,6 +17,10 @@ from LmWebServer.flask_app.scenario_package import ScenarioPackageService
 from LmWebServer.flask_app.scenario import ScenarioService
 from LmWebServer.flask_app.sdm_project import SdmProjectService
 from LmWebServer.flask_app.snippet import SnippetService
+from LmWebServer.flask_app.solr_raw import RawSolrService
+from LmWebServer.flask_app.taxonomy import TaxonomyHintService
+from LmWebServer.flask_app.tree import TreeService
+from LmWebServer.flask_app.upload import UserUploadService
 
 from LmCommon.common.lmconstants import JobStatus
 
@@ -412,7 +416,7 @@ def sdmproject(identifier):
         dict: For GET and POST operations, zero or more dictionaries of metadata for the requested or 
         posted record(s); for DELETE operations, True or False for success        
     """
-    svc = SdmProjectService()()
+    svc = SdmProjectService()
     user = svc.get_user()
     user_id = user.user_id
     
@@ -492,11 +496,96 @@ def snippet():
     return response
 
 
-    # sdmproject = SdmProjectService()
-    # shapegrid = ShapegridService()
-    # snippet = SnippetService()
-    # rawsolr = RawSolrService()
-    # taxonomy = TaxonomyHintService()
-    # tree = TreeService()
-    # upload = UserUploadService()
+# .....................................................................................
+@app.route('/api/v2/rawsolr', methods=['POST'])
+def rawsolr():
+    svc = RawSolrService()
+    req_body = request.get_json()
+    response = svc.query_collection(req_body)
+    return response
 
+# .....................................................................................
+@app.route('/api/v2/taxonomy', methods=['GET'])
+def taxonomy():
+    svc = TaxonomyHintService()
+    req_body = request.get_json()
+    response = svc.query_collection(req_body)
+    return response
+
+# .....................................................................................
+@app.route('/api/v2/tree/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
+def tree(identifier):
+    """Tree API service for GET, POST, and DELETE operations on Trees
+
+    Args:
+        identifier (str): A tree identifier to search for.
+
+    Returns:
+        dict: For GET and POST operations, zero or more dictionaries of metadata for the requested or 
+        posted record(s); for DELETE operations, True or False for success        
+    """
+    svc = TreeService()
+    user_id = svc.get_user()
+    
+    if request.method == 'POST' and request.is_json:
+        tree_data = request.get_json()
+        svc.post_tree(user_id, tree_data)
+
+    elif request.method == 'DELETE':
+        svc.delete_tree(user_id, identifier)
+    
+    elif request.method == 'GET':
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
+        is_binary = request.args.get('is_binary', default = None, type = bool)
+        is_ultrametric = request.args.get('is_ultrametric', default = None, type = bool)
+        has_branch_lengths = request.args.get('has_branch_lengths', default = None, type = bool)
+        meta_string = request.args.get('meta_string', default = None, type = str)
+        name = request.args.get('name', default = None, type = str)
+        limit = request.args.get('limit', default = 100, type = int)
+        offset = request.args.get('offset', default = 0, type = int)
+
+        if identifier is None:
+            response = svc.list_trees(
+                user_id, after_time=after_time, before_time=before_time, is_binary=is_binary, 
+                is_ultrametric=is_ultrametric, has_branch_lengths=has_branch_lengths, meta_string=meta_string, 
+                name=name, limit=limit, offset=offset)
+
+        elif identifier.lower() == 'count':
+            response = svc.count_trees(
+                user_id, after_time=after_time, before_time=before_time, is_binary=is_binary, 
+                is_ultrametric=is_ultrametric, has_branch_lengths=has_branch_lengths, meta_string=meta_string, 
+                name=name)
+
+        else:
+            try:
+                tree_id = int(identifier)
+            except:
+                return BadRequest('{} is not a valid tree ID'.format(identifier))
+            else:
+                response = svc.get_tree(user_id, tree_id)
+                
+    return response
+
+# .....................................................................................
+@app.route('/api/v2/upload', methods=['POST'])
+def upload():
+    svc = UserUploadService()
+
+    file_name = request.args.get('file_name', default = None, type = str)
+    upload_type = request.args.get('upload_type', default = None, type = str)
+    metadata = request.args.get('metadata', default = None, type = str)
+    upload_file = request.args.get('upload_file', default = None, type = str)
+    
+    if upload_file is not None:
+        try:
+            data = upload_file.file.read()
+        except Exception as e:
+            raise BadRequest('Unable to read uploaded file ({})'.str(e))
+    else:
+        try:
+            data = request.get_data()
+        except: 
+            raise BadRequest('Unable to read data from request')
+        
+    return svc.post_data(file_name, upload_type, metadata, data)

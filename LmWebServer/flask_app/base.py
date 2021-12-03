@@ -1,6 +1,6 @@
 """The module provides a base Lifemapper service class
 """
-from flask import Flask, session
+from flask import session
 import os
 
 from LmCommon.common.lmconstants import DEFAULT_POST_USER
@@ -9,8 +9,7 @@ from LmServer.common.localconstants import PUBLIC_USER
 from LmServer.common.log import WebLogger
 from LmServer.db.borg_scribe import BorgScribe
 
-app = Flask(__name__)
-
+# app = Flask(__name__)
 
 # .............................................................................
 class LmService:
@@ -31,10 +30,8 @@ class LmService:
         as a CherryPy Tool)
         """
         log = WebLogger()
-        # self.scribe = cherrypy.thread_data.scribeRetriever.get_scribe()
         self.scribe = BorgScribe(log)
         self.scribe.open_connections()
-        # self.log = cherrypy.session.log
         self.log = log
 
     # ..........................
@@ -49,7 +46,6 @@ class LmService:
         """
         if user_id is None:
             self.get_user_id()
-        # Check to see if we should use url user
         usr = self.scribe.find_user(user_id)
         return usr
 
@@ -87,8 +83,6 @@ class LmService:
                 same path construction as the getBoomPackage script
         """
         return os.path.join(ARCHIVE_PATH, user_id, 'uploads', 'biogeo')
-            
-
 
     # ..........................
     @staticmethod

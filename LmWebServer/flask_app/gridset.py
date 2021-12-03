@@ -27,7 +27,7 @@ from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
-from LmWebServer.services.cp_tools.lm_format import lm_formatter
+from LmWebServer.flask_tools.lm_format import lm_formatter
 
 BG_REF_ID_KEY = 'identifier'
 BG_REF_KEY = 'hypothesis_package_reference'
