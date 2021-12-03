@@ -1,9 +1,35 @@
-<div class="log-form">
-  <h2>Login to your account</h2>
-  <form>
-    <input type="text" title="username" placeholder="username" />
-    <input type="password" title="username" placeholder="password" />
-    <button type="submit" class="btn">Login</button>
-    <a class="forgot" href="#">Forgot Username?</a>
-  </form>
-</div><!--end log form -->
+<html>
+    <head>
+        <title>Log in to Lifemapper</title>
+    </head>
+    <body>
+        <div class="loginDiv" align="center">
+            <form action="/api/login" method="post">
+                <div align="center">
+                    <table>
+                        <tr>
+                            <td style="text-align: right;">
+                                User Name:
+                            </td>
+                            <td style="text-align: left;">
+                                <input type="text" name="userid" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right;">
+                                Password:
+                            </td>
+                            <td style="text-align: left;">
+                                <input type="password" name="pword" />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <input type="submit" value="Log In" /><br /><br />
+                New user? <a href="/api/signup">Sign up</a> here!<br /><br />
+                Forgot your password? Contact us at lifemapper at ku dot edu.
+                <br />
+            </form>
+        </div>
+    </body>
+</html>

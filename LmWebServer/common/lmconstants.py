@@ -1,11 +1,14 @@
 """This module contains constants used by the Lifemapper web services
 """
 import os
+import secrets
 
 from LmServer.base.utilities import get_mjd_time_from_iso_8601
 from LmServer.common.lmconstants import SESSION_DIR
 from LmServer.common.localconstants import SCRATCH_PATH, APP_PATH
 from LmWebServer.common.localconstants import PACKAGING_DIR
+
+FALLBACK_SECRET_KEY = secrets.token_hex()
 
 # CherryPy constants
 SESSION_PATH = os.path.join(SCRATCH_PATH, SESSION_DIR)

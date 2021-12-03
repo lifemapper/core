@@ -1,8 +1,13 @@
-from flask import (Flask, redirect, render_template, request, session, url_for)
+from  flask import (Flask, flash, redirect, render_template, request, session, url_for)
 from flask_cors import CORS
-import secrets
+from flask_login import login_user, LoginForm, LoginManager
+import os
 from werkzeug.exceptions import BadRequest
+from werkzeug.utils import secure_filename
 
+from LmCommon.common.lmconstants import JobStatus
+
+from LmWebServer.common.lmconstants import FALLBACK_SECRET_KEY
 from LmWebServer.flask_app.base import LmService
 from LmWebServer.flask_app.biotaphy_names import GBIFTaxonService
 from LmWebServer.flask_app.biotaphy_points import IDigBioOccurrenceService
@@ -22,11 +27,25 @@ from LmWebServer.flask_app.taxonomy import TaxonomyHintService
 from LmWebServer.flask_app.tree import TreeService
 from LmWebServer.flask_app.upload import UserUploadService
 
-from LmCommon.common.lmconstants import JobStatus
+try:
+    skey = os.environ['SECRET_KEY']
+except:
+    skey = FALLBACK_SECRET_KEY
 
-app = Flask(__name__.split('.')[0])
-app.secret_key = str.encode(secrets.token_hex())
+
+# TODO: Put this into the database or an environment variable
+app = Flask(__name__.split('.')[0])    
+app.secret_key = str.encode(skey)
 CORS(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+# ..........................
+@login_manager.user_loader
+def load_user(user_id):
+    return LmService.get_user(user_id)
 
 # ..........................
 @app.route('/')
@@ -36,24 +55,45 @@ def index():
     return 'You are not logged in'
 
 # ..........................
-@app.route('/api/v2/login', methods=['GET', 'POST'])
+@app.route('/api/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        user = LmService.get_user(username)
-        if user.check_password(password):
-            session['username'] = user.user_id
-            return user
-        else:
-            print('Incorrect password')
-            return redirect(request.url)
+        # Here we use a class of some kind to represent and validate our
+    # client-side form data. For example, WTForms is a library that will
+    # handle this for us, and we use a custom LoginForm to validate.
+    form = LoginForm()
+    if form.validate_on_submit():
+        # Login and validate the user.
+        # user should be an instance of your `User` class
+        login_user(user)
 
-    return render_template('public_html/login.html')
+        flash('Logged in successfully.')
+
+        next = request.args.get('next')
+        # is_safe_url should check if the url is safe for redirects.
+        # See http://flask.pocoo.org/snippets/62/ for an example.
+        # if not is_safe_url(next):
+        #     return flask.abort(400)
+
+        return redirect(next or url_for('index'))
+    return render_template('public_html/login.html', form=form)
+
+
+    # if request.method == 'POST':
+    #     username = request.form.get('username')
+    #     password = request.form.get('password')
+    #
+    #     user = LmService.get_user(username)
+    #     if user.check_password(password):
+    #         session['username'] = user.user_id
+    #         return user
+    #     else:
+    #         print('Incorrect password')
+    #         return redirect(request.url)
+    #
+    # return render_template('public_html/login.html')
 
 # .....................................................................................
-@app.route('/logout')
+@app.route('/api/logout')
 def logout():
     # remove the username from the session if it's there
     session.pop('username', None)
@@ -568,24 +608,81 @@ def tree(identifier):
     return response
 
 # .....................................................................................
-@app.route('/api/v2/upload', methods=['POST'])
+def allowed_file(filename):
+    allowed_exts = {'zip', 'json', 'tif', 'tiff', 'asc'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_exts 
+
+
+@app.route('/api/v2/upload', methods=['GET', 'POST'])
 def upload():
     svc = UserUploadService()
 
     file_name = request.args.get('file_name', default = None, type = str)
     upload_type = request.args.get('upload_type', default = None, type = str)
     metadata = request.args.get('metadata', default = None, type = str)
-    upload_file = request.args.get('upload_file', default = None, type = str)
-    
-    if upload_file is not None:
-        try:
-            data = upload_file.file.read()
-        except Exception as e:
-            raise BadRequest('Unable to read uploaded file ({})'.str(e))
-    else:
-        try:
-            data = request.get_data()
-        except: 
-            raise BadRequest('Unable to read data from request')
+
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+
+        upload_file = request.files['file']
+        # If the user does not select a file, the browser submits an empty file without a filename.
+        if upload_file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
         
-    return svc.post_data(file_name, upload_type, metadata, data)
+        if upload_file:
+            if allowed_file(upload_file.filename):
+                if file_name is not None:
+                    safe_filename = secure_filename(file_name)
+                else:
+                    safe_filename = secure_filename(upload_file.filename)
+                
+                try:
+                    data = upload_file.file.read()
+                except Exception as e:
+                    raise BadRequest('Unable to read uploaded file ({})'.str(e))
+                
+        else:
+            try:
+                data = request.get_data()
+            except: 
+                raise BadRequest('Unable to read data from request')
+
+    return svc.post_data(safe_filename, upload_type, metadata, data)
+
+
+# .....................................................................................
+@app.route('/api/v2/upload_file', methods=['GET', 'POST'])
+def upload_file():
+    """Test implementation from https://flask.palletsprojects.com/en/2.0.x/patterns/fileuploads/"""
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an empty file without a filename.
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('download_file', name=filename))
+        
+    return 
+    
+    '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form method=post enctype=multipart/form-data>
+      <input type=file name=file>
+      <input type=submit value=Upload>
+    </form>
+    '''
