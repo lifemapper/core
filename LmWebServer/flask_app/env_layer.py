@@ -2,7 +2,7 @@
 import werkzeug.exceptions as WEXC
 
 from LmWebServer.common.lmconstants import HTTPMethod
-from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
 

@@ -1,17 +1,15 @@
 """This module provides REST services for Scenario"""
 import werkzeug.exceptions as WEXC
 
-from LmCommon.common.lmconstants import HTTPStatus
 from LmWebServer.common.lmconstants import HTTPMethod
-from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 
 # .............................................................................
 class ScenarioService(LmService):
-    """Scenarios service class.
-    """
+    """Scenarios service class."""
 
     # ................................
     # @lm_formatter

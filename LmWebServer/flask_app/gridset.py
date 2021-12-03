@@ -12,15 +12,18 @@ from LmCommon.common.lmconstants import (
     DEFAULT_TREE_SCHEMA, JobStatus, LMFormat, MatrixType, ProcessType)
 from LmCommon.common.time import gmt
 from LmCommon.encoding.layer_encoder import LayerEncoder
+
 from LmDbServer.boom.boom_collate import BoomCollate
+
 from LmServer.base.atom import Atom
 from LmServer.base.layer import Vector
 from LmServer.base.service_object import ServiceObject
 from LmServer.legion.lm_matrix import LMMatrix
 from LmServer.legion.mtx_column import MatrixColumn
 from LmServer.legion.tree import Tree
+
 from LmWebServer.common.lmconstants import HTTPMethod
-from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.api.v2.matrix import MatrixService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
@@ -112,8 +115,7 @@ class GridsetAnalysisService(LmService):
             boom_col.create_workflow()
             boom_col.close()
 
-            response = make_response(gridset, HTTPStatus.ACCEPTED)
-            return response
+            return make_response(gridset, HTTPStatus.ACCEPTED)
         else:
             raise WEXC.BadRequest('Must specify at least one analysis to perform')
 

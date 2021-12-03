@@ -1,11 +1,12 @@
 """This module provides REST services for Occurrence sets"""
+from flask import make_response, Response
 from http import HTTPStatus
 import werkzeug.exceptions as WEXC
 
 from LmCommon.common.lmconstants import (JobStatus)
 from LmServer.base.atom import Atom
 from LmWebServer.common.lmconstants import HTTPMethod
-from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.common.access_control import check_user_permission
 from LmWebServer.services.common.boom_post import BoomPoster
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
@@ -34,7 +35,7 @@ class OccurrenceLayerService(LmService):
         if check_user_permission(user_id, occ, HTTPMethod.DELETE):
             success = self.scribe.delete_object(occ)
             if success:
-                return HTTPStatus.NO_CONTENT
+                return Response(status=HTTPStatus.NO_CONTENT)
     
             # If unsuccessful, fail
             raise WEXC.InternalServerError('Failed to delete occurrence set')
@@ -56,10 +57,9 @@ class OccurrenceLayerService(LmService):
         boom_post = BoomPoster(user_id, user_email, boom_data, self.scribe)
         gridset = boom_post.init_boom()
     
-        # cherrypy.response.status = HTTPStatus.ACCEPTED
-        return Atom(
-            gridset.get_id(), gridset.name, gridset.metadata_url,
-            gridset.mod_time, epsg=gridset.epsg_code)
+        atom = Atom(
+            gridset.get_id(), gridset.name, gridset.metadata_url, gridset.mod_time, epsg=gridset.epsg_code)
+        return make_response(atom, HTTPStatus.ACCEPTED)
 
     # ................................
     @lm_formatter

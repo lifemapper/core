@@ -15,7 +15,10 @@ from LmWebServer.flask_app.species_hint import SpeciesHintService
 from LmWebServer.flask_app.open_tree import OpenTreeService
 from LmWebServer.flask_app.scenario_package import ScenarioPackageService
 from LmWebServer.flask_app.scenario import ScenarioService
-from _datetime import date
+from LmWebServer.flask_app.sdm_project import SdmProjectService
+from LmWebServer.flask_app.snippet import SnippetService
+
+from LmCommon.common.lmconstants import JobStatus
 
 app = Flask(__name__.split('.')[0])
 app.secret_key = str.encode(secrets.token_hex())
@@ -52,71 +55,6 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
-# .....................................................................................
-@app.route('/api/v2/occ/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
-def occurrence(identifier):
-    """Occurrence API service for GET, POST, and DELETE operations on occurrences
-
-    Args:
-        identifier (str): An occurrence identifier to search for.
-
-    Returns:
-        dict: For GET and POST operations, zero or more dictionaries of metadata for the requested or 
-        posted record(s); for DELETE operations, True or False for success
-        
-    TODO: Why is boom post here?  Create a different service for that.
-    """
-    svc = OccurrenceLayerService()
-    user = svc.get_user()
-    user_id = user.user_id
-    
-    if request.method == 'POST' and request.is_json:
-        boom_data = request.get_json()
-        svc.post_boom_data(user_id, user.email, boom_data)
-
-    elif request.method == 'DELETE':
-        svc.delete_occurrence_set(user_id, identifier)
-    
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        display_name = request.args.get('display_name', default = None, type = str)
-        epsg_code = request.args.get('epsg_code', default= None, type = str) 
-        minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
-        # url_user = request.args.get('url_user', default = None, type = str) 
-        status = request.args.get('status', default = None, type = str)
-        gridset_id = request.args.get('gridset_id', default = None, type = str)
-        fill_points = request.args.get('fill_points', default = False, type = bool)
-        
-        if identifier is None:
-            response = svc.list_occurrence_sets(
-                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
-                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
-                offset=offset, gridset_id=gridset_id, status=status)
-
-        elif identifier.lower() == 'count':
-            response = svc.count_occurrence_sets(
-                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
-                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points,
-                gridset_id=gridset_id, status=status)
-
-        elif identifier.lower() == 'web':
-            response = svc.list_web_occurrence_sets(
-                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
-                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
-                offset=offset, gridset_id=gridset_id, status=status)
-        
-        else:
-            try:
-                occid = int(identifier)
-            except:
-                return BadRequest('{} is not a valid layer ID'.format(identifier))
-            else:
-                response = svc.get_occurrence_set(user_id, occid, fill_points=fill_points)
-                
-    return response
 
 # .....................................................................................
 @app.route('/api/v2/layer/<string:identifier>', methods=['GET', 'DELETE'])
@@ -181,6 +119,71 @@ def layer(identifier):
             else:
                 response = svc.get_layer(user_id, layer_id, env_layer=(layer_type == 1))
             
+    return response
+
+# .....................................................................................
+@app.route('/api/v2/occ/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
+def occurrence(identifier):
+    """Occurrence API service for GET, POST, and DELETE operations on occurrences
+
+    Args:
+        identifier (str): An occurrence identifier to search for.
+
+    Returns:
+        dict: For GET and POST operations, zero or more dictionaries of metadata for the requested or 
+        posted record(s); for DELETE operations, True or False for success
+        
+    TODO: Why is boom post here?  Create a different service for that.
+    """
+    svc = OccurrenceLayerService()
+    user = svc.get_user()
+    user_id = user.user_id
+    
+    if request.method == 'POST' and request.is_json:
+        boom_data = request.get_json()
+        svc.post_boom_data(user_id, user.email, boom_data)
+
+    elif request.method == 'DELETE':
+        svc.delete_occurrence_set(user_id, identifier)
+    
+    elif request.method == 'GET':
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
+        display_name = request.args.get('display_name', default = None, type = str)
+        epsg_code = request.args.get('epsg_code', default= None, type = str) 
+        minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
+        limit = request.args.get('limit', default = 100, type = int)
+        offset = request.args.get('offset', default = 0, type = int)
+        status = request.args.get('status', default = None, type = int)
+        gridset_id = request.args.get('gridset_id', default = None, type = int)
+        fill_points = request.args.get('fill_points', default = False, type = bool)
+        
+        if identifier is None:
+            response = svc.list_occurrence_sets(
+                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
+                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
+                offset=offset, gridset_id=gridset_id, status=status)
+
+        elif identifier.lower() == 'count':
+            response = svc.count_occurrence_sets(
+                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
+                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points,
+                gridset_id=gridset_id, status=status)
+
+        elif identifier.lower() == 'web':
+            response = svc.list_web_occurrence_sets(
+                user_id, after_time=after_time, before_time=before_time, display_name=display_name,
+                epsg_code=epsg_code, minimum_number_of_points=minimum_number_of_points, limit=limit,
+                offset=offset, gridset_id=gridset_id, status=status)
+        
+        else:
+            try:
+                occid = int(identifier)
+            except:
+                return BadRequest('{} is not a valid layer ID'.format(identifier))
+            else:
+                response = svc.get_occurrence_set(user_id, occid, fill_points=fill_points)
+                
     return response
 
 # .....................................................................................
@@ -364,7 +367,7 @@ def scenpackage(identifier):
 # .....................................................................................
 @app.route('/api/v2/scenario/<string:identifier>', methods=['GET'])
 def scenario(identifier):
-    svc = ScenarioPackageService()
+    svc = ScenarioService()
     user_id = svc.get_user_id()
 
     scenario_id = request.args.get('scenario_id', default = None, type = int)
@@ -394,6 +397,97 @@ def scenario(identifier):
             return BadRequest('{} is not a valid layer ID'.format(identifier))
         else:
             response = svc.get_scenario(user_id, scenario_id)
+
+    return response
+
+# .....................................................................................
+@app.route('/api/v2/sdmproject/<string:identifier>', methods=['GET', 'POST', 'DELETE'])
+def sdmproject(identifier):
+    """SdmProject API service for GET, POST, and DELETE operations on SDM projections
+
+    Args:
+        identifier (str): An sdmproject identifier to search for.
+
+    Returns:
+        dict: For GET and POST operations, zero or more dictionaries of metadata for the requested or 
+        posted record(s); for DELETE operations, True or False for success        
+    """
+    svc = SdmProjectService()()
+    user = svc.get_user()
+    user_id = user.user_id
+    
+    if request.method == 'POST' and request.is_json:
+        projection_data = request.get_json()
+        svc.post_boom_data(user_id, user.email, projection_data)
+
+    elif request.method == 'DELETE':
+        svc.delete_occurrence_set(user_id, identifier)
+    
+    elif request.method == 'GET':
+        after_time = request.args.get('after_time', default = None, type = float)
+        before_time = request.args.get('before_time', default = None, type = float)
+        after_status = request.args.get('after_status', default = JobStatus.COMPLETE, type = int)
+        before_status = request.args.get('before_status', default = JobStatus.COMPLETE, type = int)
+        alg_code = request.args.get('alg_code', default = None, type = str)
+        display_name = request.args.get('display_name', default = None, type = str)
+        epsg_code = request.args.get('epsg_code', default= None, type = str)
+        occurrence_set_id = request.args.get('occurrence_set_id', default = None, type = int)
+        mdl_scenario_code = request.args.get('mdl_scenario_code', default = None, type = str)
+        prj_scenario_code = request.args.get('prj_scenario_code', default = None, type = str)
+        status = request.args.get('status', default = JobStatus.COMPLETE, type = int)
+        gridset_id = request.args.get('gridset_id', default = None, type = int)
+        limit = request.args.get('limit', default = 100, type = int)
+        offset = request.args.get('offset', default = 0, type = int)
+        atom = request.args.get('atom', default = True, type = bool)
+        
+        if identifier is None:
+            response = svc.list_projections(
+                user_id, after_time=after_time, before_time=before_time, after_status=after_status, 
+                before_status=before_status, alg_code=alg_code, display_name=display_name, 
+                epsg_code=epsg_code, occurrence_set_id=occurrence_set_id, mdl_scenario_code=mdl_scenario_code, 
+                prj_scenario_code=prj_scenario_code, status=status, gridset_id=gridset_id, 
+                limit=limit, offset=offset, atom=atom)
+
+        elif identifier.lower() == 'count':
+            response = svc.count_projections(
+                user_id, after_time=after_time, before_time=before_time, after_status=after_status, 
+                before_status=before_status, alg_code=alg_code, display_name=display_name, 
+                epsg_code=epsg_code, occurrence_set_id=occurrence_set_id, mdl_scenario_code=mdl_scenario_code, 
+                prj_scenario_code=prj_scenario_code, status=status, gridset_id=gridset_id)
+
+        else:
+            try:
+                projection_id = int(identifier)
+            except:
+                return BadRequest('{} is not a valid projection ID'.format(identifier))
+            else:
+                response = svc.get_occurrence_set(user_id, projection_id, atom=atom)
+                
+    return response
+
+# .....................................................................................
+@app.route('/api/v2/snippet', methods=['GET'])
+def snippet():
+    svc = SnippetService()
+    user_id = svc.get_user()
+    
+    ident1 = request.args.get('ident1', default = None, type = str)
+    ident2 = request.args.get('ident2', default = None, type = str)
+    provider = request.args.get('provider', default = None, type = str)
+    collection = request.args.get('collection', default = None, type = str)
+    catalog_number = request.args.get('catalog_number', default = None, type = str)
+    operation = request.args.get('operation', default = None, type = str)
+    after_time = request.args.get('after_time', default = None, type = float)
+    before_time = request.args.get('before_time', default = None, type = float)
+    url = request.args.get('url', default = None, type = str)
+    who = request.args.get('who', default = None, type = str)
+    agent = request.args.get('agent', default = None, type = str)
+    why = request.args.get('why', default = None, type = str)
+    
+    response = svc.get_snippet(
+        user_id, ident1=ident1, ident2=ident2, provider=provider, collection=collection, 
+        catalog_number=catalog_number, operation=operation, after_time=after_time, before_time=before_time, 
+        url=url, who=who, agent=agent, why=why)
 
     return response
 

@@ -119,9 +119,9 @@ class GlobalPAMService(LmService):
 
         gridset = subset_global_pam(
             archive_name, solr_matches, user_id, bbox=bbox, cell_size=cell_size, scribe=self.scribe)
-        gatom = Atom(
+        atom = Atom(
             gridset.get_id(), gridset.name, gridset.metadata_url, gridset.mod_time, epsg=gridset.epsg_code)
-        return make_response(gatom, HTTPStatus.ACCEPTED)
+        return make_response(atom, HTTPStatus.ACCEPTED)
         
 
     # ................................

@@ -5,7 +5,7 @@ TODO: Delete?  This and biotaphy_names appear identical
 from werkzeug.exceptions import BadRequest
 
 from LmCommon.common.api_query import GbifAPI
-from LmWebServer.services.api.v2.base import LmService
+from LmWebServer.flask_app.base import LmService
 from LmWebServer.services.cp_tools.lm_format import lm_formatter
 
 # TODO: These need to go into a constants file
