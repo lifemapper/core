@@ -25,24 +25,21 @@ Install both rolls on Frontend
 	
 	     lmwriter$ $PYTHON /opt/lifemapper/LmServer/tools/matt_daemon.py stop
    
+	#. **Remove old roll(s)** without cleaning data and packages
+	   ::
+	   
+	   rocks remove roll lifemapper-server lifemapper-compute
+
 	#. **Add and enable new roll(s)**.
 	   Replace the following roll name with the latest version::
 	
 	   rocks add roll lifemapper-server-*.iso clean=1
 	   rocks add roll lifemapper-compute-*.iso clean=1
-	   rocks enable roll lifemapper-compute version=(new)yyyy.mm.dd
-	   rocks enable roll lifemapper-server version=(new)yyyy.mm.dd
-	
-	#. **Disable old roll versions**
-	   ::
-	   rocks disable roll lifemapper-compute version=(old)yyyy.mm.dd
-	   rocks disable roll lifemapper-server version=(old)yyyy.mm.dd
-	   
+	   rocks enable roll lifemapper-server lifemapper-compute
+		   
 	#. **Remove conflicting RPMs**
-	   rpm -evl --quiet --nodeps lifemapper-server
-	   rpm -evl --quiet --nodeps lifemapper-compute
-	   rpm -evl --quiet --nodeps rocks-lifemapper
-	   rpm -evl --quiet --nodeps rocks-lmcompute
+	   rpm -evl --quiet --nodeps lifemapper-lmserver lifemapper-lmcompute
+	   rpm -evl --quiet --nodeps rocks-lifemapper rocks-lmcompute
 	   
 	#. Follow `Build and execute installation` instructions below
 

@@ -2,6 +2,7 @@
 """
 from copy import copy
 import csv
+from http import HTTPStatus
 import json
 import os
 import urllib
@@ -12,8 +13,7 @@ import idigbio
 
 from LmCommon.common.lm_xml import fromstring, deserialize
 from LmCommon.common.lmconstants import (
-    BISON, BisonQuery, DwcNames, GBIF, HTTPStatus, Idigbio, IdigbioQuery,
-    Itis, URL_ESCAPES, ENCODING)
+    BISON, BisonQuery, DwcNames, GBIF, Idigbio, IdigbioQuery, Itis, URL_ESCAPES, ENCODING)
 from LmCommon.common.occ_parse import OccDataParser
 from LmCommon.common.ready_file import ready_filename
 
