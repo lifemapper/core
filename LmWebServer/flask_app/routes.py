@@ -1,6 +1,7 @@
-from  flask import (Flask, flash, redirect, render_template, request, session, url_for)
+import flask
+# from  flask import (abort, Flask, flash, redirect, render_template, request, session, url_for)
 from flask_cors import CORS
-from flask_login import login_user, LoginForm, LoginManager
+from flask_login import login_user, LoginManager
 import os
 from werkzeug.exceptions import BadRequest
 from werkzeug.utils import secure_filename
@@ -26,6 +27,7 @@ from LmWebServer.flask_app.solr_raw import RawSolrService
 from LmWebServer.flask_app.taxonomy import TaxonomyHintService
 from LmWebServer.flask_app.tree import TreeService
 from LmWebServer.flask_app.upload import UserUploadService
+from LmWebServer.flask_tools.basic_auth import is_safe_url
 
 try:
     skey = os.environ['SECRET_KEY']
@@ -34,7 +36,7 @@ except:
 
 
 # TODO: Put this into the database or an environment variable
-app = Flask(__name__.split('.')[0])    
+app = flask.Flask(__name__.split('.')[0])    
 app.secret_key = str.encode(skey)
 CORS(app)
 
@@ -50,54 +52,56 @@ def load_user(user_id):
 # ..........................
 @app.route('/')
 def index():
-    if 'username' in session:
-        return f'Logged in as {session["username"]}'
+    if 'username' in flask.session:
+        return f'Logged in as {flask.session["username"]}'
     return 'You are not logged in'
 
-# ..........................
-@app.route('/api/login', methods=['GET', 'POST'])
-def login():
-        # Here we use a class of some kind to represent and validate our
-    # client-side form data. For example, WTForms is a library that will
-    # handle this for us, and we use a custom LoginForm to validate.
-    form = LoginForm()
-    if form.validate_on_submit():
-        # Login and validate the user.
-        # user should be an instance of your `User` class
-        login_user(user)
-
-        flash('Logged in successfully.')
-
-        next = request.args.get('next')
-        # is_safe_url should check if the url is safe for redirects.
-        # See http://flask.pocoo.org/snippets/62/ for an example.
-        # if not is_safe_url(next):
-        #     return flask.abort(400)
-
-        return redirect(next or url_for('index'))
-    return render_template('public_html/login.html', form=form)
-
-
-    # if request.method == 'POST':
-    #     username = request.form.get('username')
-    #     password = request.form.get('password')
-    #
-    #     user = LmService.get_user(username)
-    #     if user.check_password(password):
-    #         session['username'] = user.user_id
-    #         return user
-    #     else:
-    #         print('Incorrect password')
-    #         return redirect(request.url)
-    #
-    # return render_template('public_html/login.html')
-
-# .....................................................................................
-@app.route('/api/logout')
-def logout():
-    # remove the username from the session if it's there
-    session.pop('username', None)
-    return redirect(url_for('index'))
+# # ..........................
+# @app.route('/api/login', methods=['GET', 'POST'])
+# def login():
+#         # Here we use a class of some kind to represent and validate our
+#     # client-side form data. For example, WTForms is a library that will
+#     # handle this for us, and we use a custom LoginForm to validate.
+#     form = LoginForm()
+#     if form.validate_on_submit():
+#         user = load_user()
+#         # Login and validate the user.
+#         # user should be an instance of your `User` class
+#         user = LmService.get_user()
+#         login_user(user)
+#
+#         flask.flash('Logged in successfully.')
+#
+#         next = flask.request.args.get('next')
+#         # is_safe_url should check if the url is safe for redirects.
+#         # See http://flask.pocoo.org/snippets/62/ for an example.
+#         if not is_safe_url(next):
+#             return flask.abort(400)
+#
+#         return flask.redirect(next or flask.url_for('index'))
+#     return flask.render_template('public_html/login.html', form=form)
+#
+#
+#     # if request.method == 'POST':
+#     #     username = request.form.get('username')
+#     #     password = request.form.get('password')
+#     #
+#     #     user = LmService.get_user(username)
+#     #     if user.check_password(password):
+#     #         session['username'] = user.user_id
+#     #         return user
+#     #     else:
+#     #         print('Incorrect password')
+#     #         return redirect(request.url)
+#     #
+#     # return render_template('public_html/login.html')
+#
+# # .....................................................................................
+# @app.route('/api/logout')
+# def logout():
+#     # remove the username from the session if it's there
+#     flask.session.pop('username', None)
+#     return flask.redirect(flask.url_for('index'))
 
 
 # .....................................................................................
@@ -115,24 +119,24 @@ def layer(identifier):
     user = svc.get_user()
     user_id = user.user_id
     
-    if request.method == 'DELETE':
+    if flask.request.method == 'DELETE':
         svc.delete_occurrence_set(user_id, identifier)
     
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        alt_pred_code = request.args.get('alt_pred_code', default = None, type = str)
-        date_code = request.args.get('date_code', default = None, type = str)
-        epsg_code = request.args.get('epsg_code', default= None, type = str) 
-        env_code = request.args.get('env_code', default = None, type = str)
-        env_type_id = request.args.get('env_type_id', default = None, type = int)
-        gcm_code = request.args.get('gcm_code', default = None, type = str)
+    elif flask.request.method == 'GET':
+        after_time = flask.request.args.get('after_time', default = None, type = float)
+        before_time = flask.request.args.get('before_time', default = None, type = float)
+        alt_pred_code = flask.request.args.get('alt_pred_code', default = None, type = str)
+        date_code = flask.request.args.get('date_code', default = None, type = str)
+        epsg_code = flask.request.args.get('epsg_code', default= None, type = str) 
+        env_code = flask.request.args.get('env_code', default = None, type = str)
+        env_type_id = flask.request.args.get('env_type_id', default = None, type = int)
+        gcm_code = flask.request.args.get('gcm_code', default = None, type = str)
         # layer_type: 
-        layer_type = request.args.get('layer_type', default = None, type = str)
-        scenario_code = request.args.get('scenario_code', default = None, type = int)
-        squid = request.args.get('squid', default = None, type = str)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
+        layer_type = flask.request.args.get('layer_type', default = None, type = str)
+        scenario_code = flask.request.args.get('scenario_code', default = None, type = int)
+        squid = flask.request.args.get('squid', default = None, type = str)
+        limit = flask.request.args.get('limit', default = 100, type = int)
+        offset = flask.request.args.get('offset', default = 0, type = int)
         
         if identifier is None:
             if layer_type == 1:
@@ -183,24 +187,24 @@ def occurrence(identifier):
     user = svc.get_user()
     user_id = user.user_id
     
-    if request.method == 'POST' and request.is_json:
-        boom_data = request.get_json()
+    if flask.request.method == 'POST' and flask.request.is_json:
+        boom_data = flask.request.get_json()
         svc.post_boom_data(user_id, user.email, boom_data)
 
-    elif request.method == 'DELETE':
+    elif flask.request.method == 'DELETE':
         svc.delete_occurrence_set(user_id, identifier)
     
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        display_name = request.args.get('display_name', default = None, type = str)
-        epsg_code = request.args.get('epsg_code', default= None, type = str) 
-        minimum_number_of_points = request.args.get('minimum_number_of_points', default = 1, type = int)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
-        status = request.args.get('status', default = None, type = int)
-        gridset_id = request.args.get('gridset_id', default = None, type = int)
-        fill_points = request.args.get('fill_points', default = False, type = bool)
+    elif flask.request.method == 'GET':
+        after_time = flask.request.args.get('after_time', default = None, type = float)
+        before_time = flask.request.args.get('before_time', default = None, type = float)
+        display_name = flask.request.args.get('display_name', default = None, type = str)
+        epsg_code = flask.request.args.get('epsg_code', default= None, type = str) 
+        minimum_number_of_points = flask.request.args.get('minimum_number_of_points', default = 1, type = int)
+        limit = flask.request.args.get('limit', default = 100, type = int)
+        offset = flask.request.args.get('offset', default = 0, type = int)
+        status = flask.request.args.get('status', default = None, type = int)
+        gridset_id = flask.request.args.get('gridset_id', default = None, type = int)
+        fill_points = flask.request.args.get('fill_points', default = False, type = bool)
         
         if identifier is None:
             response = svc.list_occurrence_sets(
@@ -234,7 +238,7 @@ def occurrence(identifier):
 @app.route('/api/v2/biotaphynames', methods=['POST'])
 def biotaphynames():
     try:
-        names_obj = request.get_json()
+        names_obj = flask.request.get_json()
     except: 
         return BadRequest('Names must be a JSON list')
     else:
@@ -246,7 +250,7 @@ def biotaphynames():
 @app.route('/api/v2/biotaphypoints', methods=['POST'])
 def biotaphypoints():
     try:
-        taxonids_obj = request.get_json()
+        taxonids_obj = flask.request.get_json()
     except: 
         return BadRequest('Taxon IDs must be a JSON list')
     else:
@@ -258,7 +262,7 @@ def biotaphypoints():
 @app.route('/api/v2/biotaphytree', methods=['POST'])
 def biotaphytree():
     try:
-        taxon_names_obj = request.get_json()
+        taxon_names_obj = flask.request.get_json()
     except:
         return BadRequest('Taxon names must be a JSON list')
     else:
@@ -269,7 +273,7 @@ def biotaphytree():
 @app.route('/api/v2/gbifparser', methods=['POST'])
 def gbifparser():
     try:
-        names_obj = request.get_json()
+        names_obj = flask.request.get_json()
     except: 
         return BadRequest('Name list must be in JSON format')
     else:
@@ -284,26 +288,26 @@ def globalpam():
     user = svc.get_user()
     user_id = user.user_id
     
-    archive_name = request.args.get('display_name', default = None, type = str)
-    cell_size = request.args.get('cell_size', default = None, type = float)
-    algorithm_code = request.args.get('algorithm_code', default = None, type = str)
-    bbox = request.args.get('bbox', default = None, type = str)
-    display_name = request.args.get('display_name', default = None, type = str)
-    gridset_id = request.args.get('gridset_id', default = None, type = int)
-    model_scenario_code = request.args.get('model_scenario_code', default = None, type = str)
-    prj_scen_code = request.args.get('prj_scenario_code', default = None, type = str)
-    point_max = request.args.get('point_max', default = None, type = int)
-    point_min = request.args.get('point_min', default = None, type = int)
-    squid = request.args.get('squid', default = None, type = str)
-    taxon_kingdom = request.args.get('taxon_kingdom', default = None, type = str)
-    taxon_phylum = request.args.get('taxon_phylum', default = None, type = str)
-    taxon_class = request.args.get('taxon_class', default = None, type = str)
-    taxon_order = request.args.get('taxon_order', default = None, type = str)
-    taxon_family = request.args.get('taxon_family', default = None, type = str)
-    taxon_genus = request.args.get('taxon_genus', default = None, type = str)
-    taxon_species = request.args.get('taxon_species', default = None, type = str)
+    archive_name = flask.request.args.get('display_name', default = None, type = str)
+    cell_size = flask.request.args.get('cell_size', default = None, type = float)
+    algorithm_code = flask.request.args.get('algorithm_code', default = None, type = str)
+    bbox = flask.request.args.get('bbox', default = None, type = str)
+    display_name = flask.request.args.get('display_name', default = None, type = str)
+    gridset_id = flask.request.args.get('gridset_id', default = None, type = int)
+    model_scenario_code = flask.request.args.get('model_scenario_code', default = None, type = str)
+    prj_scen_code = flask.request.args.get('prj_scenario_code', default = None, type = str)
+    point_max = flask.request.args.get('point_max', default = None, type = int)
+    point_min = flask.request.args.get('point_min', default = None, type = int)
+    squid = flask.request.args.get('squid', default = None, type = str)
+    taxon_kingdom = flask.request.args.get('taxon_kingdom', default = None, type = str)
+    taxon_phylum = flask.request.args.get('taxon_phylum', default = None, type = str)
+    taxon_class = flask.request.args.get('taxon_class', default = None, type = str)
+    taxon_order = flask.request.args.get('taxon_order', default = None, type = str)
+    taxon_family = flask.request.args.get('taxon_family', default = None, type = str)
+    taxon_genus = flask.request.args.get('taxon_genus', default = None, type = str)
+    taxon_species = flask.request.args.get('taxon_species', default = None, type = str)
         
-    if request.method == 'POST':
+    if flask.request.method == 'POST':
         response = svc.post_pam_subset(
             user_id, archive_name, gridset_id, algorithm_code=algorithm_code, bbox=bbox, 
             display_name=display_name, gridset_id=gridset_id, model_scenario_code=model_scenario_code, 
@@ -312,7 +316,7 @@ def globalpam():
             taxon_order=taxon_order, taxon_family=taxon_family, taxon_genus=taxon_genus, 
             taxon_species=taxon_species)
 
-    elif request.method == 'GET':
+    elif flask.request.method == 'GET':
         response = svc.post_pam_subset(
             user_id, archive_name, cell_size=cell_size, algorithm_code=algorithm_code, bbox=bbox, 
             display_name=display_name, gridset_id=gridset_id, model_scenario_code=model_scenario_code, 
@@ -330,21 +334,21 @@ def gridset(identifier):
     user = svc.get_user()
     user_id = user.user_id
     
-    if request.method == 'POST' and request.is_json:
-        gridset_data = request.get_json()
+    if flask.request.method == 'POST' and flask.request.is_json:
+        gridset_data = flask.request.get_json()
         svc.post_boom_data(user_id, user.email, gridset_data)
 
-    elif request.method == 'DELETE':
+    elif flask.request.method == 'DELETE':
         svc.delete_gridset(user_id, identifier)
     
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        epsg_code = request.args.get('epsg_code', default= None, type = str)
-        meta_string = request.args.get('meta_string', default= None, type = str)
-        shapegrid_id = request.args.get('shapegrid_id', default= None, type = int)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
+    elif flask.request.method == 'GET':
+        after_time = flask.request.args.get('after_time', default = None, type = float)
+        before_time = flask.request.args.get('before_time', default = None, type = float)
+        epsg_code = flask.request.args.get('epsg_code', default= None, type = str)
+        meta_string = flask.request.args.get('meta_string', default= None, type = str)
+        shapegrid_id = flask.request.args.get('shapegrid_id', default= None, type = int)
+        limit = flask.request.args.get('limit', default = 100, type = int)
+        offset = flask.request.args.get('offset', default = 0, type = int)
 
         if identifier is None:
             response = svc.list_gridsets(
@@ -372,7 +376,7 @@ def hint():
     svc = SpeciesHintService()
     user_id = svc.get_user()
 
-    search_string = request.args.get('search_string', default= None, type = str)
+    search_string = flask.request.args.get('search_string', default= None, type = str)
     return svc.get_hint(user_id, search_string)
     
 # .....................................................................................
@@ -381,13 +385,13 @@ def scenpackage(identifier):
     svc = ScenarioPackageService()
     user_id = svc.get_user()
     
-    scenario_package_id = request.args.get('scenario_package_id', default = None, type = int)
-    scenario_id = request.args.get('scenario_id', default = None, type = int)
-    after_time = request.args.get('after_time', default = None, type = float)
-    before_time = request.args.get('before_time', default = None, type = float)
-    epsg_code = request.args.get('epsg_code', default= None, type = str) 
-    limit = request.args.get('limit', default = 100, type = int)
-    offset = request.args.get('offset', default = 0, type = int)
+    scenario_package_id = flask.request.args.get('scenario_package_id', default = None, type = int)
+    scenario_id = flask.request.args.get('scenario_id', default = None, type = int)
+    after_time = flask.request.args.get('after_time', default = None, type = float)
+    before_time = flask.request.args.get('before_time', default = None, type = float)
+    epsg_code = flask.request.args.get('epsg_code', default= None, type = str) 
+    limit = flask.request.args.get('limit', default = 100, type = int)
+    offset = flask.request.args.get('offset', default = 0, type = int)
     
     if identifier is None:
         response = svc.list_scenario_packages(
@@ -414,15 +418,15 @@ def scenario(identifier):
     svc = ScenarioService()
     user_id = svc.get_user_id()
 
-    scenario_id = request.args.get('scenario_id', default = None, type = int)
-    after_time = request.args.get('after_time', default = None, type = float)
-    before_time = request.args.get('before_time', default = None, type = float)
-    alt_pred_code = request.args.get('alt_pred_code', default= None, type = str) 
-    date_code = request.args.get('date_code', default= None, type = str) 
-    gcm_code = request.args.get('gcm_code', default= None, type = str) 
-    epsg_code = request.args.get('epsg_code', default= None, type = str) 
-    limit = request.args.get('limit', default = 100, type = int)
-    offset = request.args.get('offset', default = 0, type = int)
+    scenario_id = flask.request.args.get('scenario_id', default = None, type = int)
+    after_time = flask.request.args.get('after_time', default = None, type = float)
+    before_time = flask.request.args.get('before_time', default = None, type = float)
+    alt_pred_code = flask.request.args.get('alt_pred_code', default= None, type = str) 
+    date_code = flask.request.args.get('date_code', default= None, type = str) 
+    gcm_code = flask.request.args.get('gcm_code', default= None, type = str) 
+    epsg_code = flask.request.args.get('epsg_code', default= None, type = str) 
+    limit = flask.request.args.get('limit', default = 100, type = int)
+    offset = flask.request.args.get('offset', default = 0, type = int)
 
     if identifier is None:
         response = svc.list_scenarios(
@@ -460,29 +464,29 @@ def sdmproject(identifier):
     user = svc.get_user()
     user_id = user.user_id
     
-    if request.method == 'POST' and request.is_json:
-        projection_data = request.get_json()
+    if flask.request.method == 'POST' and flask.request.is_json:
+        projection_data = flask.request.get_json()
         svc.post_boom_data(user_id, user.email, projection_data)
 
-    elif request.method == 'DELETE':
+    elif flask.request.method == 'DELETE':
         svc.delete_occurrence_set(user_id, identifier)
     
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        after_status = request.args.get('after_status', default = JobStatus.COMPLETE, type = int)
-        before_status = request.args.get('before_status', default = JobStatus.COMPLETE, type = int)
-        alg_code = request.args.get('alg_code', default = None, type = str)
-        display_name = request.args.get('display_name', default = None, type = str)
-        epsg_code = request.args.get('epsg_code', default= None, type = str)
-        occurrence_set_id = request.args.get('occurrence_set_id', default = None, type = int)
-        mdl_scenario_code = request.args.get('mdl_scenario_code', default = None, type = str)
-        prj_scenario_code = request.args.get('prj_scenario_code', default = None, type = str)
-        status = request.args.get('status', default = JobStatus.COMPLETE, type = int)
-        gridset_id = request.args.get('gridset_id', default = None, type = int)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
-        atom = request.args.get('atom', default = True, type = bool)
+    elif flask.request.method == 'GET':
+        after_time = flask.request.args.get('after_time', default = None, type = float)
+        before_time = flask.request.args.get('before_time', default = None, type = float)
+        after_status = flask.request.args.get('after_status', default = JobStatus.COMPLETE, type = int)
+        before_status = flask.request.args.get('before_status', default = JobStatus.COMPLETE, type = int)
+        alg_code = flask.request.args.get('alg_code', default = None, type = str)
+        display_name = flask.request.args.get('display_name', default = None, type = str)
+        epsg_code = flask.request.args.get('epsg_code', default= None, type = str)
+        occurrence_set_id = flask.request.args.get('occurrence_set_id', default = None, type = int)
+        mdl_scenario_code = flask.request.args.get('mdl_scenario_code', default = None, type = str)
+        prj_scenario_code = flask.request.args.get('prj_scenario_code', default = None, type = str)
+        status = flask.request.args.get('status', default = JobStatus.COMPLETE, type = int)
+        gridset_id = flask.request.args.get('gridset_id', default = None, type = int)
+        limit = flask.request.args.get('limit', default = 100, type = int)
+        offset = flask.request.args.get('offset', default = 0, type = int)
+        atom = flask.request.args.get('atom', default = True, type = bool)
         
         if identifier is None:
             response = svc.list_projections(
@@ -515,18 +519,18 @@ def snippet():
     svc = SnippetService()
     user_id = svc.get_user()
     
-    ident1 = request.args.get('ident1', default = None, type = str)
-    ident2 = request.args.get('ident2', default = None, type = str)
-    provider = request.args.get('provider', default = None, type = str)
-    collection = request.args.get('collection', default = None, type = str)
-    catalog_number = request.args.get('catalog_number', default = None, type = str)
-    operation = request.args.get('operation', default = None, type = str)
-    after_time = request.args.get('after_time', default = None, type = float)
-    before_time = request.args.get('before_time', default = None, type = float)
-    url = request.args.get('url', default = None, type = str)
-    who = request.args.get('who', default = None, type = str)
-    agent = request.args.get('agent', default = None, type = str)
-    why = request.args.get('why', default = None, type = str)
+    ident1 = flask.request.args.get('ident1', default = None, type = str)
+    ident2 = flask.request.args.get('ident2', default = None, type = str)
+    provider = flask.request.args.get('provider', default = None, type = str)
+    collection = flask.request.args.get('collection', default = None, type = str)
+    catalog_number = flask.request.args.get('catalog_number', default = None, type = str)
+    operation = flask.request.args.get('operation', default = None, type = str)
+    after_time = flask.request.args.get('after_time', default = None, type = float)
+    before_time = flask.request.args.get('before_time', default = None, type = float)
+    url = flask.request.args.get('url', default = None, type = str)
+    who = flask.request.args.get('who', default = None, type = str)
+    agent = flask.request.args.get('agent', default = None, type = str)
+    why = flask.request.args.get('why', default = None, type = str)
     
     response = svc.get_snippet(
         user_id, ident1=ident1, ident2=ident2, provider=provider, collection=collection, 
@@ -540,7 +544,7 @@ def snippet():
 @app.route('/api/v2/rawsolr', methods=['POST'])
 def rawsolr():
     svc = RawSolrService()
-    req_body = request.get_json()
+    req_body = flask.request.get_json()
     response = svc.query_collection(req_body)
     return response
 
@@ -548,7 +552,7 @@ def rawsolr():
 @app.route('/api/v2/taxonomy', methods=['GET'])
 def taxonomy():
     svc = TaxonomyHintService()
-    req_body = request.get_json()
+    req_body = flask.request.get_json()
     response = svc.query_collection(req_body)
     return response
 
@@ -567,23 +571,23 @@ def tree(identifier):
     svc = TreeService()
     user_id = svc.get_user()
     
-    if request.method == 'POST' and request.is_json:
-        tree_data = request.get_json()
+    if flask.request.method == 'POST' and flask.request.is_json:
+        tree_data = flask.request.get_json()
         svc.post_tree(user_id, tree_data)
 
-    elif request.method == 'DELETE':
+    elif flask.request.method == 'DELETE':
         svc.delete_tree(user_id, identifier)
     
-    elif request.method == 'GET':
-        after_time = request.args.get('after_time', default = None, type = float)
-        before_time = request.args.get('before_time', default = None, type = float)
-        is_binary = request.args.get('is_binary', default = None, type = bool)
-        is_ultrametric = request.args.get('is_ultrametric', default = None, type = bool)
-        has_branch_lengths = request.args.get('has_branch_lengths', default = None, type = bool)
-        meta_string = request.args.get('meta_string', default = None, type = str)
-        name = request.args.get('name', default = None, type = str)
-        limit = request.args.get('limit', default = 100, type = int)
-        offset = request.args.get('offset', default = 0, type = int)
+    elif flask.request.method == 'GET':
+        after_time = flask.request.args.get('after_time', default = None, type = float)
+        before_time = flask.request.args.get('before_time', default = None, type = float)
+        is_binary = flask.request.args.get('is_binary', default = None, type = bool)
+        is_ultrametric = flask.request.args.get('is_ultrametric', default = None, type = bool)
+        has_branch_lengths = flask.request.args.get('has_branch_lengths', default = None, type = bool)
+        meta_string = flask.request.args.get('meta_string', default = None, type = str)
+        name = flask.request.args.get('name', default = None, type = str)
+        limit = flask.request.args.get('limit', default = 100, type = int)
+        offset = flask.request.args.get('offset', default = 0, type = int)
 
         if identifier is None:
             response = svc.list_trees(
@@ -617,21 +621,21 @@ def allowed_file(filename):
 def upload():
     svc = UserUploadService()
 
-    file_name = request.args.get('file_name', default = None, type = str)
-    upload_type = request.args.get('upload_type', default = None, type = str)
-    metadata = request.args.get('metadata', default = None, type = str)
+    file_name = flask.request.args.get('file_name', default = None, type = str)
+    upload_type = flask.request.args.get('upload_type', default = None, type = str)
+    metadata = flask.request.args.get('metadata', default = None, type = str)
 
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
+    if flask.request.method == 'POST':
+        # check if the post flask.request has the file part
+        if 'file' not in flask.request.files:
+            flask.flash('No file part')
+            return flask.redirect(flask.request.url)
 
-        upload_file = request.files['file']
+        upload_file = flask.request.files['file']
         # If the user does not select a file, the browser submits an empty file without a filename.
         if upload_file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+            flask.flash('No selected file')
+            return flask.redirect(flask.request.url)
         
         if upload_file:
             if allowed_file(upload_file.filename):
@@ -647,9 +651,9 @@ def upload():
                 
         else:
             try:
-                data = request.get_data()
+                data = flask.request.get_data()
             except: 
-                raise BadRequest('Unable to read data from request')
+                raise BadRequest('Unable to read data from flask.request')
 
     return svc.post_data(safe_filename, upload_type, metadata, data)
 
@@ -658,22 +662,22 @@ def upload():
 @app.route('/api/v2/upload_file', methods=['GET', 'POST'])
 def upload_file():
     """Test implementation from https://flask.palletsprojects.com/en/2.0.x/patterns/fileuploads/"""
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
+    if flask.request.method == 'POST':
+        # check if the post flask.request has the file part
+        if 'file' not in flask.request.files:
+            flask.flash('No file part')
+            return flask.redirect(flask.request.url)
         
-        file = request.files['file']
+        file = flask.request.files['file']
         # If the user does not select a file, the browser submits an empty file without a filename.
         if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+            flask.flash('No selected file')
+            return flask.redirect(flask.request.url)
         
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('download_file', name=filename))
+            return flask.redirect(flask.url_for('download_file', name=filename))
         
     return 
     
